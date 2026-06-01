@@ -1,0 +1,286 @@
+/**
+ * Shell de aplicación Luxora — layout, superficies y componentes compartidos.
+ * Misma estructura en Suite, eFactura, POS y Cartera.
+ */
+:root {
+  --lux-app-bg: var(--lux-surface);
+  --lux-app-ink: #0f172a;
+  --lux-app-muted: #64748b;
+  --lux-app-border: #e2e8f0;
+  --lux-card-bg: #ffffff;
+  --lux-card-radius: 12px;
+  --lux-card-shadow: 0 1px 2px rgba(15, 17, 23, 0.04), 0 8px 24px -12px rgba(99, 102, 241, 0.12);
+  --lux-card-border: 1px solid var(--lux-app-border);
+  --lux-hero-gradient: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    color-mix(in srgb, var(--lux-cyan) 6%, #ffffff) 42%,
+    color-mix(in srgb, var(--lux-indigo) 8%, #ffffff) 100%
+  );
+  --lux-chart-bar: linear-gradient(180deg, var(--lux-cyan) 0%, var(--lux-indigo) 100%);
+  --lux-chart-track: var(--lux-indigo);
+  --lux-auth-pane-bg: #ffffff;
+  --lux-auth-card-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 4px rgba(15, 17, 23, 0.04),
+    0 16px 44px -18px rgba(var(--lux-primary-rgb), 0.28);
+}
+
+.lux-app {
+  min-height: 100vh;
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem);
+  background: var(--lux-app-bg);
+  color: var(--lux-app-ink);
+}
+
+.lux-app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.lux-app-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.lux-eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lux-primary);
+}
+
+.lux-page-title {
+  margin: 0.2rem 0 0;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--lux-app-ink);
+}
+
+.lux-lead {
+  margin: 0.35rem 0 0;
+  max-width: 36rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--lux-app-muted);
+}
+
+.lux-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 0.65rem;
+  max-width: 52rem;
+}
+
+.lux-product-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 0;
+  padding: 0.7rem 0.8rem;
+  border: var(--lux-card-border);
+  border-radius: var(--lux-card-radius);
+  background: var(--lux-card-bg);
+  box-shadow: var(--lux-card-shadow);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.lux-product-tile:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--lux-indigo) 35%, var(--lux-app-border));
+  box-shadow: 0 4px 20px -8px rgba(var(--lux-primary-rgb), 0.28);
+  transform: translateY(-1px);
+}
+
+.lux-product-tile:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lux-product-tile__mark {
+  flex-shrink: 0;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.65rem;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.lux-product-tile__mark[data-product='cartera'],
+.lux-product-tile__mark[data-product='efactura'] {
+  background: linear-gradient(135deg, var(--lux-cyan), var(--lux-indigo));
+}
+
+.lux-product-tile__mark[data-product='pos'] {
+  background: linear-gradient(135deg, var(--lux-indigo), var(--lux-magenta));
+}
+
+.lux-product-tile__mark[data-product='suite'] {
+  background: var(--lux-gradient-diagonal);
+}
+
+.lux-product-tile__body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.lux-product-tile__body strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.lux-product-tile__tagline {
+  font-size: 0.76rem;
+  color: var(--lux-app-muted);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lux-product-tile__arrow {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--lux-primary);
+  opacity: 0.7;
+}
+
+.lux-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0 0.95rem;
+  border-radius: 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: #fff;
+  background: var(--lux-gradient-diagonal);
+  border: none;
+  box-shadow: 0 8px 20px -10px rgba(var(--lux-primary-rgb), 0.55);
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.lux-btn-primary:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.lux-empty-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: var(--lux-card-radius);
+  background: var(--lux-card-bg);
+  border: var(--lux-card-border);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--lux-app-muted);
+}
+
+.lux-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+@media (max-width: 991px) {
+  .lux-kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .lux-kpi-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lux-kpi {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.7rem;
+  border: var(--lux-card-border);
+  border-radius: var(--lux-card-radius);
+  background: var(--lux-card-bg);
+  box-shadow: var(--lux-card-shadow);
+}
+
+.lux-kpi__icon {
+  display: grid;
+  place-items: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.5rem;
+  background: var(--lux-cyan-soft);
+  color: var(--lux-primary-strong);
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.lux-kpi__label {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--lux-app-muted);
+  font-weight: 600;
+}
+
+.lux-kpi__value {
+  display: block;
+  margin-top: 0.05rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--lux-app-ink);
+}
+
+.lux-kpi__hint {
+  display: block;
+  margin-top: 0.08rem;
+  font-size: 0.68rem;
+  color: var(--lux-app-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lux-kpi--success .lux-kpi__icon {
+  background: color-mix(in srgb, #16a34a 12%, #fff);
+  color: #166534;
+}
+
+.lux-kpi--warning .lux-kpi__icon {
+  background: color-mix(in srgb, #d97706 12%, #fff);
+  color: #92400e;
+}
+
+.lux-kpi--danger .lux-kpi__icon {
+  background: color-mix(in srgb, #dc2626 12%, #fff);
+  color: #991b1b;
+}

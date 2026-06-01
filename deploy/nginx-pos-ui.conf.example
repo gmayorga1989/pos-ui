@@ -1,0 +1,30 @@
+# /etc/nginx/sites-available/pos-ui
+# SPA POS (archivos estáticos en /opt/pos-ui/html)
+#
+# DNS: pos.appluxora.com → IP del Droplet
+#
+# En el servidor:
+#   sudo mkdir -p /opt/pos-ui/html
+#   sudo cp /opt/pos-ui/nginx.conf.example /etc/nginx/sites-available/pos-ui
+#   sudo ln -sf /etc/nginx/sites-available/pos-ui /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo systemctl reload nginx
+#   sudo certbot --nginx -d pos.appluxora.com
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name pos.appluxora.com;
+
+    root /opt/pos-ui/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+}

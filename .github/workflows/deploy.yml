@@ -1,0 +1,72 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: pos-ui-deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: POS_UI_CI_CD
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Build production bundle
+        run: |
+          npm ci
+          npm run build -- --configuration production
+          test -f dist/pos-ui/browser/index.html
+
+      - name: Pack static assets
+        run: tar -czf pos-ui-dist.tar.gz -C dist/pos-ui/browser .
+
+      - uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.POS_UI_DEPLOY_HOST }}
+          username: ${{ secrets.POS_UI_DEPLOY_USER }}
+          key: ${{ secrets.POS_UI_DEPLOY_SSH_KEY }}
+          port: ${{ secrets.POS_UI_DEPLOY_PORT }}
+          source: pos-ui-dist.tar.gz
+          target: ${{ secrets.POS_UI_DEPLOY_PATH }}
+
+      - uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_DIR: ${{ secrets.POS_UI_DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.POS_UI_DEPLOY_HOST }}
+          username: ${{ secrets.POS_UI_DEPLOY_USER }}
+          key: ${{ secrets.POS_UI_DEPLOY_SSH_KEY }}
+          port: ${{ secrets.POS_UI_DEPLOY_PORT }}
+          envs: APP_DIR
+          script: |
+            set -euo pipefail
+            DEPLOY_DIR="${APP_DIR:-/opt/pos-ui}"
+            cd "$DEPLOY_DIR"
+            mkdir -p html
+            rm -rf html/*
+            tar -xzf pos-ui-dist.tar.gz -C html
+            rm -f pos-ui-dist.tar.gz
+            sudo nginx -t
+            sudo systemctl reload nginx
+            echo "POS UI desplegado en ${DEPLOY_DIR}/html ($(ls html | wc -l) archivos)"
+
+      - name: Smoke check (HTTP)
+        continue-on-error: true
+        run: |
+          curl -sfI --max-time 15 "https://pos.appluxora.com/" | head -1 || \
+          curl -sfI --max-time 15 "http://${{ secrets.POS_UI_DEPLOY_HOST }}/" -H "Host: pos.appluxora.com" | head -1

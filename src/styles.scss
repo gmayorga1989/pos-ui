@@ -1,0 +1,195 @@
+@import 'styles/luxora-brand';
+
+/* —— Suite POS — tokens por tema y densidad —— */
+
+html {
+  /* Modo nocturno Luxora POS (por defecto) */
+  --pos-night-bg: #070b14;
+  --pos-night-panel: #0b1324;
+  --pos-nav-rail-w: 3.45rem;
+  --pos-topbar-h: 3.35rem;
+  --pos-content-pad-x: 1.05rem;
+  --pos-content-pad-y: 0.8rem;
+  --pos-card-art-h: 3.1rem;
+  --pos-product-minw: 9.25rem;
+  --pos-product-gap: 0.55rem;
+  --pos-qty-size: 1.65rem;
+  --pos-font-base: 15px;
+  --pos-radius-xs: 5px;
+  --pos-radius-sm: 7px;
+  --pos-radius: 11px;
+  --pos-radius-lg: 15px;
+  --pos-transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  --pos-font:
+    'Plus Jakarta Sans', 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --pos-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+}
+
+/* Densidad táctil / escritorio */
+[data-density='compact'] {
+  --pos-nav-rail-w: 3.15rem;
+  --pos-topbar-h: 3.05rem;
+  --pos-content-pad-x: 0.85rem;
+  --pos-content-pad-y: 0.55rem;
+  --pos-card-art-h: 2.55rem;
+  --pos-product-minw: 7.5rem;
+  --pos-product-gap: 0.45rem;
+  --pos-qty-size: 1.45rem;
+  --pos-font-base: 14px;
+  --pos-radius-sm: 6px;
+  --pos-radius: 9px;
+}
+
+[data-density='comfortable'] {
+  --pos-nav-rail-w: 3.45rem;
+  --pos-card-art-h: 3.1rem;
+  --pos-product-minw: 9.25rem;
+  --pos-product-gap: 0.55rem;
+  --pos-qty-size: 1.65rem;
+  --pos-font-base: 15px;
+}
+
+[data-density='touch'] {
+  --pos-nav-rail-w: 3.65rem;
+  --pos-topbar-h: 3.55rem;
+  --pos-content-pad-x: 1.1rem;
+  --pos-content-pad-y: 0.85rem;
+  --pos-card-art-h: 4rem;
+  --pos-product-minw: 10.5rem;
+  --pos-product-gap: 0.65rem;
+  --pos-qty-size: 2.35rem;
+  --pos-font-base: 16px;
+  --pos-radius-sm: 9px;
+  --pos-radius: 13px;
+}
+
+/* Tema claro — espacio de trabajo claro + rail oscuro (patrón dashboard actual) */
+html[data-theme='light'] {
+  color-scheme: light;
+  --pos-bg-deep: var(--lux-surface);
+  --pos-bg: color-mix(in srgb, var(--lux-indigo) 3%, #f1f5f9);
+  --pos-surface: #ffffff;
+  --pos-surface-2: #f8fafc;
+  --pos-elevated: #ffffff;
+  --pos-border: rgba(15, 23, 42, 0.07);
+  --pos-border-strong: rgba(15, 23, 42, 0.13);
+  --pos-text: #0f172a;
+  --pos-muted: #475569;
+  --pos-faint: #64748b;
+  --pos-accent: var(--lux-indigo);
+  --pos-accent-hover: var(--lux-primary-strong);
+  --pos-accent-muted: color-mix(in srgb, var(--lux-indigo) 14%, transparent);
+  --pos-accent-glow: var(--lux-glow-indigo);
+  --pos-warn: #c2410c;
+  --pos-danger: #be123c;
+  --pos-status-ok: #047857;
+  --pos-status-warn: #b45309;
+  --pos-shadow: 0 24px 48px -28px rgba(15, 23, 42, 0.18);
+  --pos-shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04), 0 14px 36px -20px rgba(15, 23, 42, 0.12);
+  --pos-panel-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 16px 44px -28px rgba(15, 23, 42, 0.14);
+  --pos-rail-bg: linear-gradient(175deg, var(--lux-ink) 0%, #1a1d2e 52%, var(--lux-ink) 100%);
+  --pos-rail-border: rgba(255, 255, 255, 0.07);
+  --pos-rail-fg: #94a3b8;
+  --pos-rail-fg-hover: #f8fafc;
+  --pos-rail-well: rgba(255, 255, 255, 0.07);
+  --pos-rail-active-bg: color-mix(in srgb, var(--lux-indigo) 18%, transparent);
+  --pos-rail-active-fg: var(--lux-cyan);
+  --pos-flyout-bg: #ffffff;
+  --pos-flyout-shadow: 0 24px 56px -20px rgba(15, 23, 42, 0.22);
+  --pos-topbar-bg: color-mix(in srgb, #ffffff 88%, transparent);
+  --pos-topbar-accent-line: linear-gradient(90deg, var(--lux-cyan), var(--lux-indigo), var(--lux-magenta));
+}
+
+/* Modo nocturno — #070B14 fondo · #0B1324 tarjetas/paneles */
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --pos-bg-deep: var(--pos-night-bg);
+  --pos-bg: var(--pos-night-bg);
+  --pos-surface: var(--pos-night-panel);
+  --pos-surface-2: color-mix(in srgb, var(--pos-night-panel) 88%, #131d33);
+  --pos-elevated: var(--pos-night-panel);
+  --pos-border: rgba(148, 163, 184, 0.12);
+  --pos-border-strong: rgba(148, 163, 184, 0.22);
+  --pos-text: #f1f5f9;
+  --pos-muted: #94a3b8;
+  --pos-faint: #64748b;
+  --pos-accent: var(--lux-cyan);
+  --pos-accent-hover: #67efff;
+  --pos-accent-muted: color-mix(in srgb, var(--lux-cyan) 16%, transparent);
+  --pos-accent-glow: var(--lux-glow-cyan);
+  --pos-warn: #fbbf24;
+  --pos-danger: #fb7185;
+  --pos-status-ok: #6ee7b7;
+  --pos-status-warn: #fbbf24;
+  --pos-shadow: 0 24px 56px -20px rgba(0, 0, 0, 0.55);
+  --pos-shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.32);
+  --pos-panel-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 50px -24px rgba(0, 0, 0, 0.45);
+  --pos-rail-bg: linear-gradient(175deg, var(--pos-night-bg) 0%, #0a1020 52%, var(--pos-night-bg) 100%);
+  --pos-rail-border: rgba(148, 163, 184, 0.09);
+  --pos-rail-fg: #64748b;
+  --pos-rail-fg-hover: #f1f5f9;
+  --pos-rail-well: rgba(255, 255, 255, 0.05);
+  --pos-rail-active-bg: color-mix(in srgb, var(--lux-indigo) 22%, transparent);
+  --pos-rail-active-fg: var(--lux-cyan);
+  --pos-flyout-bg: var(--pos-elevated);
+  --pos-flyout-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  --pos-topbar-bg: color-mix(in srgb, var(--pos-night-panel) 92%, transparent);
+  --pos-topbar-accent-line: linear-gradient(90deg, var(--lux-cyan), var(--lux-indigo), var(--lux-magenta));
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: var(--pos-font);
+  font-size: var(--pos-font-base);
+  line-height: 1.5;
+  background: var(--pos-bg-deep);
+  color: var(--pos-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.015em;
+}
+
+html[data-theme='light'] body {
+  background:
+    radial-gradient(ellipse 100% 70% at 100% 0%, color-mix(in srgb, var(--lux-cyan) 8%, transparent) 0%, transparent 52%),
+    radial-gradient(ellipse 70% 50% at 0% 100%, color-mix(in srgb, var(--lux-indigo) 7%, transparent) 0%, transparent 48%),
+    linear-gradient(180deg, var(--lux-surface) 0%, #f1f5f9 38%, var(--lux-app-bg, var(--lux-surface)) 100%);
+}
+
+html[data-theme='dark'] body {
+  background:
+    radial-gradient(ellipse 90% 60% at 100% 0%, color-mix(in srgb, var(--lux-indigo) 14%, transparent) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 0% 100%, color-mix(in srgb, var(--lux-cyan) 8%, transparent) 0%, transparent 50%),
+    var(--pos-night-bg);
+}
+
+button,
+input,
+select {
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+a {
+  color: var(--pos-accent);
+}
+
+.pos-focus-ring:focus-visible {
+  outline: 2px solid var(--pos-accent);
+  outline-offset: 2px;
+}
+
+.pos-page-host {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
