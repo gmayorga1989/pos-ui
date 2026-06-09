@@ -9,7 +9,8 @@ export type PosRoleProfile = 'auto' | 'cajero' | 'supervisor' | 'mostrador';
 export type PosHandedness = 'right' | 'left';
 export type PosCardProvider = 'datafast' | 'kushki' | 'nuvei' | 'placetopay' | 'payphone' | 'manual';
 
-const K_THEME = 'pos_ui_theme';
+const K_THEME = 'lux_ui_theme';
+const K_THEME_LEGACY = 'pos_ui_theme';
 const K_DENSITY = 'pos_ui_density';
 const K_DENSITY_SRC = 'pos_ui_density_src';
 const K_ROLE = 'pos_ui_role_profile';
@@ -99,7 +100,10 @@ export class PosLayoutPreferencesService {
   }
 
   hydrateFromStorage(): void {
-    const t = localStorage.getItem(K_THEME) as PosTheme | null;
+    let t = localStorage.getItem(K_THEME) as PosTheme | null;
+    if (t !== 'light' && t !== 'dark') {
+      t = localStorage.getItem(K_THEME_LEGACY) as PosTheme | null;
+    }
     if (t === 'light' || t === 'dark') {
       this.theme.set(t);
     }
@@ -168,9 +172,12 @@ export class PosLayoutPreferencesService {
 
   applyDocumentAttributes(): void {
     const root = document.documentElement;
-    root.setAttribute('data-theme', this.theme());
+    const theme = this.theme();
+    root.setAttribute('data-theme', theme);
+    root.setAttribute('data-lux-theme', theme);
+    root.setAttribute('data-bs-theme', theme);
     root.setAttribute('data-density', this.resolveEffectiveDensity());
-    root.style.colorScheme = this.theme() === 'dark' ? 'dark' : 'light';
+    root.style.colorScheme = theme === 'dark' ? 'dark' : 'light';
   }
 
   /** Llamar tras login / cambio de token o preferencias. */
@@ -182,6 +189,7 @@ export class PosLayoutPreferencesService {
   setTheme(value: PosTheme): void {
     this.theme.set(value);
     localStorage.setItem(K_THEME, value);
+    localStorage.setItem(K_THEME_LEGACY, value);
     this.applyDocumentAttributes();
     this.layoutTick.update((n) => n + 1);
   }

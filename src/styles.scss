@@ -1,4 +1,9 @@
 @import 'styles/luxora-brand';
+@import 'styles/luxora-shell';
+@import 'styles/luxora-sso-bridge';
+@import 'styles/pos-maestro';
+@import 'styles/pos-ef-modals';
+@import 'styles/pos-tabulator';
 
 /* —— Suite POS — tokens por tema y densidad —— */
 
@@ -83,6 +88,8 @@ html[data-theme='light'] {
   --pos-warn: #c2410c;
   --pos-danger: #be123c;
   --pos-status-ok: #047857;
+  --pos-status-ok-bg: color-mix(in srgb, var(--lux-indigo) 10%, #ffffff);
+  --pos-status-ok-border: color-mix(in srgb, var(--lux-indigo) 24%, transparent);
   --pos-status-warn: #b45309;
   --pos-shadow: 0 24px 48px -28px rgba(15, 23, 42, 0.18);
   --pos-shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04), 0 14px 36px -20px rgba(15, 23, 42, 0.12);
@@ -119,7 +126,9 @@ html[data-theme='dark'] {
   --pos-accent-glow: var(--lux-glow-cyan);
   --pos-warn: #fbbf24;
   --pos-danger: #fb7185;
-  --pos-status-ok: #6ee7b7;
+  --pos-status-ok: var(--lux-cyan);
+  --pos-status-ok-bg: color-mix(in srgb, var(--lux-cyan) 12%, transparent);
+  --pos-status-ok-border: color-mix(in srgb, var(--lux-cyan) 30%, transparent);
   --pos-status-warn: #fbbf24;
   --pos-shadow: 0 24px 56px -20px rgba(0, 0, 0, 0.55);
   --pos-shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.32);

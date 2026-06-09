@@ -1,27 +1,461 @@
 <!doctype html>
-<html lang="es" data-theme="dark" data-density="comfortable">
+
+<html lang="es" dir="ltr" data-theme="dark" data-lux-theme="dark" data-bs-theme="dark" data-density="comfortable">
+
   <head>
+
     <meta charset="utf-8" />
+
     <script>
+
       (function () {
+
         try {
-          var t = localStorage.getItem('pos_ui_theme');
-          document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+
+          var t = localStorage.getItem('lux_ui_theme') || localStorage.getItem('pos_ui_theme');
+
+          var theme = t === 'light' ? 'light' : 'dark';
+
+          document.documentElement.setAttribute('data-theme', theme);
+
+          document.documentElement.setAttribute('data-lux-theme', theme);
+
+          document.documentElement.setAttribute('data-bs-theme', theme);
+
         } catch (e) {
+
           document.documentElement.setAttribute('data-theme', 'dark');
+
+          document.documentElement.setAttribute('data-lux-theme', 'dark');
+
+          document.documentElement.setAttribute('data-bs-theme', 'dark');
+
         }
+
       })();
+
     </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
     <link
+
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..800&display=swap"
+
       rel="stylesheet" />
+
     <title>Luxora POS · Terminal de venta</title>
+
     <base href="/" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="color-scheme" content="dark light" />
+
+    <style id="pos-sso-splash-style">
+
+      #pos-sso-splash {
+
+        position: fixed;
+
+        inset: 0;
+
+        z-index: 2147483646;
+
+        display: grid;
+
+        place-items: center;
+
+        padding: clamp(1rem, 4vw, 2rem);
+
+        overflow: hidden;
+
+        background: linear-gradient(165deg, #0c1222 0%, #111827 42%, #1e1b4b 100%);
+
+        color: #e2e8f0;
+
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+        -webkit-font-smoothing: antialiased;
+
+      }
+
+      #pos-sso-splash .pos-sso-card {
+
+        position: relative;
+
+        z-index: 1;
+
+        width: min(26rem, 100%);
+
+        padding: clamp(1.35rem, 4vw, 1.85rem);
+
+        border-radius: 1.35rem;
+
+        background: linear-gradient(165deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.03) 100%);
+
+        border: 1px solid rgba(255, 255, 255, 0.14);
+
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset, 0 28px 56px -20px rgba(0, 0, 0, 0.55), 0 0 100px -28px rgba(99, 102, 241, 0.35);
+
+      }
+
+      #pos-sso-splash .pos-sso-brand {
+
+        display: flex;
+
+        align-items: flex-start;
+
+        gap: 0.9rem;
+
+        margin-bottom: 1.35rem;
+
+        padding-bottom: 1.15rem;
+
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+      }
+
+      #pos-sso-splash .pos-sso-mark {
+
+        flex-shrink: 0;
+
+        width: 2.75rem;
+
+        height: 2.75rem;
+
+        border-radius: 0.85rem;
+
+        display: grid;
+
+        place-items: center;
+
+        color: #fff;
+
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+
+        box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+
+      }
+
+      #pos-sso-splash .pos-sso-title {
+
+        margin: 0;
+
+        font-size: clamp(1.15rem, 3vw, 1.35rem);
+
+        font-weight: 800;
+
+        letter-spacing: -0.02em;
+
+        color: #f8fafc;
+
+      }
+
+      #pos-sso-splash .pos-sso-sub {
+
+        margin: 0.35rem 0 0;
+
+        font-size: 0.8rem;
+
+        line-height: 1.5;
+
+        font-weight: 500;
+
+        color: rgba(203, 213, 225, 0.88);
+
+      }
+
+      #pos-sso-splash .pos-sso-flow {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 0.5rem;
+
+        margin-bottom: 1.15rem;
+
+        padding: 0.65rem 0.35rem;
+
+      }
+
+      #pos-sso-splash .pos-sso-node {
+
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        gap: 0.35rem;
+
+      }
+
+      #pos-sso-splash .pos-sso-dot {
+
+        width: 0.65rem;
+
+        height: 0.65rem;
+
+        border-radius: 999px;
+
+        box-shadow: 0 0 14px currentColor;
+
+      }
+
+      #pos-sso-splash .pos-sso-dot--suite {
+
+        color: #a5b4fc;
+
+        background: #a5b4fc;
+
+      }
+
+      #pos-sso-splash .pos-sso-dot--pos {
+
+        color: #22d3ee;
+
+        background: #22d3ee;
+
+        animation: pos-sso-pulse 1.2s ease-in-out infinite;
+
+      }
+
+      @keyframes pos-sso-pulse {
+
+        0%,
+
+        100% {
+
+          transform: scale(1);
+
+          opacity: 1;
+
+        }
+
+        50% {
+
+          transform: scale(1.15);
+
+          opacity: 0.85;
+
+        }
+
+      }
+
+      #pos-sso-splash .pos-sso-node-label {
+
+        font-size: 0.68rem;
+
+        font-weight: 700;
+
+        letter-spacing: 0.12em;
+
+        text-transform: uppercase;
+
+        color: rgba(226, 232, 240, 0.65);
+
+      }
+
+      #pos-sso-splash .pos-sso-bridge {
+
+        flex: 1;
+
+        position: relative;
+
+        height: 2rem;
+
+        min-width: 2rem;
+
+      }
+
+      #pos-sso-splash .pos-sso-line {
+
+        position: absolute;
+
+        left: 8%;
+
+        right: 8%;
+
+        top: 50%;
+
+        height: 2px;
+
+        margin-top: -1px;
+
+        border-radius: 2px;
+
+        background: linear-gradient(90deg, rgba(165, 180, 252, 0.35) 0%, rgba(129, 140, 248, 0.85) 45%, rgba(34, 211, 238, 0.75) 100%);
+
+      }
+
+      #pos-sso-splash .pos-sso-panel {
+
+        border-radius: 1rem;
+
+        padding: 1rem 1.1rem;
+
+        background: rgba(255, 255, 255, 0.06);
+
+        border: 1px solid rgba(255, 255, 255, 0.1);
+
+      }
+
+      #pos-sso-splash .pos-sso-status {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 0.75rem;
+
+      }
+
+      #pos-sso-splash .pos-sso-spinner {
+
+        flex-shrink: 0;
+
+        width: 1.35rem;
+
+        height: 1.35rem;
+
+        border: 2.5px solid rgba(165, 180, 252, 0.35);
+
+        border-top-color: #e0e7ff;
+
+        border-radius: 50%;
+
+        animation: pos-sso-spin 0.7s linear infinite;
+
+      }
+
+      @keyframes pos-sso-spin {
+
+        to {
+
+          transform: rotate(360deg);
+
+        }
+
+      }
+
+      #pos-sso-splash .pos-sso-msg {
+
+        margin: 0;
+
+        font-size: 0.95rem;
+
+        font-weight: 650;
+
+        color: #f1f5f9;
+
+      }
+
+      #pos-sso-splash .pos-sso-hint {
+
+        margin: 0.75rem 0 0;
+
+        font-size: 0.68rem;
+
+        font-weight: 600;
+
+        letter-spacing: 0.06em;
+
+        text-transform: uppercase;
+
+        color: rgba(148, 163, 184, 0.85);
+
+      }
+
+    </style>
+
+    <script>
+
+      (function () {
+
+        var path = window.location.pathname || '';
+
+        var search = window.location.search || '';
+
+        if (path.indexOf('/auth/callback') === -1 && !/[?&]at=/.test(search)) {
+
+          return;
+
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+          if (document.getElementById('pos-sso-splash')) {
+
+            return;
+
+          }
+
+          var root = document.createElement('div');
+
+          root.id = 'pos-sso-splash';
+
+          root.setAttribute('aria-live', 'polite');
+
+          root.setAttribute('aria-busy', 'true');
+
+          root.innerHTML =
+
+            '<main class="pos-sso-card">' +
+
+            '<header class="pos-sso-brand">' +
+
+            '<div class="pos-sso-mark" aria-hidden="true">' +
+
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none">' +
+
+            '<path d="M6 6h12l-1.2 11H7.2L6 6zM9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+
+            '</svg></div>' +
+
+            '<div><h1 class="pos-sso-title">Luxora POS</h1>' +
+
+            '<p class="pos-sso-sub">Conectando su terminal de venta</p></div></header>' +
+
+            '<div class="pos-sso-flow" aria-hidden="true">' +
+
+            '<div class="pos-sso-node"><span class="pos-sso-dot pos-sso-dot--suite"></span><span class="pos-sso-node-label">Suite</span></div>' +
+
+            '<div class="pos-sso-bridge"><span class="pos-sso-line"></span></div>' +
+
+            '<div class="pos-sso-node"><span class="pos-sso-dot pos-sso-dot--pos"></span><span class="pos-sso-node-label">POS</span></div>' +
+
+            '</div>' +
+
+            '<div class="pos-sso-panel"><div class="pos-sso-status">' +
+
+            '<span class="pos-sso-spinner" aria-hidden="true"></span>' +
+
+            '<p class="pos-sso-msg">Estableciendo sesión segura…</p></div>' +
+
+            '<p class="pos-sso-hint">Conexión segura vía Identity Gateway</p></div></main>';
+
+          document.body.appendChild(root);
+
+        });
+
+      })();
+
+    </script>
+
   </head>
+
   <body>
+
     <pos-root></pos-root>
+
   </body>
+
 </html>
+
+

@@ -1,0 +1,265 @@
+@import 'tabulator-tables/dist/css/tabulator_bootstrap5.min.css';
+
+.ts-tabulator-grid.tabulator {
+  border: 1px solid var(--pos-maestro-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--pos-maestro-card);
+  color: var(--pos-text);
+  font-size: 0.925rem;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-header {
+  border-bottom: 1px solid var(--pos-maestro-divider);
+  background: var(--pos-maestro-grid-head);
+}
+
+.ts-tabulator-grid.tabulator .tabulator-header .tabulator-col {
+  border-right: 1px solid var(--pos-maestro-divider);
+  background: var(--pos-maestro-grid-head);
+  color: var(--pos-muted);
+  font-weight: 700;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-header .tabulator-col:last-child {
+  border-right: 0;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-header .tabulator-col .tabulator-col-content {
+  padding: 0.85rem 0.9rem;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-header .tabulator-col .tabulator-col-title {
+  white-space: normal;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-header .tabulator-col {
+  height: auto !important;
+  min-height: 2.75rem;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-row {
+  border-bottom: 1px solid var(--pos-maestro-divider);
+  background: var(--pos-maestro-card);
+}
+
+.ts-tabulator-grid.tabulator .tabulator-row.tabulator-row-even {
+  background: color-mix(in srgb, var(--pos-maestro-card) 92%, var(--lux-indigo) 8%);
+}
+
+.ts-tabulator-grid.tabulator .tabulator-row:hover {
+  background: var(--pos-maestro-grid-hover);
+}
+
+.ts-tabulator-grid.tabulator .tabulator-row .tabulator-cell {
+  border-right: 1px solid var(--pos-maestro-divider);
+  padding: 0.45rem 0.6rem;
+  color: var(--pos-text);
+}
+
+.ts-tabulator-grid.tabulator .tabulator-row .tabulator-cell:has(.ts-grid-actions) {
+  overflow: visible;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-row .tabulator-cell:last-child {
+  border-right: 0;
+}
+
+.ts-tabulator-grid .ts-cell-textarea {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.35;
+  display: block;
+}
+
+.ts-tabulator-grid .ts-grid-actions {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.ts-tabulator-grid .ts-grid-actions__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.95rem;
+  height: 1.95rem;
+  padding: 0;
+  border: 1px solid var(--pos-border-strong);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--pos-maestro-card) 88%, var(--lux-indigo) 12%);
+  color: var(--pos-muted);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.ts-tabulator-grid .ts-grid-actions__toggle:hover,
+.ts-tabulator-grid .ts-grid-actions__toggle.show {
+  border-color: color-mix(in srgb, var(--lux-indigo) 30%, transparent);
+  background: color-mix(in srgb, var(--lux-indigo) 12%, var(--pos-maestro-card));
+  color: var(--lux-primary-strong);
+}
+
+.ts-tabulator-grid .ts-grid-actions__dots {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+body > .ts-grid-actions__menu,
+.ts-tabulator-grid .ts-grid-actions .dropdown-menu {
+  display: none;
+  min-width: 9.5rem;
+  margin: 0;
+  border: 1px solid var(--pos-maestro-border);
+  border-radius: 8px;
+  padding: 0.35rem;
+  background: var(--pos-maestro-card);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px) scale(0.98);
+  z-index: 2000;
+  box-shadow: 0 16px 36px rgba(17, 38, 146, 0.14);
+}
+
+body > .ts-grid-actions__menu.show,
+.ts-tabulator-grid .ts-grid-actions .dropdown-menu.show {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+body > .ts-grid-actions__menu .dropdown-item,
+.ts-tabulator-grid .ts-grid-actions .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 2.15rem;
+  padding: 0.45rem 0.6rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 0.9rem;
+  color: var(--pos-text);
+  cursor: pointer;
+}
+
+body > .ts-grid-actions__menu .dropdown-item:hover,
+.ts-tabulator-grid .ts-grid-actions .dropdown-item:hover {
+  background: color-mix(in srgb, var(--lux-indigo) 10%, var(--pos-maestro-card));
+}
+
+.ts-tabulator-grid.tabulator .tabulator-tableholder .tabulator-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: min(420px, 52vh);
+  color: var(--pos-muted);
+  padding: 2rem 1rem 2.5rem;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-tableholder .tabulator-placeholder-contents {
+  display: block;
+  width: 100%;
+  padding: 0;
+  text-align: center;
+}
+
+.ts-tabulator-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: min(440px, 100%);
+  margin: 0 auto;
+  padding: 0.25rem 0.5rem 0.5rem;
+  text-align: center;
+}
+
+.ts-tabulator-empty__visual {
+  display: grid;
+  place-items: center;
+  width: min(240px, 78vw);
+  margin-bottom: 0.25rem;
+}
+
+.ts-tabulator-empty__image {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+.ts-tabulator-empty__content {
+  width: 100%;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+
+.ts-tabulator-empty__title {
+  margin: 0 0 0.5rem;
+  padding-left: 0.65rem;
+  border-left: 3px solid var(--lux-indigo);
+  color: var(--pos-text);
+  font-size: clamp(1rem, 2vw, 1.12rem);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.ts-tabulator-empty__description {
+  margin: 0;
+  padding-left: 0.65rem;
+  color: var(--pos-muted);
+  font-size: clamp(0.82rem, 1.6vw, 0.92rem);
+  line-height: 1.55;
+  text-align: left;
+}
+
+.ts-tabulator-empty__highlight {
+  color: var(--lux-primary-strong);
+  font-weight: 700;
+}
+
+.ts-tabulator-empty__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  margin-top: 0.35rem;
+  padding: 0.38rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-maestro-border));
+  border-radius: 8px;
+  background: var(--pos-maestro-card);
+  color: var(--lux-primary-strong);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.ts-tabulator-empty__cta:hover {
+  border-color: color-mix(in srgb, var(--lux-indigo) 42%, var(--pos-maestro-border));
+  background: color-mix(in srgb, var(--lux-indigo) 8%, var(--pos-maestro-card));
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--lux-indigo) 14%, transparent);
+}
+
+html[data-theme='dark'] .ts-tabulator-empty__cta {
+  background: color-mix(in srgb, var(--pos-maestro-card) 92%, #0f172a);
+}

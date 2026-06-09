@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, interval } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PosAuthService } from '../core/auth/pos-auth.service';
+import { PosSsoHandoffService } from '../core/auth/pos-sso-handoff.service';
+import { PosConfigService } from '../core/config/pos-config.service';
 import type { PosCajaCierreDenomination } from '../core/api/pos-backend.types';
 import { PosDeskSessionService } from '../core/desk/pos-desk-session.service';
 import { readPosSessionDisplay } from '../core/layout/pos-jwt-hint.util';
@@ -86,13 +88,19 @@ type CashPanelMode = 'open' | 'close' | 'history';
                 <span class="chip__dot"></span>
                 API
               </span>
-              @if (hasUrl(efactura)) {
+              @if (deploymentMode()) {
+                <span class="chip chip--pos" role="listitem" [attr.title]="deploymentMode()">
+                  <span class="chip__dot"></span>
+                  {{ deploymentModeShort() }}
+                </span>
+              }
+              @if (showEfacturaChip()) {
                 <span class="chip chip--ok" role="listitem">
                   <span class="chip__dot"></span>
                   eF
                 </span>
               }
-              @if (hasUrl(cartera)) {
+              @if (showCarteraChip()) {
                 <span class="chip chip--ok" role="listitem">
                   <span class="chip__dot"></span>
                   Car
@@ -1148,15 +1156,12 @@ type CashPanelMode = 'open' | 'close' | 'history';
       color: var(--pos-accent-hover);
     }
     .chip--ok {
-      border-color: rgba(52, 211, 153, 0.35);
-      color: #059669;
+      border-color: var(--pos-status-ok-border);
+      color: var(--pos-status-ok);
     }
     .chip--warn {
       border-color: rgba(248, 113, 113, 0.35);
       color: #b91c1c;
-    }
-    html[data-theme='dark'] .chip--ok {
-      color: #6ee7b7;
     }
     html[data-theme='dark'] .chip--warn {
       color: #fca5a5;
@@ -1168,7 +1173,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
       background: var(--pos-accent);
     }
     .chip--ok .chip__dot {
-      background: #10b981;
+      background: var(--pos-status-ok);
     }
     .chip--warn .chip__dot {
       background: #ef4444;
@@ -1248,8 +1253,14 @@ export class PosShellComponent implements OnInit {
   private readonly router = inject(Router);
   readonly prefs = inject(PosLayoutPreferencesService);
   private readonly auth = inject(PosAuthService);
+  private readonly ssoHandoff = inject(PosSsoHandoffService);
+  private readonly runtimeConfig = inject(PosConfigService);
   readonly desk = inject(PosDeskSessionService);
   readonly offline = inject(PosOfflineSyncService);
+
+  readonly deploymentMode = signal('');
+  readonly invoicingEnabled = signal(false);
+  readonly carteraEnabled = signal(false);
 
   readonly cajaPanelOpen = signal(false);
   readonly cashPanelMode = signal<CashPanelMode>('open');
@@ -1291,6 +1302,24 @@ export class PosShellComponent implements OnInit {
   readonly time = signal('');
   readonly date = signal('');
   readonly online = signal(navigator.onLine);
+
+  readonly showEfacturaChip = computed(
+    () => this.invoicingEnabled() && this.deploymentMode() !== 'STANDALONE',
+  );
+  readonly showCarteraChip = computed(() => this.carteraEnabled());
+  readonly deploymentModeShort = computed(() => {
+    const m = this.deploymentMode();
+    if (m === 'STANDALONE') {
+      return 'Local';
+    }
+    if (m === 'LUXORA') {
+      return 'Luxora';
+    }
+    if (m === 'INTEGRATED') {
+      return 'Integr.';
+    }
+    return m.slice(0, 5);
+  });
 
   private readonly sessionUi = computed(() => {
     void this.prefs.layoutTick();
@@ -1336,6 +1365,8 @@ export class PosShellComponent implements OnInit {
   readonly nav: { path: string; label: string; desc: string; exact?: boolean; iconHtml: SafeHtml }[];
 
   constructor() {
+    afterNextRender(() => this.ssoHandoff.complete());
+
     const raw: { path: string; label: string; desc: string; exact?: boolean; icon: string }[] = [
       {
         path: '/venta',
@@ -1349,6 +1380,18 @@ export class PosShellComponent implements OnInit {
         label: 'Catálogo',
         desc: 'Productos, variantes y precios (sync eFactura).',
         icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>`,
+      },
+      {
+        path: '/clientes',
+        label: 'Clientes',
+        desc: 'Maestro de clientes para ventas y facturación.',
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M14 19c.3-2 1.8-3.5 4-3.5" stroke="currentColor" stroke-width="1.5"/></svg>`,
+      },
+      {
+        path: '/reportes',
+        label: 'Reportes',
+        desc: 'Ventas por día y top productos.',
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 19V9M10 19V5M15 19v-7M20 19V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
       },
       {
         path: '/historial',
@@ -1407,6 +1450,11 @@ export class PosShellComponent implements OnInit {
   ngOnInit(): void {
     this.prefs.applyDocumentAttributes();
     void this.offline.refreshPendingCount();
+    void this.runtimeConfig.ensureLoaded().then((cfg) => {
+      this.deploymentMode.set(cfg.deploymentMode);
+      this.invoicingEnabled.set(cfg.invoicingEnabled);
+      this.carteraEnabled.set(cfg.carteraEnabled);
+    });
     this.router.events
       .pipe(
         filter((e): e is NavigationEnd => e instanceof NavigationEnd),
@@ -1557,6 +1605,11 @@ export class PosShellComponent implements OnInit {
 
   logout(): void {
     this.auth.clear();
+    const native = sessionStorage.getItem('pos_auth_mode') === 'NATIVE';
+    if (native) {
+      window.location.href = '/login';
+      return;
+    }
     window.location.href = `${environment.suiteShellOrigin.replace(/\/+$/, '')}/login`;
   }
 

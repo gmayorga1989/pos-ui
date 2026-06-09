@@ -16,11 +16,19 @@ import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
 import type {
   PosCheckoutPago,
   PosCheckoutRequestBody,
+  PosCustomerResponse,
   PosOfflineComprobanteSyncRequest,
   PosPaymentCollectionResponse,
 } from '../../core/api/pos-backend.types';
+import {
+  customerResponseToSale,
+  SALE_CONSUMIDOR_FINAL,
+  saleCustomerTipoLabel,
+  type SaleCustomer,
+} from '../../shared/customer/pos-sale-customer.util';
 import { PosDeskSessionService } from '../../core/desk/pos-desk-session.service';
 import { PosAuthService } from '../../core/auth/pos-auth.service';
+import { PosConfigService } from '../../core/config/pos-config.service';
 import { PosLayoutPreferencesService } from '../../core/layout/pos-layout-preferences.service';
 import { PosOfflineSyncService } from '../../core/offline/pos-offline-sync.service';
 
@@ -40,12 +48,6 @@ interface CartLine {
   qty: number;
   /** Descuento fijo en USD sobre el ítem (no por unidad). */
   discountAmount: number;
-}
-
-interface SaleCustomer {
-  name: string;
-  doc: string;
-  email?: string | null;
 }
 
 interface SaleTab {
@@ -121,7 +123,7 @@ type ModalState =
             </label>
             <div class="catalog-toolbar__tools">
               <div class="cats" role="tablist" aria-label="Filtro por categoría">
-                @for (c of categories; track c) {
+                @for (c of categories(); track c) {
                   <button
                     type="button"
                     class="cat pos-focus-ring"
@@ -225,26 +227,68 @@ type ModalState =
             <span class="badge">{{ lineCount() }} ítems</span>
           </div>
 
-          <div class="customer-compact">
-            <span class="customer-compact__lbl">Cliente</span>
-            <div class="customer-compact__row">
-              <input
-                type="search"
-                class="customer-compact__input pos-focus-ring"
-                placeholder="RUC, cédula o nombre…"
-                [value]="custQuery()"
-                (input)="onCustQuery($event)" />
-              <button type="button" class="btn-xs pos-focus-ring" (click)="searchCustomer()">Buscar</button>
-              <button type="button" class="btn-xs btn-xs--pri pos-focus-ring" (click)="openNewCustomer()">Nuevo</button>
+          <div class="customer-panel">
+            <div class="customer-panel__head">
+              <span class="customer-panel__lbl">Cliente</span>
+              @if (activeCustomer(); as ac) {
+                <span class="customer-panel__badge" [class.customer-panel__badge--cf]="ac.isConsumidorFinal">
+                  {{ saleCustomerTipoLabel(ac.tipoIdentificacion) }}
+                </span>
+              }
             </div>
             @if (activeCustomer(); as ac) {
-              <div class="customer-compact__chip">
-                <span class="customer-compact__name">{{ ac.name }}</span>
-                <span class="customer-compact__doc">{{ ac.doc }}</span>
-                <button type="button" class="link-x pos-focus-ring" (click)="clearCustomer()">Quitar</button>
+              <div class="customer-panel__active">
+                <div class="customer-panel__active-text">
+                  <strong>{{ ac.name }}</strong>
+                  <span>{{ ac.doc }}</span>
+                </div>
+                @if (!ac.isConsumidorFinal) {
+                  <button type="button" class="customer-panel__reset pos-focus-ring" (click)="applyConsumidorFinal()">
+                    Usar CF
+                  </button>
+                }
               </div>
-            } @else {
-              <p class="customer-compact__hint">Opcional antes de cobrar</p>
+            }
+            <div class="customer-panel__search">
+              <input
+                type="search"
+                class="customer-panel__input pos-focus-ring"
+                placeholder="RUC, cédula, nombre o correo…"
+                [value]="custQuery()"
+                (input)="onCustQuery($event)"
+                (keydown.enter)="searchCustomer()" />
+              <button type="button" class="customer-panel__btn pos-focus-ring" [disabled]="custSearchLoading()" (click)="searchCustomer()">
+                {{ custSearchLoading() ? '…' : 'Buscar' }}
+              </button>
+            </div>
+            <div class="customer-panel__quick">
+              <button
+                type="button"
+                class="customer-panel__chip pos-focus-ring"
+                [class.customer-panel__chip--active]="activeCustomer()?.isConsumidorFinal"
+                (click)="applyConsumidorFinal()">
+                Consumidor final
+              </button>
+              <button type="button" class="customer-panel__chip customer-panel__chip--ghost pos-focus-ring" (click)="openNewCustomer()">
+                + Nuevo cliente
+              </button>
+            </div>
+            @if (custResultsOpen() && custResults().length > 0) {
+              <ul class="customer-panel__results" role="listbox">
+                @for (row of custResults(); track row.id) {
+                  <li>
+                    <button type="button" class="customer-panel__result pos-focus-ring" (click)="selectCustomer(row)">
+                      <span class="customer-panel__result-name">{{ row.nombreComercial || row.razonSocial }}</span>
+                      <span class="customer-panel__result-meta">
+                        {{ saleCustomerTipoLabel(row.tipoIdentificacion) }} · {{ row.identificacion }}
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+            @if (custSearchMsg()) {
+              <p class="customer-panel__msg">{{ custSearchMsg() }}</p>
             }
           </div>
 
@@ -257,8 +301,13 @@ type ModalState =
             } @else if (error()) {
               <div class="api-err" role="alert">{{ error() }}</div>
             }
-            @if (posApiConfigured() && !prefs.puntoEmisionId().trim()) {
+            @if (invoicingEnabled() && posApiConfigured() && !prefs.puntoEmisionId().trim()) {
               <div class="api-warn" role="status">Se usara sucursal/emision local si no hay punto eFactura seleccionado.</div>
+            }
+            @if (lastTicketId()) {
+              <button type="button" class="api-ok api-ok--link pos-focus-ring" (click)="openLastTicket()">
+                Imprimir último ticket
+              </button>
             }
             @if (!desk.cajaOpen()) {
               <div class="api-warn" role="status">Debe aperturar caja para proceder con la venta.</div>
@@ -344,6 +393,57 @@ type ModalState =
     </div>
 
     @if (modal(); as m) {
+      @if (m.kind === 'newCustomer') {
+      <div class="ts-modal-backdrop" (click)="closeModal()"></div>
+      <section class="ts-form-modal ts-form-modal--compact" role="dialog" aria-modal="true" aria-labelledby="mdl-newc">
+        <header class="ts-form-modal__header">
+          <div class="ts-form-modal__icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
+              <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </div>
+          <div class="ts-form-modal__head-text">
+            <p class="ts-form-modal__eyebrow">Venta</p>
+            <h3 id="mdl-newc">Nuevo cliente</h3>
+            <p class="ts-form-modal__subtitle">Registro rápido para asignar al ticket actual.</p>
+          </div>
+          <button type="button" class="ts-form-modal__close" aria-label="Cerrar" (click)="closeModal()">×</button>
+        </header>
+        <div class="ts-form-modal__body">
+          @if (checkoutError()) {
+            <p class="customer-panel__msg customer-panel__msg--warn">{{ checkoutError() }}</p>
+          }
+          <label class="pos-form-field">
+            <span>Nombre o razón social</span>
+            <input class="pos-focus-ring" type="text" [value]="newCustName()" (input)="onNewCustNameInput($event)" />
+          </label>
+          <label class="pos-form-field">
+            <span>RUC / cédula</span>
+            <div class="pos-form-field__inline">
+              <input class="pos-focus-ring" type="text" inputmode="numeric" [value]="newCustDoc()" (input)="onNewCustDocInput($event)" />
+              @if (posApiConfigured()) {
+                <button
+                  type="button"
+                  class="pos-btn pos-btn--soft pos-form-field__action"
+                  [disabled]="newCustConsultLoading()"
+                  (click)="consultarNewCustDoc()">
+                  {{ newCustConsultLoading() ? '…' : 'Consultar' }}
+                </button>
+              }
+            </div>
+          </label>
+          <label class="pos-form-field">
+            <span>Correo (opcional)</span>
+            <input class="pos-focus-ring" type="email" autocomplete="email" [value]="newCustEmail()" (input)="onNewCustEmailInput($event)" />
+          </label>
+        </div>
+        <footer class="ts-form-modal__footer">
+          <button type="button" class="pos-btn pos-btn--ghost" (click)="closeModal()">Cancelar</button>
+          <button type="button" class="pos-btn pos-btn--primary" (click)="saveNewCustomer()">Guardar y usar</button>
+        </footer>
+      </section>
+      } @else {
       <div class="modal-back" role="presentation" (click)="closeModal()"></div>
       <div
         class="modal"
@@ -607,45 +707,9 @@ type ModalState =
               }
             </div>
           }
-          @case ('newCustomer') {
-            <h3 class="modal__title" id="mdl-newc">Nuevo cliente</h3>
-            @if (checkoutError()) {
-              <p class="modal__p modal__p--warn">{{ checkoutError() }}</p>
-            }
-            <label class="modal-field">
-              <span>Nombre o razón social</span>
-              <input
-                class="modal-input pos-focus-ring"
-                type="text"
-                [value]="newCustName()"
-                (input)="onNewCustNameInput($event)" />
-            </label>
-            <label class="modal-field">
-              <span>RUC / cédula</span>
-              <input
-                class="modal-input pos-focus-ring"
-                type="text"
-                [value]="newCustDoc()"
-                (input)="onNewCustDocInput($event)" />
-            </label>
-            <label class="modal-field">
-              <span>Correo (opcional)</span>
-              <input
-                class="modal-input pos-focus-ring"
-                type="email"
-                autocomplete="email"
-                [value]="newCustEmail()"
-                (input)="onNewCustEmailInput($event)" />
-            </label>
-            <div class="modal-actions">
-              <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="closeModal()">
-                Cancelar
-              </button>
-              <button type="button" class="btn-modal pos-focus-ring" (click)="saveNewCustomer()">Guardar</button>
-            </div>
-          }
         }
       </div>
+      }
     }
   `,
   styles: `
@@ -800,36 +864,180 @@ type ModalState =
       color: var(--pos-accent-hover);
       background: transparent;
     }
-    .customer-compact {
-      padding: 0.6rem 0.65rem 0.55rem;
+    .customer-panel {
+      position: relative;
+      padding: 0.62rem 0.65rem 0.58rem;
       border-bottom: 1px solid var(--pos-border);
       background: var(--pos-elevated);
       flex-shrink: 0;
     }
-    .customer-compact__lbl {
-      display: block;
+    .customer-panel__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.45rem;
+      margin-bottom: 0.38rem;
+    }
+    .customer-panel__lbl {
       font-size: 0.58rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--pos-faint);
-      margin-bottom: 0.32rem;
     }
-    .customer-compact__row {
+    .customer-panel__badge {
+      padding: 0.12rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid var(--pos-border-strong);
+      background: var(--pos-surface-2);
+      color: var(--pos-muted);
+      font-size: 0.62rem;
+      font-weight: 700;
+    }
+    .customer-panel__badge--cf {
+      color: var(--pos-status-ok);
+      border-color: var(--pos-status-ok-border);
+      background: var(--pos-status-ok-bg);
+    }
+    .customer-panel__active {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.45rem;
+      margin-bottom: 0.42rem;
+      padding: 0.42rem 0.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--pos-border);
+      background: var(--pos-surface-2);
+    }
+    .customer-panel__active-text {
+      display: grid;
+      gap: 0.1rem;
+      min-width: 0;
+    }
+    .customer-panel__active-text strong {
+      font-size: 0.78rem;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .customer-panel__active-text span {
+      font-family: var(--pos-mono);
+      font-size: 0.64rem;
+      color: var(--pos-muted);
+    }
+    .customer-panel__reset {
+      border: 1px solid var(--pos-border-strong);
+      border-radius: 6px;
+      background: var(--pos-surface);
+      color: var(--pos-muted);
+      font-size: 0.64rem;
+      font-weight: 700;
+      padding: 0.24rem 0.45rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .customer-panel__search {
+      display: flex;
+      gap: 0.35rem;
       align-items: center;
     }
-    .customer-compact__input {
+    .customer-panel__input {
       flex: 1;
       min-width: 0;
-      border-radius: 6px;
+      border-radius: 8px;
       border: 1px solid var(--pos-border-strong);
       background: var(--pos-bg);
       color: var(--pos-text);
-      padding: 0.32rem 0.45rem;
-      font-size: 0.74rem;
+      padding: 0.38rem 0.5rem;
+      font-size: 0.76rem;
+    }
+    .customer-panel__btn {
+      border-radius: 8px;
+      border: 1px solid color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-border-strong));
+      background: color-mix(in srgb, var(--lux-indigo) 10%, var(--pos-surface));
+      color: var(--lux-primary-strong);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.36rem 0.55rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .customer-panel__btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+    .customer-panel__quick {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.42rem;
+    }
+    .customer-panel__chip {
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--lux-indigo) 24%, var(--pos-border-strong));
+      background: var(--pos-surface);
+      color: var(--pos-text);
+      font-size: 0.68rem;
+      font-weight: 650;
+      padding: 0.28rem 0.58rem;
+      cursor: pointer;
+    }
+    .customer-panel__chip--active {
+      border-color: color-mix(in srgb, var(--lux-indigo) 42%, var(--pos-border-strong));
+      background: color-mix(in srgb, var(--lux-indigo) 12%, var(--pos-surface));
+      color: var(--lux-primary-strong);
+    }
+    .customer-panel__chip--ghost {
+      background: transparent;
+      color: var(--pos-muted);
+    }
+    .customer-panel__results {
+      list-style: none;
+      margin: 0.42rem 0 0;
+      padding: 0;
+      max-height: 9.5rem;
+      overflow: auto;
+      border: 1px solid var(--pos-border);
+      border-radius: 10px;
+      background: var(--pos-surface);
+      box-shadow: var(--pos-shadow-soft);
+    }
+    .customer-panel__result {
+      display: grid;
+      gap: 0.12rem;
+      width: 100%;
+      padding: 0.48rem 0.55rem;
+      border: none;
+      border-bottom: 1px solid var(--pos-border);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+    .customer-panel__result:last-child {
+      border-bottom: none;
+    }
+    .customer-panel__result:hover {
+      background: var(--pos-surface-2);
+    }
+    .customer-panel__result-name {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--pos-text);
+    }
+    .customer-panel__result-meta {
+      font-size: 0.64rem;
+      color: var(--pos-muted);
+      font-family: var(--pos-mono);
+    }
+    .customer-panel__msg {
+      margin: 0.35rem 0 0;
+      font-size: 0.66rem;
+      color: var(--pos-muted);
+    }
+    .customer-panel__msg--warn {
+      color: var(--pos-warn);
     }
     .btn-xs {
       border-radius: 6px;
@@ -841,43 +1049,6 @@ type ModalState =
       padding: 0.3rem 0.45rem;
       cursor: pointer;
       flex-shrink: 0;
-    }
-    .btn-xs--pri {
-      border-color: var(--pos-border-strong);
-      background: var(--pos-text);
-      color: var(--pos-surface);
-    }
-    .customer-compact__chip {
-      margin-top: 0.35rem;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.3rem 0.5rem;
-      font-size: 0.72rem;
-    }
-    .customer-compact__name {
-      font-weight: 700;
-      color: var(--pos-text);
-    }
-    .customer-compact__doc {
-      font-family: var(--pos-mono);
-      font-size: 0.65rem;
-      color: var(--pos-muted);
-    }
-    .customer-compact__hint {
-      margin: 0.28rem 0 0;
-      font-size: 0.65rem;
-      color: var(--pos-faint);
-    }
-    .customer-compact__chip .link-x {
-      border: none;
-      background: none;
-      color: var(--pos-accent-hover);
-      font-size: 0.72rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: underline;
-      padding: 0;
     }
     .venta__grid {
       flex: 1;
@@ -1183,18 +1354,26 @@ type ModalState =
       gap: 0.4rem;
     }
     .api-ok {
-      background: rgba(52, 211, 153, 0.12);
-      border: 1px solid rgba(52, 211, 153, 0.28);
-      color: #059669;
+      background: var(--pos-status-ok-bg);
+      border: 1px solid var(--pos-status-ok-border);
+      color: var(--pos-status-ok);
     }
-    html[data-theme='dark'] .api-ok {
-      color: #6ee7b7;
+    .api-ok--link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.35rem;
+      padding: 0.3rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
     }
     .api-ok__dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #10b981;
+      background: var(--pos-status-ok);
     }
     .api-err {
       background: rgba(251, 113, 133, 0.1);
@@ -1840,8 +2019,8 @@ type ModalState =
       cursor: not-allowed;
     }
     .payment-method-chip--ready {
-      border-color: rgba(4, 120, 87, 0.24);
-      color: #047857;
+      border-color: var(--pos-status-ok-border);
+      color: var(--pos-status-ok);
     }
     .pay-status {
       display: grid;
@@ -1939,7 +2118,7 @@ type ModalState =
       letter-spacing: 0.05em;
     }
     .card-pay__state--ok {
-      color: #047857 !important;
+      color: var(--pos-status-ok) !important;
       border-color: rgba(4, 120, 87, 0.26) !important;
       background: rgba(16, 185, 129, 0.12) !important;
     }
@@ -2230,47 +2409,25 @@ export class PosVentaPage {
   private audioCtx?: AudioContext;
   readonly desk = inject(PosDeskSessionService);
   readonly auth = inject(PosAuthService);
+  readonly runtimeConfig = inject(PosConfigService);
   readonly prefs = inject(PosLayoutPreferencesService);
   readonly offline = inject(PosOfflineSyncService);
+
+  readonly invoicingEnabled = signal(false);
 
   /** URL de pos-app configurada en environment (no null). */
   posApiConfigured(): boolean {
     return this.auth.apiBaseUrl.trim().length > 0;
   }
 
-  readonly categories = ['Todos', 'Retail', 'Servicios', 'Combo'] as const;
-  readonly activeCat = signal<(typeof this.categories)[number]>('Todos');
+  readonly catalog = signal<DemoProduct[]>([]);
+  readonly catalogLoading = signal(false);
+  readonly activeCat = signal<string>('Todos');
 
-  readonly catalog: DemoProduct[] = [
-    { id: '1', name: 'Café americano', sku: 'SKU-001', barcode: '7501001000001', price: 1.5, tag: 'Retail' },
-    { id: '2', name: 'Sandwich mixto', sku: 'SKU-014', barcode: '7501001000014', price: 3.25, tag: 'Combo' },
-    { id: '3', name: 'Agua 600ml', sku: 'SKU-220', barcode: '7501001000220', price: 0.75, tag: 'Retail' },
-    { id: '4', name: 'Servicio empaque', sku: 'SRV-03', barcode: '7502002000003', price: 0.35, tag: 'Servicios' },
-    { id: '5', name: 'Brownie', sku: 'SKU-088', barcode: '7501001000088', price: 2.0, tag: 'Retail' },
-    { id: '6', name: 'Menú ejecutivo', sku: 'CMB-01', barcode: '7503003000001', price: 6.5, tag: 'Combo' },
-    { id: '7', name: 'Jugo natural', sku: 'SKU-030', barcode: '7501001000030', price: 2.2, tag: 'Retail' },
-    { id: '8', name: 'Galletas x3', sku: 'SKU-041', barcode: '7501001000041', price: 1.1, tag: 'Retail' },
-    { id: '9', name: 'Delivery express', sku: 'SRV-09', barcode: '7502002000009', price: 1.5, tag: 'Servicios' },
-    { id: '10', name: 'Combo desayuno', sku: 'CMB-02', barcode: '7503003000002', price: 4.25, tag: 'Combo' },
-    { id: '11', name: 'Helado vainilla', sku: 'SKU-112', barcode: '7501001000112', price: 2.5, tag: 'Retail' },
-    { id: '12', name: 'Té verde', sku: 'SKU-005', barcode: '7501001000005', price: 1.35, tag: 'Retail' },
-    { id: '13', name: 'Soporte POS', sku: 'SRV-22', barcode: '7502002000022', price: 5.0, tag: 'Servicios' },
-    { id: '14', name: 'Combo almuerzo', sku: 'CMB-04', barcode: '7503003000004', price: 7.9, tag: 'Combo' },
-    { id: '15', name: 'Nachos', sku: 'SKU-077', barcode: '7501001000077', price: 2.8, tag: 'Retail' },
-    { id: '16', name: 'Recargo tarjeta', sku: 'SRV-31', barcode: '7502002000031', price: 0.25, tag: 'Servicios' },
-    ...Array.from({ length: 20 }, (_, i): DemoProduct => {
-      const id = 17 + i;
-      const tags = ['Retail', 'Servicios', 'Combo'];
-      return {
-        id: String(id),
-        name: `Ítem catálogo ${id}`,
-        sku: `EXT-${400 + i}`,
-        barcode: `78004567${String(1000 + id).slice(-4)}`,
-        price: Number((0.55 + (i % 9) * 0.3).toFixed(2)),
-        tag: tags[i % 3]!,
-      };
-    }),
-  ];
+  readonly categories = computed(() => {
+    const tags = new Set(this.catalog().map((p) => p.tag));
+    return ['Todos', ...Array.from(tags).sort()];
+  });
 
   readonly catalogPageSize = 8;
   readonly catalogQuery = signal('');
@@ -2279,13 +2436,20 @@ export class PosVentaPage {
   private readonly catalogSearchRef = viewChild<ElementRef<HTMLInputElement>>('catalogSearch');
 
   private tabSeq = 1;
-  readonly tabs = signal<SaleTab[]>([{ id: 't-1', label: 'Venta 1', cart: [], customer: null }]);
+  readonly saleCustomerTipoLabel = saleCustomerTipoLabel;
+  readonly tabs = signal<SaleTab[]>([{ id: 't-1', label: 'Venta 1', cart: [], customer: SALE_CONSUMIDOR_FINAL }]);
   readonly activeTabId = signal('t-1');
   readonly custQuery = signal('');
+  readonly custResults = signal<PosCustomerResponse[]>([]);
+  readonly custResultsOpen = signal(false);
+  readonly custSearchLoading = signal(false);
+  readonly custSearchMsg = signal<string | null>(null);
+  private custSearchTimer: ReturnType<typeof setTimeout> | null = null;
   readonly modal = signal<ModalState | null>(null);
   readonly newCustName = signal('');
   readonly newCustDoc = signal('');
   readonly newCustEmail = signal('');
+  readonly newCustConsultLoading = signal(false);
   readonly calcBuffer = signal('0');
   readonly calcKeys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫'] as const;
   readonly tenderDenominations = [1, 5, 10, 20, 50, 100] as const;
@@ -2320,6 +2484,7 @@ export class PosVentaPage {
   readonly checkoutError = signal<string | null>(null);
   readonly checkoutLoading = signal(false);
   readonly saleActionMessage = signal<string | null>(null);
+  readonly lastTicketId = signal<string | null>(null);
 
   readonly ping = signal<{ status: string; companyId: string } | null>(null);
   readonly error = signal<string | null>(null);
@@ -2336,7 +2501,8 @@ export class PosVentaPage {
   readonly filteredCatalog = computed(() => {
     const c = this.activeCat();
     const q = this.catalogQuery().trim().toLowerCase();
-    const base = c === 'Todos' ? this.catalog : this.catalog.filter((p) => p.tag === c);
+    const items = this.catalog();
+    const base = c === 'Todos' ? items : items.filter((p) => p.tag === c);
     if (!q) {
       return base;
     }
@@ -2495,6 +2661,56 @@ export class PosVentaPage {
       next: (r) => this.ping.set(r),
       error: (err: unknown) => this.error.set(this.connectionErrMessage(err)),
     });
+    this.loadCatalog();
+    void this.runtimeConfig.ensureLoaded().then((cfg) => this.invoicingEnabled.set(cfg.invoicingEnabled));
+  }
+
+  openLastTicket(): void {
+    const id = this.lastTicketId();
+    const token = this.auth.accessToken();
+    const base = this.auth.apiBaseUrl.replace(/\/+$/, '');
+    if (!id || !token || !base) {
+      return;
+    }
+    fetch(`${base}/api/v1/pos/comprobantes/${encodeURIComponent(id)}/ticket`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.text() : Promise.reject(new Error('No se pudo cargar el ticket'))))
+      .then((html) => {
+        const w = window.open('', '_blank', 'noopener,noreferrer');
+        if (w) {
+          w.document.write(html);
+          w.document.close();
+          w.focus();
+          w.print();
+        }
+      })
+      .catch(() => this.saleActionMessage.set('No se pudo abrir el ticket para impresión.'));
+  }
+
+  private loadCatalog(): void {
+    if (!this.posApiConfigured()) {
+      return;
+    }
+    this.catalogLoading.set(true);
+    this.backend.getProducts().subscribe({
+      next: (rows) => {
+        this.catalog.set(
+          rows.map((p) => ({
+            id: p.id,
+            name: p.name,
+            sku: p.sku,
+            barcode: p.barcode ?? undefined,
+            price: Number(p.price),
+            tag: p.tag || 'Retail',
+          })),
+        );
+        this.catalogLoading.set(false);
+      },
+      error: () => {
+        this.catalogLoading.set(false);
+      },
+    });
   }
 
   stockRows(p: DemoProduct): { warehouse: string; qty: number }[] {
@@ -2509,6 +2725,17 @@ export class PosVentaPage {
   onCustQuery(ev: Event): void {
     const v = (ev.target as HTMLInputElement).value;
     this.custQuery.set(v);
+    if (this.custSearchTimer) {
+      clearTimeout(this.custSearchTimer);
+    }
+    const trimmed = v.trim();
+    if (trimmed.length < 2) {
+      this.custResults.set([]);
+      this.custResultsOpen.set(false);
+      this.custSearchMsg.set(null);
+      return;
+    }
+    this.custSearchTimer = setTimeout(() => this.runCustomerSearch(trimmed), 300);
   }
 
   private focusCatalogSearch(): void {
@@ -3008,6 +3235,15 @@ export class PosVentaPage {
       .pipe(finalize(() => this.checkoutLoading.set(false)))
       .subscribe({
         next: (response) => {
+          if (response.estadoSri?.trim()) {
+            this.saleActionMessage.set(`Estado SRI: ${response.estadoSri}`);
+          } else if (response.invoiceStatus === 'SKIPPED') {
+            this.saleActionMessage.set('Venta registrada (ticket local).');
+          }
+          const cid = response.comprobanteLocalId?.trim();
+          if (cid) {
+            this.lastTicketId.set(cid);
+          }
           this.desk.refreshAfterRemoteSale();
           if (response.paymentCollectionId) {
             this.loadPaymentCollection(response.paymentCollectionId);
@@ -3068,11 +3304,11 @@ export class PosVentaPage {
   }
 
   private buildCheckoutBody(puntoEmisionId: string): PosCheckoutRequestBody {
-    const cust = this.activeCustomer();
-    const docDigits = (cust?.doc ?? '').replace(/\D/g, '');
-    const identificacion = docDigits.length >= 10 ? docDigits.slice(0, 13) : '9999999999999';
-    const tipoIdentificacion = this.inferTipoIdentificacion(identificacion);
-    const razonSocial = (cust?.name ?? '').trim() || 'CONSUMIDOR FINAL';
+    const cust = this.activeCustomer() ?? SALE_CONSUMIDOR_FINAL;
+    const docDigits = cust.doc.replace(/\D/g, '');
+    const identificacion = docDigits.length >= 10 ? docDigits.slice(0, 13) : SALE_CONSUMIDOR_FINAL.doc;
+    const tipoIdentificacion = cust.tipoIdentificacion || this.inferTipoIdentificacion(identificacion);
+    const razonSocial = cust.name.trim() || SALE_CONSUMIDOR_FINAL.name;
     const emailRaw = (cust?.email ?? '').trim();
     const pagos = this.buildFiscalPayments(this.total());
     return {
@@ -3270,6 +3506,7 @@ export class PosVentaPage {
   selectTab(id: string): void {
     if (this.tabs().some((t) => t.id === id)) {
       this.activeTabId.set(id);
+      this.resetCustomerSearchUi();
       this.focusCatalogSearch();
     }
   }
@@ -3281,9 +3518,9 @@ export class PosVentaPage {
     this.tabSeq += 1;
     const id = `t-${this.tabSeq}`;
     const n = this.tabs().length + 1;
-    this.patchTabs((ts) => [...ts, { id, label: `Venta ${n}`, cart: [], customer: null }]);
+    this.patchTabs((ts) => [...ts, { id, label: `Venta ${n}`, cart: [], customer: SALE_CONSUMIDOR_FINAL }]);
     this.activeTabId.set(id);
-    this.custQuery.set('');
+    this.resetCustomerSearchUi();
     this.focusCatalogSearch();
   }
 
@@ -3298,7 +3535,7 @@ export class PosVentaPage {
     if (this.activeTabId() === id) {
       this.activeTabId.set(next[0]?.id ?? 't-1');
     }
-    this.custQuery.set('');
+    this.resetCustomerSearchUi();
   }
 
   closeTabKb(ev: Event, id: string): void {
@@ -3318,31 +3555,128 @@ export class PosVentaPage {
     this.newCustEmail.set((ev.target as HTMLInputElement).value);
   }
 
+  consultarNewCustDoc(): void {
+    const doc = this.newCustDoc().trim();
+    if (/^\d{13}$/.test(doc)) {
+      this.newCustConsultLoading.set(true);
+      this.backend.consultarRuc(doc).subscribe({
+        next: (res) => {
+          this.newCustConsultLoading.set(false);
+          if (!res.encontrado || !res.razonSocial?.trim()) {
+            this.checkoutError.set('RUC no encontrado en el SRI.');
+            return;
+          }
+          this.newCustName.set(res.razonSocial.trim());
+          this.checkoutError.set(null);
+        },
+        error: () => {
+          this.newCustConsultLoading.set(false);
+          this.checkoutError.set('No se pudo consultar el RUC.');
+        },
+      });
+      return;
+    }
+    if (/^\d{10}$/.test(doc)) {
+      this.newCustConsultLoading.set(true);
+      this.backend.consultarCedula(doc).subscribe({
+        next: (res) => {
+          this.newCustConsultLoading.set(false);
+          if (!res.encontrado || !res.nombres?.trim()) {
+            this.checkoutError.set('Cédula no encontrada.');
+            return;
+          }
+          this.newCustName.set(res.nombres.trim());
+          this.checkoutError.set(null);
+        },
+        error: () => {
+          this.newCustConsultLoading.set(false);
+          this.checkoutError.set('No se pudo consultar la cédula.');
+        },
+      });
+      return;
+    }
+    this.checkoutError.set('Ingrese un RUC de 13 dígitos o una cédula de 10 dígitos.');
+  }
+
   searchCustomer(): void {
     const raw = this.custQuery().trim();
     if (!raw) {
+      this.applyConsumidorFinal();
       return;
     }
     const q = raw.toLowerCase();
     if (q.includes('consum') || q === 'cf' || q === '999') {
-      this.patchActiveTab((t) => ({
-        ...t,
-        customer: { name: 'Consumidor final', doc: '9999999999999', email: null },
-      }));
-      this.custQuery.set('');
-      this.focusCatalogSearch();
+      this.applyConsumidorFinal();
       return;
     }
-    this.patchActiveTab((t) => ({
-      ...t,
-      customer: { name: raw, doc: '—', email: null },
-    }));
-    this.custQuery.set('');
+    this.runCustomerSearch(raw);
+  }
+
+  selectCustomer(row: PosCustomerResponse): void {
+    this.applyCustomer(customerResponseToSale(row));
+  }
+
+  applyConsumidorFinal(): void {
+    this.applyCustomer(SALE_CONSUMIDOR_FINAL);
+  }
+
+  private runCustomerSearch(raw: string): void {
+    const q = raw.trim();
+    if (!q) {
+      return;
+    }
+    if (!this.posApiConfigured()) {
+      this.custResults.set([]);
+      this.custResultsOpen.set(false);
+      this.custSearchMsg.set('Configure la API del POS para buscar en el maestro de clientes.');
+      return;
+    }
+    this.custSearchLoading.set(true);
+    this.custSearchMsg.set(null);
+    this.backend.getCustomers(q).subscribe({
+      next: (rows) => {
+        this.custSearchLoading.set(false);
+        const digits = q.replace(/\D/g, '');
+        const exact =
+          rows.find((c) => c.identificacion === q) ??
+          (digits ? rows.find((c) => c.identificacion === digits) : undefined) ??
+          (rows.length === 1 ? rows[0] : null);
+        if (exact) {
+          this.applyCustomer(customerResponseToSale(exact));
+          return;
+        }
+        this.custResults.set(rows);
+        this.custResultsOpen.set(rows.length > 0);
+        this.custSearchMsg.set(
+          rows.length > 1
+            ? 'Seleccione un cliente de la lista.'
+            : rows.length === 0
+              ? 'Sin coincidencias. Use Consumidor final o cree un cliente nuevo.'
+              : null,
+        );
+      },
+      error: () => {
+        this.custSearchLoading.set(false);
+        this.custResults.set([]);
+        this.custResultsOpen.set(false);
+        this.custSearchMsg.set('No se pudo consultar clientes. Verifique la conexión con pos-app.');
+      },
+    });
+  }
+
+  private applyCustomer(customer: SaleCustomer): void {
+    this.patchActiveTab((t) => ({ ...t, customer }));
+    this.resetCustomerSearchUi();
+    this.saleActionMessage.set(null);
     this.focusCatalogSearch();
   }
 
-  clearCustomer(): void {
-    this.patchActiveTab((t) => ({ ...t, customer: null }));
+  private resetCustomerSearchUi(): void {
+    this.custQuery.set('');
+    this.custResults.set([]);
+    this.custResultsOpen.set(false);
+    this.custSearchMsg.set(null);
+    this.custSearchLoading.set(false);
   }
 
   openNewCustomer(): void {
@@ -3350,6 +3684,7 @@ export class PosVentaPage {
     this.newCustName.set('');
     this.newCustDoc.set('');
     this.newCustEmail.set('');
+    this.newCustConsultLoading.set(false);
     this.modal.set({ kind: 'newCustomer' });
   }
 
@@ -3361,12 +3696,38 @@ export class PosVentaPage {
       return;
     }
     const em = this.newCustEmail().trim();
-    this.patchActiveTab((t) => ({
-      ...t,
-      customer: { name, doc, email: em ? em : null },
-    }));
-    this.checkoutError.set(null);
-    this.closeModal();
+    const assign = () => {
+      this.patchActiveTab((t) => ({
+        ...t,
+        customer: {
+          name,
+          doc,
+          email: em ? em : null,
+          tipoIdentificacion: this.inferTipoIdentificacion(doc),
+        },
+      }));
+      this.checkoutError.set(null);
+      this.closeModal();
+    };
+    if (!this.posApiConfigured()) {
+      assign();
+      return;
+    }
+    this.backend
+      .postCustomer({
+        tipoIdentificacion: this.inferTipoIdentificacion(doc),
+        identificacion: doc,
+        razonSocial: name,
+        email: em || null,
+        phone: null,
+      })
+      .subscribe({
+        next: () => assign(),
+        error: () => {
+          this.checkoutError.set('No se pudo guardar en el maestro; se usará solo en esta venta.');
+          assign();
+        },
+      });
   }
 
   openModal(kind: 'stock' | 'promo', product: DemoProduct): void {

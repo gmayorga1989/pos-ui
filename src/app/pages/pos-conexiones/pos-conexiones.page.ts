@@ -171,7 +171,7 @@ import { environment } from '../../../environments/environment';
     }
     .pill--on {
       border: 1px solid rgba(52, 211, 153, 0.35);
-      color: #6ee7b7;
+      color: var(--pos-status-ok);
     }
     .pill--off {
       border: 1px solid var(--pos-border);

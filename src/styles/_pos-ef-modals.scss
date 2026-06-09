@@ -1,0 +1,156 @@
+/* Modales POS — mismo patrón visual que efactura-ui (ts-form-modal) */
+
+.ts-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  background: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(3px);
+}
+
+.ts-form-modal {
+  position: fixed;
+  z-index: 1100;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  width: min(520px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  background: var(--pos-maestro-card, var(--pos-elevated));
+  color: var(--pos-text);
+  border: 1px solid var(--pos-maestro-border, var(--pos-border));
+  border-radius: 16px;
+  box-shadow: var(--pos-maestro-shadow, var(--pos-panel-shadow));
+  overflow: hidden;
+}
+
+.ts-form-modal--wide {
+  width: min(760px, calc(100vw - 2rem));
+}
+
+.ts-form-modal--compact {
+  width: min(440px, calc(100vw - 2rem));
+}
+
+.ts-form-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--pos-maestro-divider, var(--pos-border));
+  background: var(--pos-maestro-header-bg, var(--pos-surface-2));
+}
+
+.ts-form-modal__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  color: var(--lux-primary-strong);
+  background: var(--pos-maestro-icon-bg, var(--pos-surface-2));
+  border: 1px solid var(--pos-maestro-icon-border, var(--pos-border-strong));
+  border-radius: 12px;
+}
+
+.ts-form-modal__head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ts-form-modal__eyebrow {
+  margin: 0 0 0.12rem;
+  color: var(--pos-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ts-form-modal__header h3 {
+  margin: 0;
+  color: var(--pos-text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.ts-form-modal__subtitle {
+  margin: 0.2rem 0 0;
+  color: var(--pos-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.ts-form-modal__close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--pos-maestro-border, var(--pos-border-strong));
+  border-radius: 10px;
+  color: var(--pos-muted);
+  background: var(--pos-maestro-card, var(--pos-elevated));
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.ts-form-modal__close:hover {
+  background: color-mix(in srgb, var(--lux-indigo) 10%, var(--pos-maestro-card, var(--pos-elevated)));
+  border-color: color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-maestro-border, var(--pos-border)));
+  color: var(--pos-text);
+}
+
+.ts-form-modal__body {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem 1.1rem 0.25rem;
+  overflow-y: auto;
+}
+
+.ts-form-modal__footer {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.85rem 1.1rem 1.05rem;
+  border-top: 1px solid var(--pos-maestro-divider, var(--pos-border));
+  background: color-mix(in srgb, var(--pos-bg) 12%, var(--pos-maestro-card, var(--pos-elevated)));
+}
+
+.ts-confirm-modal {
+  position: fixed;
+  z-index: 1100;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 2rem));
+  padding: 1.1rem 1.15rem;
+  background: var(--pos-maestro-card, var(--pos-elevated));
+  border: 1px solid var(--pos-maestro-border, var(--pos-border));
+  border-radius: 14px;
+  box-shadow: var(--pos-maestro-shadow, var(--pos-panel-shadow));
+}
+
+.ts-confirm-modal h3 {
+  margin: 0 0 0.45rem;
+  font-size: 1rem;
+}
+
+.ts-confirm-modal p {
+  margin: 0 0 1rem;
+  color: var(--pos-muted);
+  font-size: 0.86rem;
+}
+
+.ts-confirm-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

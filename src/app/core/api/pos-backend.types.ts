@@ -349,3 +349,106 @@ export interface PayPhoneSaleStatusResponse {
   message?: string | null;
   [key: string]: unknown;
 }
+
+export interface PosProductResponse {
+  id: string;
+  sku: string;
+  barcode?: string | null;
+  name: string;
+  description?: string | null;
+  price: number;
+  ivaPercent: number;
+  ivaTaxCode: string;
+  tag: string;
+  stockQty?: number | null;
+  efacturaProductId?: string | null;
+  active: boolean;
+}
+
+export interface PosProductRequest {
+  sku: string;
+  barcode?: string | null;
+  name: string;
+  description?: string | null;
+  price: number;
+  ivaPercent?: number | null;
+  ivaTaxCode?: string | null;
+  tag?: string | null;
+  stockQty?: number | null;
+  active?: boolean | null;
+}
+
+export interface PosCustomerResponse {
+  id: string;
+  tipoIdentificacion: string;
+  identificacion: string;
+  razonSocial: string;
+  nombreComercial?: string | null;
+  direccion?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  active: boolean;
+}
+
+export interface PosCustomerRequest {
+  tipoIdentificacion: string;
+  identificacion: string;
+  razonSocial: string;
+  nombreComercial?: string | null;
+  direccion?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  active?: boolean | null;
+}
+
+export interface PosCedulaConsultaResponse {
+  identificacion: string;
+  encontrado: boolean;
+  nombres?: string | null;
+  lugarNacimiento?: string | null;
+  fechaNacimiento?: string | null;
+  fuente?: string | null;
+  obsoleto?: boolean;
+  datos?: Record<string, unknown> | null;
+}
+
+export interface PosRucConsultaResponse {
+  numeroRuc: string;
+  encontrado: boolean;
+  razonSocial?: string | null;
+  nombreComercial?: string | null;
+  tipoContribuyente?: string | null;
+  estadoContribuyenteRuc?: string | null;
+  obligadoLlevarContabilidad?: string | null;
+  contribuyenteEspecial?: string | null;
+  regimen?: string | null;
+  actividadEconomicaPrincipal?: string | null;
+  fuente?: string | null;
+  obsoleto?: boolean;
+  contribuyente?: Record<string, unknown> | null;
+}
+
+export interface PosInvoicingConfigResponse {
+  customBaseUrl?: string | null;
+  customAuthType?: string | null;
+  hasApiKey: boolean;
+  customFieldMappingJson?: string | null;
+  hasWebhookSecret: boolean;
+}
+
+export interface PosInvoicingConfigRequest {
+  customBaseUrl?: string | null;
+  customAuthType?: string | null;
+  customApiKey?: string | null;
+  customFieldMappingJson?: string | null;
+  webhookSecret?: string | null;
+}
+
+export interface PosSalesReportResponse {
+  from: string;
+  to: string;
+  saleCount: number;
+  totalAmount: number;
+  dailyTotals: { date: string; saleCount: number; totalAmount: number }[];
+  topProducts: { sku: string; name: string; quantity: number; amount: number }[];
+}

@@ -13,6 +13,8 @@ import type {
   StripeTenantConfigResponse,
 } from '../../core/api/pos-backend.types';
 import { PosAuthService } from '../../core/auth/pos-auth.service';
+import { PosConfigService } from '../../core/config/pos-config.service';
+import type { PosInvoicingConfigRequest } from '../../core/api/pos-backend.types';
 import { decodeJwtPayload } from '../../core/layout/pos-jwt-hint.util';
 import {
   PosLayoutPreferencesService,
@@ -139,6 +141,39 @@ declare global {
                 Estos controles están en modo lectura para tu perfil. Requieren rol <strong>ADMIN</strong>,
                 <strong>SUITE_ADMIN</strong> o <strong>POS_ADMIN</strong>.
               </div>
+            }
+
+            @if (invoicingProvider() === 'CUSTOM') {
+              <div class="card-grid" style="margin-bottom: 1rem">
+                <label class="field">
+                  <span>URL emisión terceros</span>
+                  <input class="input pos-focus-ring" [ngModel]="invoicingCustomUrl()" (ngModelChange)="invoicingCustomUrl.set($event)" />
+                </label>
+                <label class="field">
+                  <span>Auth</span>
+                  <select class="input pos-focus-ring" [ngModel]="invoicingCustomAuth()" (ngModelChange)="invoicingCustomAuth.set($event)">
+                    <option value="API_KEY">API Key</option>
+                    <option value="BEARER">Bearer</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>API Key / Token</span>
+                  <input class="input pos-focus-ring" type="password" [ngModel]="invoicingCustomApiKey()" (ngModelChange)="invoicingCustomApiKey.set($event)" />
+                </label>
+                <div class="field">
+                  <span>&nbsp;</span>
+                  <button type="button" class="btn-primary pos-focus-ring" (click)="saveInvoicingConfig()">Guardar integración</button>
+                </div>
+              </div>
+              @if (invoicingStatus()) {
+                <p class="hint">{{ invoicingStatus() }}</p>
+              }
+            }
+
+            @if (invoicingProvider() !== 'NONE') {
+              <p class="hint">Pendientes fiscales offline: {{ invoicingPending() }}
+                <button type="button" class="linkish" (click)="retryInvoicingPending()">Reintentar ahora</button>
+              </p>
             }
 
             <div class="card-grid">
@@ -1317,7 +1352,7 @@ declare global {
     }
     .integration-card__state--ok {
       background: rgba(16, 185, 129, 0.12) !important;
-      color: #047857 !important;
+      color: var(--pos-status-ok) !important;
     }
     .integration-card__state--bad {
       background: rgba(248, 113, 113, 0.14) !important;
@@ -1583,7 +1618,7 @@ declare global {
     .stripe-status--ok {
       border-color: rgba(16, 185, 129, 0.34);
       background: rgba(16, 185, 129, 0.1);
-      color: #047857;
+      color: var(--pos-status-ok);
     }
     .stripe-status--warn {
       border-color: rgba(217, 119, 6, 0.32);
@@ -1733,6 +1768,14 @@ export class PosAjustesPage implements OnInit {
   readonly prefs = inject(PosLayoutPreferencesService);
   private readonly api = inject(PosBackendApiService);
   readonly auth = inject(PosAuthService);
+  private readonly runtimeConfig = inject(PosConfigService);
+
+  readonly invoicingProvider = signal('NONE');
+  readonly invoicingPending = signal(0);
+  readonly invoicingCustomUrl = signal('');
+  readonly invoicingCustomAuth = signal('API_KEY');
+  readonly invoicingCustomApiKey = signal('');
+  readonly invoicingStatus = signal('');
 
   readonly activeTab = signal<SettingsTab>('business');
   readonly selectedPaymentIntegration = signal<PaymentIntegrationId>('terminal');
@@ -1946,19 +1989,59 @@ export class PosAjustesPage implements OnInit {
     },
   ];
 
+  saveInvoicingConfig(): void {
+    const body: PosInvoicingConfigRequest = {
+      customBaseUrl: this.invoicingCustomUrl().trim() || null,
+      customAuthType: this.invoicingCustomAuth(),
+      customApiKey: this.invoicingCustomApiKey().trim() || null,
+    };
+    this.api.putInvoicingConfig(body).subscribe({
+      next: () => this.invoicingStatus.set('Integración guardada'),
+      error: () => this.invoicingStatus.set('No se pudo guardar la integración'),
+    });
+  }
+
+  retryInvoicingPending(): void {
+    this.api.retryInvoicingPending().subscribe({
+      next: (r) => {
+        this.invoicingPending.set(r.pendingExternal ?? 0);
+        this.invoicingStatus.set('Reintento de emisión solicitado');
+      },
+      error: () => this.invoicingStatus.set('No se pudo reintentar la emisión'),
+    });
+  }
+
   ngOnInit(): void {
     if (!this.auth.apiBaseUrl.trim()) {
       return;
     }
-    this.api.getPuntosEmision().subscribe({
-      next: (list) => {
-        this.puntos.set(list ?? []);
-        this.puntosError.set(null);
-      },
-      error: () => {
-        this.puntos.set([]);
-        this.puntosError.set('No se pudieron cargar los puntos de eFactura. Puede operar con sucursal/emision local.');
-      },
+    void this.runtimeConfig.ensureLoaded().then((cfg) => {
+      this.invoicingProvider.set(cfg.invoicingProvider);
+      if (cfg.invoicingEnabled) {
+        this.api.getInvoicingPending().subscribe({
+          next: (r) => this.invoicingPending.set(r.pendingExternal ?? 0),
+        });
+        if (cfg.invoicingProvider === 'CUSTOM') {
+          this.api.getInvoicingConfig().subscribe({
+            next: (c) => {
+              this.invoicingCustomUrl.set(c.customBaseUrl ?? '');
+              this.invoicingCustomAuth.set(c.customAuthType ?? 'API_KEY');
+            },
+          });
+        }
+      }
+      if (cfg.invoicingEnabled) {
+        this.api.getPuntosEmision().subscribe({
+          next: (list) => {
+            this.puntos.set(list ?? []);
+            this.puntosError.set(null);
+          },
+          error: () => {
+            this.puntos.set([]);
+            this.puntosError.set('No se pudieron cargar los puntos de eFactura. Puede operar con sucursal/emision local.');
+          },
+        });
+      }
     });
     this.loadStripeConfig();
     this.loadKushkiConfig();

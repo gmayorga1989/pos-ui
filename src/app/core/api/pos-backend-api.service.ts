@@ -23,6 +23,15 @@ import type {
   PayPhoneSaleStatusResponse,
   PayPhoneTenantConfigRequest,
   PayPhoneTenantConfigResponse,
+  PosCedulaConsultaResponse,
+  PosCustomerRequest,
+  PosCustomerResponse,
+  PosRucConsultaResponse,
+  PosInvoicingConfigRequest,
+  PosInvoicingConfigResponse,
+  PosProductRequest,
+  PosProductResponse,
+  PosSalesReportResponse,
   StripeSubscriptionCheckoutRequest,
   StripeSubscriptionCheckoutResponse,
   StripeTenantConfigRequest,
@@ -222,5 +231,136 @@ export class PosBackendApiService {
     return this.http.get<PayPhoneSaleStatusResponse>(
       `${root}/payments/payphone/sales/client/${encodeURIComponent(clientTransactionId)}/status`,
     );
+  }
+
+  getProducts(): Observable<PosProductResponse[]> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PosProductResponse[]>(`${root}/products`);
+  }
+
+  postProduct(body: PosProductRequest): Observable<PosProductResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<PosProductResponse>(`${root}/products`, body);
+  }
+
+  putProduct(id: string, body: PosProductRequest): Observable<PosProductResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.put<PosProductResponse>(`${root}/products/${encodeURIComponent(id)}`, body);
+  }
+
+  deleteProduct(id: string): Observable<void> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.delete<void>(`${root}/products/${encodeURIComponent(id)}`);
+  }
+
+  getCustomers(q?: string): Observable<PosCustomerResponse[]> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    const params = q?.trim() ? `?q=${encodeURIComponent(q.trim())}` : '';
+    return this.http.get<PosCustomerResponse[]>(`${root}/customers${params}`);
+  }
+
+  postCustomer(body: PosCustomerRequest): Observable<PosCustomerResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<PosCustomerResponse>(`${root}/customers`, body);
+  }
+
+  putCustomer(id: string, body: PosCustomerRequest): Observable<PosCustomerResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.put<PosCustomerResponse>(`${root}/customers/${encodeURIComponent(id)}`, body);
+  }
+
+  consultarCedula(cedula: string): Observable<PosCedulaConsultaResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PosCedulaConsultaResponse>(
+      `${root}/catastro/cedula/${encodeURIComponent(cedula.trim())}`,
+    );
+  }
+
+  consultarRuc(ruc: string): Observable<PosRucConsultaResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PosRucConsultaResponse>(`${root}/catastro/ruc/${encodeURIComponent(ruc.trim())}`);
+  }
+
+  syncEfacturaCatalog(): Observable<{ itemsSynced: number; source: string }> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<{ itemsSynced: number; source: string }>(`${root}/catalog/sync-efactura`, {});
+  }
+
+  getInvoicingConfig(): Observable<PosInvoicingConfigResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PosInvoicingConfigResponse>(`${root}/invoicing/config`);
+  }
+
+  putInvoicingConfig(body: PosInvoicingConfigRequest): Observable<PosInvoicingConfigResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.put<PosInvoicingConfigResponse>(`${root}/invoicing/config`, body);
+  }
+
+  getInvoicingPending(): Observable<{ pendingExternal: number }> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<{ pendingExternal: number }>(`${root}/invoicing/pending`);
+  }
+
+  retryInvoicingPending(): Observable<{ pendingExternal: number }> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<{ pendingExternal: number }>(`${root}/invoicing/retry-pending`, {});
+  }
+
+  getSalesReport(from?: string, to?: string): Observable<PosSalesReportResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    const q = new URLSearchParams();
+    if (from) {
+      q.set('from', from);
+    }
+    if (to) {
+      q.set('to', to);
+    }
+    const suffix = q.toString() ? `?${q}` : '';
+    return this.http.get<PosSalesReportResponse>(`${root}/reports/sales${suffix}`);
   }
 }

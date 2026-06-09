@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
+import { PosConfigService } from '../../core/config/pos-config.service';
 import { PosOfflineSyncService, type PosOfflineComprobanteRecord, type PosOfflineQueueStatus } from '../../core/offline/pos-offline-sync.service';
 
 type SyncFilter = 'all' | 'pending' | 'error' | 'synced';
@@ -41,6 +43,12 @@ type SyncFilter = 'all' | 'pending' | 'error' | 'synced';
           <span>Sincronizados</span>
           <strong>{{ syncedCount() }}</strong>
         </div>
+        @if (fiscalPending() > 0) {
+          <div class="metric">
+            <span>Pend. fiscal</span>
+            <strong>{{ fiscalPending() }}</strong>
+          </div>
+        }
       </div>
 
       @if (offline.lastMessage()) {
@@ -177,7 +185,7 @@ type SyncFilter = 'all' | 'pending' | 'error' | 'synced';
       font-size: 1rem;
     }
     .metric__online {
-      color: #047857;
+      color: var(--pos-status-ok);
     }
     .metric__offline {
       color: #b91c1c;
@@ -248,7 +256,7 @@ type SyncFilter = 'all' | 'pending' | 'error' | 'synced';
     }
     .status--synced {
       background: rgba(16, 185, 129, 0.14);
-      color: #047857;
+      color: var(--pos-status-ok);
     }
     .status--error {
       background: rgba(248, 113, 113, 0.14);
@@ -279,8 +287,11 @@ type SyncFilter = 'all' | 'pending' | 'error' | 'synced';
 })
 export class PosSincronizacionPage implements OnInit {
   readonly offline = inject(PosOfflineSyncService);
+  private readonly api = inject(PosBackendApiService);
+  private readonly config = inject(PosConfigService);
   readonly filter = signal<SyncFilter>('all');
   readonly online = signal(navigator.onLine);
+  readonly fiscalPending = signal(0);
 
   readonly pendingCount = computed(() => this.countBy('PENDING') + this.countBy('ERROR'));
   readonly errorCount = computed(() => this.countBy('ERROR'));
@@ -303,6 +314,13 @@ export class PosSincronizacionPage implements OnInit {
 
   ngOnInit(): void {
     void this.offline.loadRecords();
+    void this.config.ensureLoaded().then((cfg) => {
+      if (cfg.invoicingEnabled) {
+        this.api.getInvoicingPending().subscribe({
+          next: (r) => this.fiscalPending.set(r.pendingExternal ?? 0),
+        });
+      }
+    });
     window.addEventListener('online', this.updateOnline);
     window.addEventListener('offline', this.updateOnline);
   }

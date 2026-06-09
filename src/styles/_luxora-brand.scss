@@ -1,5 +1,6 @@
 /**
- * Paleta Luxora / Appluxora — POS.
+ * Paleta Luxora / Appluxora — usar en todas las UIs (efactura, suite, pos, cartera).
+ * Cyan #00E5FF · Indigo #6366F1 · Magenta #C026D3 · Ink #0F1117 · Surface #F5F7FA
  */
 :root {
   --lux-cyan: #00e5ff;
@@ -14,12 +15,18 @@
   --lux-primary: var(--lux-indigo);
   --lux-primary-rgb: 99, 102, 241;
   --lux-primary-strong: #4f46e5;
+  --lux-primary-deep: #4338ca;
+  --lux-primary-soft: color-mix(in srgb, var(--lux-indigo) 14%, #ffffff);
+  --lux-cyan-soft: color-mix(in srgb, var(--lux-cyan) 18%, #ffffff);
+  --lux-magenta-soft: color-mix(in srgb, var(--lux-magenta) 14%, #ffffff);
+
   --lux-glow-cyan: rgba(0, 229, 255, 0.35);
   --lux-glow-indigo: rgba(99, 102, 241, 0.45);
   --lux-glow-magenta: rgba(192, 38, 211, 0.28);
 
-  --lux-primary-soft: color-mix(in srgb, var(--lux-indigo) 14%, #ffffff);
-  --lux-cyan-soft: color-mix(in srgb, var(--lux-cyan) 18%, #ffffff);
+  --bs-primary: var(--lux-primary);
+  --bs-primary-rgb: var(--lux-primary-rgb);
 }
 
+@import 'luxora-theme';
 @import 'luxora-shell';

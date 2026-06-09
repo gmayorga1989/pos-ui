@@ -3,3 +3,4 @@
 /.angular
 /.idea
 *.log
+*-dist.tar.gz

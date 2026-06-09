@@ -1,11 +1,15 @@
 import { Routes } from '@angular/router';
 import { posAuthGuard } from './core/auth/pos-auth.guard';
+import { AuthCallbackPage } from './pages/auth-callback/auth-callback.page';
 
 export const routes: Routes = [
   {
+    path: 'login',
+    loadComponent: () => import('./pages/pos-login/pos-login.page').then((m) => m.PosLoginPage),
+  },
+  {
     path: 'auth/callback',
-    loadComponent: () =>
-      import('./pages/auth-callback/auth-callback.page').then((m) => m.AuthCallbackPage),
+    component: AuthCallbackPage,
   },
   {
     path: '',
@@ -20,6 +24,14 @@ export const routes: Routes = [
       {
         path: 'catalogo',
         loadComponent: () => import('./pages/pos-catalogo/pos-catalogo.page').then((m) => m.PosCatalogoPage),
+      },
+      {
+        path: 'clientes',
+        loadComponent: () => import('./pages/pos-clientes/pos-clientes.page').then((m) => m.PosClientesPage),
+      },
+      {
+        path: 'reportes',
+        loadComponent: () => import('./pages/pos-reportes/pos-reportes.page').then((m) => m.PosReportesPage),
       },
       {
         path: 'historial',
