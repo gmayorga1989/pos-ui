@@ -362,51 +362,83 @@ type ModalState =
 
           <div class="lines">
             @for (line of cart(); track line.lineId) {
-              <div class="line">
-                <div class="line__info">
-                  <span class="line__name">{{ line.product.name }}</span>
-                  <span class="line__sku">{{ line.product.sku }}</span>
+              <article class="line-card">
+                <header class="line-card__head">
+                  <div class="line-card__identity">
+                    <span class="line-card__name">{{ line.product.name }}</span>
+                    <span class="line-card__sku">{{ line.product.sku }}</span>
+                  </div>
+                  <div class="line-card__amount">
+                    @if (line.discountAmount > 0) {
+                      <span class="line-card__gross">{{ lineGross(line) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                      <span class="line-card__disc">−{{ line.discountAmount | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                    }
+                    <span class="line-card__sum">{{ lineNet(line) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                  </div>
+                </header>
+                <div class="line-card__actions">
                   <button
                     type="button"
-                    class="line__unit line__unit--btn pos-focus-ring"
-                    [class.line__unit--locked]="!canChangeLinePrice()"
+                    class="line-card__price pos-focus-ring"
+                    [class.line-card__price--locked]="!canChangeLinePrice()"
                     [disabled]="!canChangeLinePrice()"
                     [title]="canChangeLinePrice() ? 'Cambiar lista de precio' : linePriceListLabel(line) || 'Precio fijado'"
                     (click)="openLinePrice(line)">
-                    {{ line.product.price | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}
+                    <span class="line-card__price-val">{{ line.product.price | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
                     @if (linePriceListLabel(line); as listLbl) {
-                      <span class="line__list">{{ listLbl }}</span>
+                      <span class="line-card__price-tag">{{ listLbl }}</span>
+                    }
+                    @if (canChangeLinePrice()) {
+                      <svg class="line-card__price-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M8 10l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      </svg>
                     }
                   </button>
-                  @if (line.discountAmount > 0) {
-                    <span class="line__disc">−{{ line.discountAmount | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
-                  }
-                </div>
-                <button type="button" class="line-dcto pos-focus-ring" [class.line-dcto--locked]="!desk.cajaOpen()" (click)="openLineDiscount(line)">Dcto.</button>
-                <div class="line__ctrl">
-                  <button type="button" class="qty pos-focus-ring" [class.qty--locked]="!desk.cajaOpen()" (click)="dec(line)" aria-label="Menos">−</button>
-                  <input
-                    class="line__qty-input pos-focus-ring"
-                    type="number"
-                    min="1"
-                    step="1"
-                    inputmode="numeric"
-                    aria-label="Cantidad"
-                    [value]="line.qty"
-                    [readonly]="!desk.cajaOpen()"
-                    (change)="onLineQtyInput(line, $event)"
-                    (keydown.enter)="onLineQtyInput(line, $event)" />
-                  <button type="button" class="qty pos-focus-ring" [class.qty--locked]="!desk.cajaOpen()" (click)="inc(line)" aria-label="Más">+</button>
-                </div>
-                <div class="line__quick" aria-label="Acciones de linea">
-                  <button type="button" class="line-remove pos-focus-ring" [class.line-remove--locked]="!desk.cajaOpen()" (click)="removeLine(line)">
-                    Eliminar
+                  <button
+                    type="button"
+                    class="line-card__dcto pos-focus-ring"
+                    [class.line-card__dcto--locked]="!desk.cajaOpen()"
+                    (click)="openLineDiscount(line)">
+                    Dcto.
+                  </button>
+                  <div class="line-card__qty" aria-label="Cantidad">
+                    <button type="button" class="line-card__qty-btn pos-focus-ring" [class.line-card__qty-btn--locked]="!desk.cajaOpen()" (click)="dec(line)" aria-label="Menos">−</button>
+                    <input
+                      class="line-card__qty-input pos-focus-ring"
+                      type="number"
+                      min="1"
+                      step="1"
+                      inputmode="numeric"
+                      aria-label="Cantidad"
+                      [value]="line.qty"
+                      [readonly]="!desk.cajaOpen()"
+                      (change)="onLineQtyInput(line, $event)"
+                      (keydown.enter)="onLineQtyInput(line, $event)" />
+                    <button type="button" class="line-card__qty-btn pos-focus-ring" [class.line-card__qty-btn--locked]="!desk.cajaOpen()" (click)="inc(line)" aria-label="Más">+</button>
+                  </div>
+                  <button
+                    type="button"
+                    class="line-card__remove pos-focus-ring"
+                    [class.line-card__remove--locked]="!desk.cajaOpen()"
+                    aria-label="Eliminar línea"
+                    title="Eliminar"
+                    (click)="removeLine(line)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7h12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
                   </button>
                 </div>
-                <div class="line__sum">{{ lineNet(line) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</div>
-              </div>
+              </article>
             } @empty {
-              <p class="empty">{{ desk.cajaOpen() ? 'Pulse un producto para agregarlo al ticket.' : 'Debe aperturar caja para agregar productos.' }}</p>
+              <div class="lines-empty">
+                <svg class="lines-empty__ico" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6 8h15l-1.5 9H7.5L6 8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                  <path d="M6 8L5 4H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  <circle cx="9" cy="20" r="1" fill="currentColor" />
+                  <circle cx="18" cy="20" r="1" fill="currentColor" />
+                </svg>
+                <p>{{ desk.cajaOpen() ? 'Pulse un producto para agregarlo al ticket.' : 'Debe aperturar caja para agregar productos.' }}</p>
+              </div>
             }
           </div>
 
@@ -1563,10 +1595,10 @@ type ModalState =
     }
     .card__main--locked,
     .mini--locked,
-    .line-dcto--locked,
-    .qty--locked,
+    .line-card__dcto--locked,
+    .line-card__qty-btn--locked,
     .line-chip--locked,
-    .line-remove--locked,
+    .line-card__remove--locked,
     .sale-tab--locked,
     .btn-pay--locked {
       opacity: 0.55;
@@ -1657,94 +1689,249 @@ type ModalState =
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 0.35rem 0.6rem 0.3rem;
+      padding: 0.45rem 0.55rem 0.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.42rem;
     }
-    .line {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto auto auto;
-      gap: 0.35rem 0.3rem;
-      align-items: center;
-      padding: 0.52rem 0.4rem;
-      border: 1px solid transparent;
-      border-bottom-color: var(--pos-border);
+    .line-card {
+      position: relative;
+      border: 1px solid var(--pos-border);
       border-radius: var(--pos-radius-sm);
-      font-size: 0.74rem;
+      background: var(--pos-elevated);
+      padding: 0.58rem 0.62rem 0.52rem;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+      overflow: hidden;
     }
-    .line:hover {
-      background: var(--pos-surface-2);
-      border-color: var(--pos-border);
+    .line-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, var(--pos-accent), color-mix(in srgb, var(--pos-accent) 35%, #6366f1));
+      border-radius: var(--pos-radius-xs) 0 0 var(--pos-radius-xs);
     }
-    .line__info {
+    html[data-theme='dark'] .line-card {
+      background: var(--pos-surface);
+      border-color: var(--pos-border-strong);
+    }
+    .line-card__head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.55rem;
+      margin-bottom: 0.48rem;
+      padding-left: 0.15rem;
+    }
+    .line-card__identity {
       min-width: 0;
+      flex: 1;
     }
-    .line__disc {
+    .line-card__name {
       display: block;
-      margin-top: 0.12rem;
+      font-size: 0.8rem;
+      font-weight: 650;
+      color: var(--pos-text);
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .line-card__sku {
+      display: inline-block;
+      margin-top: 0.14rem;
       font-size: 0.62rem;
+      color: var(--pos-faint);
+      font-family: var(--pos-mono);
+      letter-spacing: 0.02em;
+    }
+    .line-card__amount {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.06rem;
+      flex-shrink: 0;
+    }
+    .line-card__gross {
+      font-size: 0.62rem;
+      color: var(--pos-faint);
+      text-decoration: line-through;
+      font-family: var(--pos-mono);
+      font-variant-numeric: tabular-nums;
+    }
+    .line-card__disc {
+      font-size: 0.58rem;
       font-weight: 700;
       color: var(--pos-warn);
       font-family: var(--pos-mono);
     }
-    .line-dcto {
-      border-radius: 6px;
-      border: 1px solid var(--pos-border-strong);
-      background: var(--pos-surface-2);
-      color: var(--pos-muted);
-      font-size: 0.62rem;
-      font-weight: 700;
-      padding: 0.28rem 0.38rem;
+    .line-card__sum {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--pos-text);
+      font-family: var(--pos-mono);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+    .line-card__actions {
+      display: flex;
+      align-items: center;
+      gap: 0.32rem;
+      padding-left: 0.15rem;
+    }
+    .line-card__price {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+      min-width: 0;
+      max-width: 7.5rem;
+      padding: 0.32rem 0.42rem;
+      border-radius: 8px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 18%, var(--pos-border-strong));
+      background: color-mix(in srgb, var(--pos-accent-muted) 22%, var(--pos-surface-2));
+      color: var(--pos-text);
       cursor: pointer;
       flex-shrink: 0;
     }
-    .line-dcto:hover {
+    .line-card__price:hover:not(:disabled) {
+      border-color: color-mix(in srgb, var(--pos-accent) 38%, var(--pos-border-strong));
+      background: color-mix(in srgb, var(--pos-accent-muted) 38%, var(--pos-surface-2));
+    }
+    .line-card__price--locked,
+    .line-card__price:disabled {
+      cursor: default;
+      opacity: 0.9;
+      border-color: var(--pos-border);
+      background: var(--pos-surface-2);
+    }
+    .line-card__price-val {
+      font-family: var(--pos-mono);
+      font-size: 0.72rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .line-card__price-tag {
+      font-size: 0.5rem;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--pos-accent-hover);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 4.2rem;
+    }
+    .line-card__price-chevron {
+      flex-shrink: 0;
+      color: var(--pos-muted);
+      margin-left: auto;
+    }
+    .line-card__dcto {
+      border-radius: 8px;
+      border: 1px solid var(--pos-border-strong);
+      background: var(--pos-surface-2);
+      color: var(--pos-muted);
+      font-size: 0.64rem;
+      font-weight: 700;
+      padding: 0.34rem 0.48rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .line-card__dcto:hover:not(.line-card__dcto--locked) {
       color: var(--pos-text);
       border-color: var(--pos-text);
     }
-    .line__name {
-      display: block;
-      font-weight: 600;
+    .line-card__dcto--locked {
+      opacity: 0.55;
+      cursor: not-allowed;
     }
-    .line__sku {
-      font-size: 0.64rem;
-      color: var(--pos-faint);
-      font-family: var(--pos-mono);
+    .line-card__qty {
+      display: flex;
+      align-items: center;
+      gap: 0.18rem;
+      margin-left: auto;
+      flex-shrink: 0;
     }
-    .line__unit {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.04rem;
-      margin-top: 0.14rem;
-      padding: 0.1rem 0.36rem;
+    .line-card__qty-btn {
+      width: 1.85rem;
+      height: 1.85rem;
       border-radius: 8px;
-      border: 1px solid var(--pos-border);
+      border: 1px solid var(--pos-border-strong);
       background: var(--pos-surface-2);
       color: var(--pos-text);
+      font-size: 0.95rem;
+      line-height: 1;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+    .line-card__qty-btn:hover:not(.line-card__qty-btn--locked) {
+      border-color: var(--pos-accent);
+      color: var(--pos-accent-hover);
+    }
+    .line-card__qty-btn--locked {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .line-card__qty-input {
+      width: 2.35rem;
+      height: 1.85rem;
+      text-align: center;
+      font-weight: 700;
       font-family: var(--pos-mono);
-      font-size: 0.66rem;
-      font-weight: 750;
+      font-size: 0.78rem;
+      border-radius: 8px;
+      border: 1px solid var(--pos-border-strong);
+      background: var(--pos-elevated);
+      color: var(--pos-text);
+      padding: 0;
       font-variant-numeric: tabular-nums;
     }
-    .line__unit--btn {
+    .line-card__qty-input::-webkit-outer-spin-button,
+    .line-card__qty-input::-webkit-inner-spin-button {
+      margin: 0;
+    }
+    .line-card__remove {
+      width: 1.85rem;
+      height: 1.85rem;
+      border-radius: 8px;
+      border: 1px solid rgba(185, 28, 28, 0.22);
+      background: rgba(248, 113, 113, 0.08);
+      color: #b91c1c;
       cursor: pointer;
-      text-align: left;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      flex-shrink: 0;
     }
-    .line__unit--btn:hover:not(:disabled) {
-      border-color: color-mix(in srgb, var(--pos-accent) 35%, var(--pos-border-strong));
-      background: color-mix(in srgb, var(--pos-accent-muted) 28%, var(--pos-surface-2));
+    .line-card__remove:hover:not(.line-card__remove--locked) {
+      border-color: #b91c1c;
+      background: rgba(248, 113, 113, 0.14);
     }
-    .line__unit--locked,
-    .line__unit--btn:disabled {
-      cursor: default;
-      opacity: 0.88;
+    .line-card__remove--locked {
+      opacity: 0.55;
+      cursor: not-allowed;
     }
-    .line__list {
-      font-size: 0.54rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+    html[data-theme='dark'] .line-card__remove {
+      color: #fca5a5;
+    }
+    .lines-empty {
+      margin: 1.5rem 0.5rem;
+      text-align: center;
       color: var(--pos-muted);
-      font-family: inherit;
+      font-size: 0.78rem;
+      display: grid;
+      gap: 0.35rem;
+      justify-items: center;
+    }
+    .lines-empty__ico {
+      color: var(--pos-faint);
+      opacity: 0.7;
     }
     .price-pick {
       display: grid;
@@ -1777,51 +1964,6 @@ type ModalState =
       font-size: 0.92rem;
       font-variant-numeric: tabular-nums;
     }
-    .line__ctrl {
-      display: flex;
-      align-items: center;
-      gap: 0.2rem;
-    }
-    .qty {
-      width: var(--pos-qty-size);
-      height: var(--pos-qty-size);
-      border-radius: 8px;
-      border: 1px solid var(--pos-border-strong);
-      background: var(--pos-surface-2);
-      color: var(--pos-text);
-      font-size: 1rem;
-      line-height: 1;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      padding: 0;
-    }
-    .qty:hover {
-      border-color: var(--pos-accent);
-    }
-    .line__qty-input {
-      width: 3rem;
-      height: var(--pos-qty-size);
-      text-align: center;
-      font-weight: 700;
-      font-family: var(--pos-mono);
-      font-size: 0.78rem;
-      border-radius: 8px;
-      border: 1px solid var(--pos-border-strong);
-      background: var(--pos-elevated);
-      color: var(--pos-text);
-      padding: 0 0.2rem;
-      font-variant-numeric: tabular-nums;
-    }
-    .line__qty-input::-webkit-outer-spin-button,
-    .line__qty-input::-webkit-inner-spin-button {
-      margin: 0;
-    }
-    .line__quick {
-      display: flex;
-      align-items: center;
-      gap: 0.18rem;
-    }
     .line-chip {
       min-width: 1.8rem;
       height: var(--pos-qty-size);
@@ -1838,35 +1980,6 @@ type ModalState =
       border-color: var(--pos-accent);
       color: var(--pos-accent-hover);
       background: var(--pos-accent-muted);
-    }
-    .line-remove {
-      height: var(--pos-qty-size);
-      border-radius: 8px;
-      border: 1px solid rgba(185, 28, 28, 0.28);
-      background: rgba(248, 113, 113, 0.1);
-      color: #b91c1c;
-      padding: 0 0.55rem;
-      font-size: 0.68rem;
-      font-weight: 800;
-      cursor: pointer;
-    }
-    .line-remove:hover {
-      border-color: #b91c1c;
-      background: rgba(248, 113, 113, 0.16);
-    }
-    html[data-theme='dark'] .line-remove {
-      color: #fca5a5;
-    }
-    .line__sum {
-      font-weight: 700;
-      font-family: var(--pos-mono);
-      font-size: 0.8rem;
-    }
-    .empty {
-      margin: 1rem 0.4rem;
-      text-align: center;
-      color: var(--pos-muted);
-      font-size: 0.8rem;
     }
     .totals {
       flex-shrink: 0;
