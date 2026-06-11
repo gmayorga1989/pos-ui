@@ -35,6 +35,7 @@ import type {
   PosProductCategoryResponse,
   PosProductPriceEntry,
   PosProductPriceResponse,
+  PosBulkImageResult,
   PosImportKind,
   PosImportPreset,
   PosImportPreviewResult,
@@ -351,6 +352,16 @@ export class PosBackendApiService {
     const form = new FormData();
     form.append('file', file);
     return this.http.post<PosProductResponse>(`${root}/products/${encodeURIComponent(productId)}/image`, form);
+  }
+
+  bulkUploadProductImages(file: File, matchBy: 'sku' | 'barcode' = 'sku'): Observable<PosBulkImageResult> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<PosBulkImageResult>(`${root}/products/images/bulk?matchBy=${matchBy}`, form);
   }
 
   putProductCategory(id: string, body: PosProductCategoryRequest): Observable<PosProductCategoryResponse> {

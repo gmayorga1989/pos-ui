@@ -1079,8 +1079,39 @@ html[data-theme='dark'] .pos-page-actions-toolbar .pos-btn--outline {
 }
 
 .pos-mig-tipo-grid--pick {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: 640px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  max-width: 920px;
+}
+
+.pos-mig-tipo-card--link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pos-mig-tipo-card--link:hover {
+  border-color: color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-maestro-border));
+}
+
+.pos-mig-guide--compact {
+  margin-bottom: 0.75rem;
+}
+
+.pos-mig-filter-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: 320px;
+  margin-bottom: 0.75rem;
+  font-size: 0.84rem;
+}
+
+.pos-mig-filter-row select {
+  padding: 0.42rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid var(--pos-maestro-border);
+  background: var(--pos-maestro-card);
 }
 
 .pos-mig-preset-grid {

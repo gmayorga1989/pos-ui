@@ -158,6 +158,11 @@ const COL_LABELS: Record<string, string> = {
               <p class="pos-mig-panel__hint">Elija el tipo de datos. En el siguiente paso indicará de dónde provienen.</p>
             </header>
             <div class="pos-mig-tipo-grid pos-mig-tipo-grid--pick">
+              <a routerLink="/migracion/imagenes" class="pos-mig-tipo-card pos-mig-tipo-card--link pos-focus-ring">
+                <span class="pos-mig-tipo-card__icon" aria-hidden="true">🖼</span>
+                <strong>Imágenes de productos</strong>
+                <span>ZIP con fotos nombradas por SKU (PROD-001.jpg)</span>
+              </a>
               @for (t of tipos; track t.kind) {
                 <button
                   type="button"

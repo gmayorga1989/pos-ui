@@ -536,6 +536,20 @@ export interface PosImportPreset {
   mapeo: Record<string, string>;
 }
 
+export interface PosBulkImageLineResult {
+  archivo: string;
+  referencia: string;
+  estado: string;
+  mensaje: string;
+}
+
+export interface PosBulkImageResult {
+  totalArchivos: number;
+  asignados: number;
+  errores: number;
+  detalles: PosBulkImageLineResult[];
+}
+
 export interface PosImportPreviewResult {
   totalFilas: number;
   columnasDetectadas: string[];

@@ -12,7 +12,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import type { ColumnDefinition } from 'tabulator-tables';
 import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
 import type {
@@ -21,7 +21,9 @@ import type {
   PosCustomerResponse,
   PosOfflineComprobanteSyncRequest,
   PosPaymentCollectionResponse,
+  PosProductCategoryResponse,
 } from '../../core/api/pos-backend.types';
+import { resolveProductMediaUrl } from '../../shared/catalog/pos-product-media.util';
 import {
   applyTipoIdentificacionDefaults,
   buildCustomerRequest,
@@ -63,6 +65,9 @@ interface DemoProduct {
   barcode?: string;
   price: number;
   tag: string;
+  imageUrl?: string;
+  categoryId?: string | null;
+  categoryName?: string | null;
 }
 
 interface CartLine {
@@ -146,13 +151,25 @@ type ModalState =
                 (keydown.enter)="onCatalogEnter($event)" />
             </label>
             <div class="catalog-toolbar__tools">
-              <div class="cats" role="tablist" aria-label="Filtro por categoría">
-                @for (c of categories(); track c) {
+              <label class="catalog-filter">
+                <span class="sr-only">Categoría</span>
+                <select
+                  class="catalog-filter__select pos-focus-ring"
+                  [value]="activeCategoryId()"
+                  (change)="onCategoryFilter($event)">
+                  <option value="">Todas las categorías</option>
+                  @for (c of categoryOptions(); track c.id) {
+                    <option [value]="c.id">{{ c.pathLabel }}</option>
+                  }
+                </select>
+              </label>
+              <div class="cats" role="tablist" aria-label="Filtro por etiqueta">
+                @for (c of tagOptions(); track c) {
                   <button
                     type="button"
                     class="cat pos-focus-ring"
-                    [class.cat--on]="c === activeCat()"
-                    (click)="activeCat.set(c)">
+                    [class.cat--on]="c === activeTag()"
+                    (click)="activeTag.set(c)">
                     {{ c }}
                   </button>
                 }
@@ -164,7 +181,20 @@ type ModalState =
               @for (p of pagedProducts(); track p.id) {
                 <article class="card">
                   <button type="button" class="card__main pos-focus-ring" [class.card__main--locked]="!desk.cajaOpen()" (click)="addLine(p)">
+                    @if (prefs.showProductImages()) {
+                      <div class="card__thumb">
+                        <img
+                          [src]="productImageUrl(p)"
+                          [alt]="p.name"
+                          loading="lazy"
+                          decoding="async"
+                          (error)="onProductImageError($event)" />
+                      </div>
+                    }
                     <div class="card__body">
+                      @if (p.categoryName) {
+                        <span class="card__cat">{{ p.categoryName }}</span>
+                      }
                       <span class="card__tag">{{ p.tag }}</span>
                       <span class="card__name">{{ p.name }}</span>
                       <span class="card__sku">{{ p.sku }}</span>
@@ -1287,8 +1317,22 @@ type ModalState =
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      justify-content: space-between;
       gap: 0.4rem 0.55rem;
+    }
+    .catalog-filter {
+      flex: 1 1 11rem;
+      min-width: 9rem;
+      max-width: 16rem;
+    }
+    .catalog-filter__select {
+      width: 100%;
+      padding: 0.34rem 0.5rem;
+      border-radius: var(--pos-radius-xs);
+      border: 1px solid var(--pos-border-strong);
+      background: var(--pos-elevated);
+      color: var(--pos-text);
+      font-size: 0.72rem;
+      font-weight: 600;
     }
     .catalog-pager {
       flex-shrink: 0;
@@ -1356,9 +1400,9 @@ type ModalState =
     }
     .products {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(var(--pos-product-minw), 1fr));
-      gap: var(--pos-product-gap);
-      padding: 0.65rem 0.7rem 0.75rem;
+      grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+      gap: 0.45rem;
+      padding: 0.55rem 0.6rem 0.65rem;
       align-content: start;
     }
     .card {
@@ -1403,6 +1447,8 @@ type ModalState =
     }
     .card__main {
       flex: 1;
+      display: flex;
+      flex-direction: column;
       text-align: left;
       border: none;
       background: transparent;
@@ -1410,6 +1456,20 @@ type ModalState =
       cursor: pointer;
       color: inherit;
       font: inherit;
+    }
+    .card__thumb {
+      width: 100%;
+      aspect-ratio: 1;
+      background: color-mix(in srgb, var(--pos-surface-2) 88%, var(--pos-border));
+      border-bottom: 1px solid var(--pos-border);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .card__thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
     .card__main--locked,
     .mini--locked,
@@ -1423,10 +1483,23 @@ type ModalState =
       cursor: not-allowed;
     }
     .card__body {
-      padding: 0.6rem 0.65rem 0.52rem;
+      padding: 0.45rem 0.5rem 0.42rem;
       display: flex;
       flex-direction: column;
-      gap: 0.1rem;
+      gap: 0.06rem;
+      flex: 1;
+      min-width: 0;
+    }
+    .card__cat {
+      font-size: 0.52rem;
+      font-weight: 700;
+      color: var(--pos-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .card__tag {
       font-size: 0.56rem;
@@ -1436,10 +1509,14 @@ type ModalState =
       color: var(--pos-muted);
     }
     .card__name {
-      font-size: 0.78rem;
+      font-size: 0.7rem;
       font-weight: 600;
       color: var(--pos-text);
-      line-height: 1.25;
+      line-height: 1.2;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     .card__sku {
       font-size: 0.62rem;
@@ -2569,14 +2646,20 @@ export class PosVentaPage {
 
   readonly catalog = signal<DemoProduct[]>([]);
   readonly catalogLoading = signal(false);
-  readonly activeCat = signal<string>('Todos');
+  readonly categoryCatalog = signal<PosProductCategoryResponse[]>([]);
+  readonly activeCategoryId = signal('');
+  readonly activeTag = signal<string>('Todos');
 
-  readonly categories = computed(() => {
+  readonly categoryOptions = computed(() =>
+    [...this.categoryCatalog()].sort((a, b) => a.pathLabel.localeCompare(b.pathLabel)),
+  );
+
+  readonly tagOptions = computed(() => {
     const tags = new Set(this.catalog().map((p) => p.tag));
     return ['Todos', ...Array.from(tags).sort()];
   });
 
-  readonly catalogPageSize = 8;
+  readonly catalogPageSize = 24;
   readonly catalogQuery = signal('');
   readonly catalogPage = signal(1);
 
@@ -2687,19 +2770,27 @@ export class PosVentaPage {
   readonly cart = computed(() => this.activeTab().cart);
 
   readonly filteredCatalog = computed(() => {
-    const c = this.activeCat();
+    const catId = this.activeCategoryId();
+    const tag = this.activeTag();
     const q = this.catalogQuery().trim().toLowerCase();
-    const items = this.catalog();
-    const base = c === 'Todos' ? items : items.filter((p) => p.tag === c);
-    if (!q) {
-      return base;
+    let items = this.catalog();
+    if (catId) {
+      const allowed = this.categoryFilterSet(catId);
+      items = items.filter((p) => p.categoryId && allowed.has(p.categoryId));
     }
-    return base.filter((p) => {
+    if (tag !== 'Todos') {
+      items = items.filter((p) => p.tag === tag);
+    }
+    if (!q) {
+      return items;
+    }
+    return items.filter((p) => {
       const bc = (p.barcode ?? p.sku).toLowerCase();
       return (
         p.name.toLowerCase().includes(q) ||
         p.sku.toLowerCase().includes(q) ||
-        bc.includes(q)
+        bc.includes(q) ||
+        (p.categoryName ?? '').toLowerCase().includes(q)
       );
     });
   });
@@ -2816,7 +2907,8 @@ export class PosVentaPage {
     this.restorePendingSaleTabs();
 
     effect(() => {
-      this.activeCat();
+      this.activeCategoryId();
+      this.activeTag();
       this.catalogQuery();
       untracked(() => this.catalogPage.set(1));
     });
@@ -2876,22 +2968,68 @@ export class PosVentaPage {
       .catch(() => this.saleActionMessage.set('No se pudo abrir el ticket para impresión.'));
   }
 
+  productImageUrl(p: DemoProduct): string {
+    return resolveProductMediaUrl(p.imageUrl, this.auth.apiBaseUrl);
+  }
+
+  onProductImageError(ev: Event): void {
+    const img = ev.target as HTMLImageElement;
+    img.src = resolveProductMediaUrl(null, this.auth.apiBaseUrl);
+  }
+
+  onCategoryFilter(ev: Event): void {
+    this.activeCategoryId.set((ev.target as HTMLSelectElement).value);
+  }
+
+  private categoryFilterSet(rootId: string): Set<string> {
+    const cats = this.categoryCatalog();
+    const children = new Map<string, string[]>();
+    for (const c of cats) {
+      if (c.parentId) {
+        const list = children.get(c.parentId) ?? [];
+        list.push(c.id);
+        children.set(c.parentId, list);
+      }
+    }
+    const out = new Set<string>([rootId]);
+    const stack = [rootId];
+    while (stack.length) {
+      const id = stack.pop()!;
+      for (const ch of children.get(id) ?? []) {
+        if (!out.has(ch)) {
+          out.add(ch);
+          stack.push(ch);
+        }
+      }
+    }
+    return out;
+  }
+
   private loadCatalog(): void {
     if (!this.posApiConfigured()) {
       return;
     }
     this.catalogLoading.set(true);
-    this.backend.getProducts().subscribe({
-      next: (rows) => {
+    forkJoin({
+      products: this.backend.getProducts(),
+      categories: this.backend.getProductCategories(),
+    }).subscribe({
+      next: ({ products, categories }) => {
+        this.categoryCatalog.set(categories.filter((c) => c.active));
         this.catalog.set(
-          rows.map((p) => ({
-            id: p.id,
-            name: p.name,
-            sku: p.sku,
-            barcode: p.barcode ?? undefined,
-            price: Number(p.price),
-            tag: p.tag || 'Retail',
-          })),
+          products
+            .filter((p) => p.active)
+            .map((p) => ({
+              id: p.id,
+              name: p.name,
+              sku: p.sku,
+              barcode: p.barcode ?? undefined,
+              price: Number(p.price),
+              tag: p.tag || 'Retail',
+              imageUrl: p.imageUrl ?? undefined,
+              categoryId: p.categoryId ?? null,
+              categoryName: p.categoryName ?? null,
+            })),
         );
         this.catalogLoading.set(false);
       },
