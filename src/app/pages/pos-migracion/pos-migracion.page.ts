@@ -3,7 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { ColumnDefinition } from 'tabulator-tables';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
 import type {
   PosImportKind,
@@ -19,6 +19,12 @@ import { escapeHtml, tabulatorCellValue, tabulatorTextareaCell } from '../../sha
 import { PosPageLayoutComponent } from '../../shared/pos-page-layout.component';
 
 type MigracionPaso = 1 | 2 | 3 | 4 | 5;
+type RevisarTab = 'config' | 'errores';
+
+interface ListaPrecioFaltante {
+  code: string;
+  column: string;
+}
 
 interface MigracionTipoConfig {
   kind: PosImportKind;
@@ -48,6 +54,7 @@ const TIPOS: MigracionTipoConfig[] = [
       'precio = lista principal; columnas precio_* = listas adicionales de su empresa.',
       'iva_codigo: 4 = 15 % IVA (por defecto si se omite).',
       'categoria_codigo debe existir antes de importar (Catálogo → Categorías: ALIMENTOS, BEBIDAS, etc.).',
+      'Columnas precio_mayorista, precio_distribuidor, etc. requieren listas de precio con el mismo código.',
     ],
   },
   {
@@ -347,65 +354,158 @@ const COL_LABELS: Record<string, string> = {
                 </div>
               </div>
 
-              @if (!pv.mapeoCompleto) {
-                <p class="pos-mig-warn">
-                  Asigne las columnas obligatorias faltantes: {{ pv.columnasFaltantes.join(', ') }}
-                </p>
-              }
+              @if (hayPreparacionPendiente()) {
+                <div class="pos-mig-preparar">
+                  <div class="pos-mig-preparar__head">
+                    <h3 class="pos-mig-preparar__title">Complete el catálogo antes de importar</h3>
+                    <p class="pos-mig-preparar__hint">
+                      Su archivo usa datos que aún no existen en el POS. Puede crearlos aquí con un clic.
+                    </p>
+                  </div>
 
-              @if (resumenErrores(pv.detalles); as resumen) {
-                <p class="pos-mig-warn">{{ resumen }}</p>
-              }
-
-              <div class="pos-mig-mapping">
-                <div class="pos-mig-mapping__head">
-                  <h3>Mapeo de columnas</h3>
-                  <button type="button" class="pos-btn pos-btn--soft" [disabled]="previewing()" (click)="refrescarPreview()">
-                    {{ previewing() ? 'Analizando…' : 'Actualizar vista previa' }}
-                  </button>
-                </div>
-                <p class="pos-mig-panel__hint">
-                  Columnas detectadas en su archivo:
-                  <code>{{ pv.columnasDetectadas.join(' · ') }}</code>
-                </p>
-                <div class="pos-mig-mapping__grid">
-                  @for (col of columnasMapeo(); track col) {
-                    <label class="pos-mig-mapping__row" [class.pos-mig-mapping__row--req]="esObligatoria(col)">
-                      <span>
-                        {{ colLabel(col) }}
-                        @if (esObligatoria(col)) {
-                          <em>*</em>
+                  @if (categoriasFaltantes().length) {
+                    <div class="pos-mig-preparar__block">
+                      <h4>Categorías ({{ categoriasFaltantes().length }})</h4>
+                      <ul class="pos-mig-fix-panel__list">
+                        @for (c of categoriasFaltantes(); track c) {
+                          <li class="pos-mig-fix-panel__item">
+                            <code>{{ c }}</code>
+                            <span>{{ nombreDesdeCodigo(c) }}</span>
+                          </li>
                         }
-                        <small><code>{{ col }}</code></small>
-                      </span>
-                      <select [(ngModel)]="mappingDraft[col]" [name]="'map_' + col" (ngModelChange)="onMappingChange()">
-                        <option value="">— Sin asignar —</option>
-                        @for (h of pv.columnasDetectadas; track h) {
-                          <option [value]="h">{{ h }}</option>
-                        }
-                      </select>
-                    </label>
+                      </ul>
+                    </div>
                   }
+
+                  @if (listasPrecioFaltantes().length) {
+                    <div class="pos-mig-preparar__block">
+                      <h4>Listas de precio ({{ listasPrecioFaltantes().length }})</h4>
+                      <p class="pos-mig-preparar__subhint">
+                        Columnas como <code>precio_mayorista</code> requieren una lista con ese código.
+                      </p>
+                      <ul class="pos-mig-fix-panel__list">
+                        @for (lp of listasPrecioFaltantes(); track lp.code) {
+                          <li class="pos-mig-fix-panel__item">
+                            <code>{{ lp.code }}</code>
+                            <span>{{ nombreDesdeCodigo(lp.code) }} · {{ lp.column }}</span>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  }
+
+                  <div class="pos-mig-preparar__actions">
+                    <button
+                      type="button"
+                      class="pos-btn pos-btn--primary"
+                      [disabled]="creandoPreparacion() || previewing()"
+                      (click)="crearPreparacionCatalogo()">
+                      {{ creandoPreparacion() ? 'Creando…' : 'Crear lo que falta y actualizar' }}
+                    </button>
+                    <a routerLink="/categorias" class="pos-btn pos-btn--outline">Categorías</a>
+                    <a routerLink="/listas-precio" class="pos-btn pos-btn--outline">Listas de precio</a>
+                  </div>
                 </div>
+              }
+
+              <nav class="pos-mig-tabs" role="tablist" aria-label="Revisión de importación">
+                <button
+                  type="button"
+                  class="pos-mig-tabs__tab"
+                  role="tab"
+                  [class.pos-mig-tabs__tab--active]="revisarTab() === 'config'"
+                  [attr.aria-selected]="revisarTab() === 'config'"
+                  (click)="revisarTab.set('config')">
+                  Configuración
+                </button>
+                <button
+                  type="button"
+                  class="pos-mig-tabs__tab"
+                  role="tab"
+                  [class.pos-mig-tabs__tab--active]="revisarTab() === 'errores'"
+                  [attr.aria-selected]="revisarTab() === 'errores'"
+                  (click)="revisarTab.set('errores')">
+                  Errores
+                  @if (conteoErroresPreview() > 0) {
+                    <span class="pos-mig-tabs__badge">{{ conteoErroresPreview() }}</span>
+                  }
+                </button>
+                <button
+                  type="button"
+                  class="pos-btn pos-btn--soft pos-mig-tabs__refresh"
+                  [disabled]="previewing()"
+                  (click)="refrescarPreview()">
+                  {{ previewing() ? 'Analizando…' : 'Actualizar vista previa' }}
+                </button>
+              </nav>
+
+              <div class="pos-mig-tabs__panel" role="tabpanel">
+                @if (revisarTab() === 'config') {
+                  @if (!pv.mapeoCompleto) {
+                    <div class="pos-mig-inline-alert pos-mig-inline-alert--warn">
+                      Asigne las columnas obligatorias faltantes: <strong>{{ pv.columnasFaltantes.join(', ') }}</strong>
+                    </div>
+                  }
+
+                  <div class="pos-mig-mapping pos-mig-mapping--tab">
+                    <p class="pos-mig-panel__hint">
+                      Columnas detectadas en su archivo:
+                      <code>{{ pv.columnasDetectadas.join(' · ') }}</code>
+                    </p>
+                    <div class="pos-mig-mapping__grid">
+                      @for (col of columnasMapeo(); track col) {
+                        <label class="pos-mig-mapping__row" [class.pos-mig-mapping__row--req]="esObligatoria(col)">
+                          <span>
+                            {{ colLabel(col) }}
+                            @if (esObligatoria(col)) {
+                              <em>*</em>
+                            }
+                            <small><code>{{ col }}</code></small>
+                          </span>
+                          <select [(ngModel)]="mappingDraft[col]" [name]="'map_' + col" (ngModelChange)="onMappingChange()">
+                            <option value="">— Sin asignar —</option>
+                            @for (h of pv.columnasDetectadas; track h) {
+                              <option [value]="h">{{ h }}</option>
+                            }
+                          </select>
+                        </label>
+                      }
+                    </div>
+                  </div>
+
+                  @if (pv.muestra.length) {
+                    <h3 class="pos-mig-subtitle">Muestra (primeras filas)</h3>
+                    <pos-tabulator-local-grid
+                      [data]="asGridData(pv.muestra)"
+                      [columns]="muestraColumns()"
+                      height="200px"
+                      emptyDescription="Sin muestra." />
+                  }
+                } @else {
+                  @if (conteoErroresPreview() === 0) {
+                    <div class="pos-mig-inline-alert pos-mig-inline-alert--ok">
+                      No hay errores de validación. Puede confirmar la importación.
+                    </div>
+                  } @else {
+                    @if (resumenErrores(pv.detalles); as resumen) {
+                      <div class="pos-mig-inline-alert pos-mig-inline-alert--warn">{{ resumen }}</div>
+                    }
+
+                    @if (hayPreparacionPendiente()) {
+                      <div class="pos-mig-inline-alert pos-mig-inline-alert--warn">
+                        Use el panel <strong>Complete el catálogo</strong> arriba para crear categorías o listas de precio.
+                      </div>
+                    }
+
+                    <h3 class="pos-mig-subtitle">Detalle por fila</h3>
+                    <pos-tabulator-local-grid
+                      [data]="asGridData(detallesErroresPreview())"
+                      [columns]="previewColumns"
+                      height="min(280px, calc(100vh - 24rem))"
+                      emptyDescription="Sin errores." />
+                  }
+                }
               </div>
-
-              @if (pv.muestra.length) {
-                <h3 class="pos-mig-subtitle">Muestra (primeras filas)</h3>
-                <pos-tabulator-local-grid
-                  [data]="asGridData(pv.muestra)"
-                  [columns]="muestraColumns()"
-                  height="220px"
-                  emptyDescription="Sin muestra." />
-              }
-
-              @if (pv.detalles.length) {
-                <h3 class="pos-mig-subtitle">Validación por fila</h3>
-                <pos-tabulator-local-grid
-                  [data]="asGridData(pv.detalles)"
-                  [columns]="previewColumns"
-                  height="min(320px, calc(100vh - 28rem))"
-                  emptyDescription="Sin detalle." />
-              }
 
               <footer class="pos-mig-panel__footer">
                 <button type="button" class="pos-btn pos-btn--outline" (click)="retroceder()">Atrás</button>
@@ -508,6 +608,10 @@ export class PosMigracionPage implements OnInit {
   readonly result = signal<PosImportResult | null>(null);
   readonly message = signal('');
   readonly messageIsError = signal(false);
+  readonly revisarTab = signal<RevisarTab>('config');
+  readonly creandoPreparacion = signal(false);
+  readonly categoriasExistentes = signal<Set<string>>(new Set());
+  readonly listasPrecioExistentes = signal<Set<string>>(new Set());
 
   readonly messageTitle = computed(() => {
     const m = this.message().toLowerCase();
@@ -549,6 +653,65 @@ export class PosMigracionPage implements OnInit {
     }
     return [...this.config().obligatorias, ...this.config().opcionales];
   });
+
+  readonly detallesErroresPreview = computed(() => {
+    const pv = this.preview();
+    if (!pv) return [];
+    return pv.detalles.filter((d) => d.estado === 'ERROR' || d.estado === 'MAPEO');
+  });
+
+  readonly conteoErroresPreview = computed(() => this.detallesErroresPreview().length);
+
+  readonly categoriasFaltantes = computed(() => {
+    if (this.kind() !== 'products') return [];
+    const codes = new Set<string>();
+    const existentes = this.categoriasExistentes();
+    const re = /Categor[ií]a «([^»]+)» no existe/i;
+    for (const d of this.detallesErroresPreview()) {
+      const m = d.mensaje?.match(re);
+      if (m?.[1]) {
+        codes.add(m[1].trim().toUpperCase());
+      }
+    }
+    for (const row of this.preview()?.muestra ?? []) {
+      const raw = row['categoria_codigo']?.trim();
+      if (raw) {
+        codes.add(raw.toUpperCase());
+      }
+    }
+    return [...codes].filter((c) => !existentes.has(c)).sort((a, b) => a.localeCompare(b));
+  });
+
+  readonly listasPrecioFaltantes = computed((): ListaPrecioFaltante[] => {
+    const pv = this.preview();
+    if (!pv || this.kind() !== 'products') return [];
+    const existentes = this.listasPrecioExistentes();
+    const objetivo = new Set(pv.columnasObjetivo.map((c) => c.trim().toLowerCase()));
+    const seen = new Set<string>();
+    const out: ListaPrecioFaltante[] = [];
+    for (const header of pv.columnasDetectadas) {
+      const col = header.trim().toLowerCase();
+      if (!col.startsWith('precio_')) {
+        continue;
+      }
+      if (objetivo.has(col)) {
+        continue;
+      }
+      const code = col.slice('precio_'.length).toUpperCase();
+      if (!code || seen.has(code) || existentes.has(code)) {
+        continue;
+      }
+      seen.add(code);
+      out.push({ code, column: col });
+    }
+    return out.sort((a, b) => a.code.localeCompare(b.code));
+  });
+
+  readonly hayPreparacionPendiente = computed(
+    () =>
+      this.kind() === 'products' &&
+      (this.categoriasFaltantes().length > 0 || this.listasPrecioFaltantes().length > 0),
+  );
 
   readonly previewColumns: ColumnDefinition[] = [
     { title: 'Fila', field: 'fila', width: 72, hozAlign: 'right' },
@@ -766,6 +929,87 @@ export class PosMigracionPage implements OnInit {
     void this.ejecutarPreview(false);
   }
 
+  nombreDesdeCodigo(code: string): string {
+    return code
+      .toLowerCase()
+      .split(/[_\s-]+/)
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }
+
+  crearPreparacionCatalogo(): void {
+    const cats = this.categoriasFaltantes();
+    const lists = this.listasPrecioFaltantes();
+    if (!cats.length && !lists.length) {
+      return;
+    }
+    this.creandoPreparacion.set(true);
+    const requests = [
+      ...cats.map((code, index) =>
+        this.api.postProductCategory({
+          code,
+          name: this.nombreDesdeCodigo(code),
+          parentId: null,
+          sortOrder: index,
+          active: true,
+        }),
+      ),
+      ...lists.map((lp) =>
+        this.api.postPriceList({
+          code: lp.code,
+          name: this.nombreDesdeCodigo(lp.code),
+          currency: 'USD',
+        }),
+      ),
+    ];
+    forkJoin(requests)
+      .pipe(finalize(() => this.creandoPreparacion.set(false)))
+      .subscribe({
+        next: () => {
+          const partes: string[] = [];
+          if (cats.length) partes.push(`${cats.length} categoría(s)`);
+          if (lists.length) partes.push(`${lists.length} lista(s) de precio`);
+          this.toast.success(`${partes.join(' y ')} creada(s). Actualizando vista previa…`);
+          this.cargarCatalogoReferencia();
+          this.refrescarPreview();
+        },
+        error: (err: unknown) =>
+          this.toast.error(extractApiErrorMessage(err, 'No se pudo completar el catálogo')),
+      });
+  }
+
+  private cargarCatalogoReferencia(): void {
+    if (this.kind() !== 'products') {
+      return;
+    }
+    forkJoin({
+      cats: this.api.getProductCategories(),
+      lists: this.api.getPriceLists(),
+    }).subscribe({
+      next: ({ cats, lists }) => {
+        this.categoriasExistentes.set(
+          new Set(
+            cats
+              .filter((c) => c.active && c.code)
+              .map((c) => c.code!.trim().toUpperCase()),
+          ),
+        );
+        this.listasPrecioExistentes.set(
+          new Set(
+            lists
+              .filter((l) => l.active && !l.primary)
+              .map((l) => l.code.trim().toUpperCase()),
+          ),
+        );
+      },
+      error: () => {
+        this.categoriasExistentes.set(new Set());
+        this.listasPrecioExistentes.set(new Set());
+      },
+    });
+  }
+
   ejecutarImportacion(): void {
     const f = this.file();
     if (!f) {
@@ -825,6 +1069,9 @@ export class PosMigracionPage implements OnInit {
         next: (pv) => {
           this.preview.set(pv);
           this.mappingDraft = this.mergeMapping(pv);
+          this.cargarCatalogoReferencia();
+          const hayErrores = pv.filasConError > 0 || pv.detalles.some((d) => d.estado === 'ERROR' || d.estado === 'MAPEO');
+          this.revisarTab.set(hayErrores ? 'errores' : 'config');
           if (advanceStep) {
             this.paso.set(4);
           }
@@ -884,6 +1131,9 @@ export class PosMigracionPage implements OnInit {
     this.preview.set(null);
     this.result.set(null);
     this.clearMessage();
+    this.revisarTab.set('config');
+    this.categoriasExistentes.set(new Set());
+    this.listasPrecioExistentes.set(new Set());
     this.mappingDraft = {};
   }
 
