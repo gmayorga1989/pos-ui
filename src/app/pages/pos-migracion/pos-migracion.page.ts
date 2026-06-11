@@ -110,8 +110,36 @@ const COL_LABELS: Record<string, string> = {
         }
       </nav>
 
-      @if (message()) {
-        <p class="pos-maestro-msg" [class.pos-maestro-msg--err]="messageIsError()">{{ message() }}</p>
+      @if (message(); as msg) {
+        <div
+          class="pos-mig-alert"
+          [class.pos-mig-alert--err]="messageIsError()"
+          [class.pos-mig-alert--ok]="!messageIsError()"
+          role="alert"
+          aria-live="polite">
+          <div class="pos-mig-alert__icon" aria-hidden="true">
+            @if (messageIsError()) {
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" />
+                <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            } @else {
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" />
+                <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            }
+          </div>
+          <div class="pos-mig-alert__body">
+            <strong class="pos-mig-alert__title">{{ messageTitle() }}</strong>
+            <p class="pos-mig-alert__text">{{ msg }}</p>
+          </div>
+          <button type="button" class="pos-mig-alert__close" (click)="clearMessage()" aria-label="Cerrar aviso">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
       }
 
       <div class="pos-mig-flow">
@@ -481,6 +509,24 @@ export class PosMigracionPage implements OnInit {
   readonly message = signal('');
   readonly messageIsError = signal(false);
 
+  readonly messageTitle = computed(() => {
+    const m = this.message().toLowerCase();
+    if (!m) return '';
+    if (m.includes('encabezado') || m.includes('columna') || m.includes('mapeo')) {
+      return 'Formato del archivo';
+    }
+    if (m.includes('categoría') || m.includes('categoria')) {
+      return 'Categorías del catálogo';
+    }
+    if (m.includes('permiso') || m.includes('sesión') || m.includes('sesion')) {
+      return 'Acceso';
+    }
+    if (m.includes('conexión') || m.includes('conexion') || m.includes('servidor')) {
+      return 'Conexión con el servidor';
+    }
+    return this.messageIsError() ? 'Revisar antes de continuar' : 'Todo correcto';
+  });
+
   mappingDraft: Record<string, string> = {};
 
   readonly config = computed(() => TIPOS.find((t) => t.kind === this.kind()) ?? TIPOS[0]);
@@ -828,12 +874,16 @@ export class PosMigracionPage implements OnInit {
     this.message.set('');
   }
 
+  clearMessage(): void {
+    this.message.set('');
+    this.messageIsError.set(false);
+  }
+
   private clearState(): void {
     this.file.set(null);
     this.preview.set(null);
     this.result.set(null);
-    this.message.set('');
-    this.messageIsError.set(false);
+    this.clearMessage();
     this.mappingDraft = {};
   }
 
