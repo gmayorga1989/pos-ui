@@ -12,6 +12,7 @@ import type {
   PosImportPreset,
   PosImportResult,
 } from '../../core/api/pos-backend.types';
+import { extractApiErrorMessage } from '../../core/http-error.util';
 import { PosToastService } from '../../core/ui/pos-toast.service';
 import { PosTabulatorLocalGridComponent } from '../../shared/grid/pos-tabulator-local-grid.component';
 import { escapeHtml, tabulatorCellValue, tabulatorTextareaCell } from '../../shared/grid/tabulator-formatters.util';
@@ -46,6 +47,7 @@ const TIPOS: MigracionTipoConfig[] = [
       'codigo_barras y sku van como Texto — evita que Excel los convierta a 7,89E+12.',
       'precio = lista principal; columnas precio_* = listas adicionales de su empresa.',
       'iva_codigo: 4 = 15 % IVA (por defecto si se omite).',
+      'categoria_codigo debe existir antes de importar (Catálogo → Categorías: ALIMENTOS, BEBIDAS, etc.).',
     ],
   },
   {
@@ -323,6 +325,10 @@ const COL_LABELS: Record<string, string> = {
                 </p>
               }
 
+              @if (resumenErrores(pv.detalles); as resumen) {
+                <p class="pos-mig-warn">{{ resumen }}</p>
+              }
+
               <div class="pos-mig-mapping">
                 <div class="pos-mig-mapping__head">
                   <h3>Mapeo de columnas</h3>
@@ -414,7 +420,14 @@ const COL_LABELS: Record<string, string> = {
               @if (res.errores === 0) {
                 <p class="pos-mig-success">Importación completada sin errores.</p>
               } @else {
-                <p class="pos-mig-warn">Las filas válidas ya fueron guardadas. Revise los errores abajo.</p>
+                <p class="pos-mig-warn">
+                  Las filas válidas ya fueron guardadas.
+                  @if (resumenErrores(res.detalles); as resumen) {
+                    {{ resumen }}
+                  } @else {
+                    Revise el detalle por fila abajo.
+                  }
+                </p>
               }
               @if (res.detalles.length) {
                 <pos-tabulator-local-grid
@@ -483,7 +496,13 @@ export class PosMigracionPage implements OnInit {
 
   readonly esPlantillaLuxora = computed(() => this.presetId() === 'luxora');
 
-  readonly columnasMapeo = computed(() => [...this.config().obligatorias, ...this.config().opcionales]);
+  readonly columnasMapeo = computed(() => {
+    const objetivo = this.preview()?.columnasObjetivo;
+    if (objetivo?.length) {
+      return objetivo;
+    }
+    return [...this.config().obligatorias, ...this.config().opcionales];
+  });
 
   readonly previewColumns: ColumnDefinition[] = [
     { title: 'Fila', field: 'fila', width: 72, hozAlign: 'right' },
@@ -556,9 +575,28 @@ export class PosMigracionPage implements OnInit {
     return rows as unknown as Record<string, unknown>[];
   }
 
+  resumenErrores(detalles: PosImportLineResult[]): string | null {
+    const errores = detalles.filter((d) => d.estado === 'ERROR' || d.estado === 'MAPEO');
+    if (!errores.length) {
+      return null;
+    }
+    const mensajes = [...new Set(errores.map((e) => e.mensaje).filter(Boolean))];
+    if (mensajes.length === 1) {
+      const prefijo = errores[0].estado === 'MAPEO' ? '' : `${errores.length} fila(s) con el mismo problema: `;
+      return `${prefijo}${mensajes[0]}`;
+    }
+    const first = errores[0];
+    const extra = mensajes.length > 1 ? ` (+${mensajes.length - 1} tipo(s) de error más)` : '';
+    return `${errores.length} error(es). Ejemplo fila ${first.fila} (${first.referencia || 'sin ref'}): ${first.mensaje}${extra}`;
+  }
+
   private estadoPreviewBadge(estado: string): string {
     const cls =
-      estado === 'ERROR' ? 'pos-mig-estado--err' : estado === 'CREAR' ? 'pos-mig-estado--ok' : 'pos-mig-estado--upd';
+      estado === 'ERROR' || estado === 'MAPEO'
+        ? 'pos-mig-estado--err'
+        : estado === 'CREAR'
+          ? 'pos-mig-estado--ok'
+          : 'pos-mig-estado--upd';
     return `<span class="pos-mig-estado ${cls}">${escapeHtml(estado)}</span>`;
   }
 
@@ -569,6 +607,9 @@ export class PosMigracionPage implements OnInit {
   }
 
   colLabel(col: string): string {
+    if (col.startsWith('precio_')) {
+      return `Precio ${col.replace('precio_', '')}`;
+    }
     return COL_LABELS[col] ?? col;
   }
 
@@ -688,7 +729,7 @@ export class PosMigracionPage implements OnInit {
     this.importing.set(true);
     this.message.set('');
     this.api
-      .importFromTemplate(this.kind(), f, this.mappingDraft)
+      .importFromTemplate(this.kind(), f, this.buildEffectiveMapping())
       .pipe(finalize(() => this.importing.set(false)))
       .subscribe({
         next: (res) => {
@@ -697,10 +738,10 @@ export class PosMigracionPage implements OnInit {
           if (res.errores === 0) {
             this.toast.success(`Importación lista: ${res.creados} creados, ${res.actualizados} actualizados.`);
           } else {
-            this.showMsg(`Importación con ${res.errores} error(es).`, true);
+            this.showMsg(this.resumenErrores(res.detalles) ?? `Importación con ${res.errores} error(es).`, true);
           }
         },
-        error: (err: unknown) => this.showMsg(this.errMsg(err, 'No se pudo importar el archivo.'), true),
+        error: (err: unknown) => this.showMsg(extractApiErrorMessage(err, 'No se pudo importar el archivo.'), true),
       });
   }
 
@@ -731,24 +772,41 @@ export class PosMigracionPage implements OnInit {
     }
     this.previewing.set(true);
     this.message.set('');
-    const mapping = Object.keys(this.mappingDraft).length ? this.mappingDraft : null;
     this.api
-      .previewImport(this.kind(), f, mapping)
+      .previewImport(this.kind(), f, this.buildEffectiveMapping())
       .pipe(finalize(() => this.previewing.set(false)))
       .subscribe({
         next: (pv) => {
           this.preview.set(pv);
-          const next: Record<string, string> = {};
-          for (const col of this.columnasMapeo()) {
-            next[col] = this.mappingDraft[col] || pv.mapeoAplicado[col] || pv.mapeoSugerido[col] || '';
-          }
-          this.mappingDraft = next;
+          this.mappingDraft = this.mergeMapping(pv);
           if (advanceStep) {
             this.paso.set(4);
           }
         },
-        error: (err: unknown) => this.showMsg(this.errMsg(err, 'No se pudo analizar el archivo.'), true),
+        error: (err: unknown) => this.showMsg(extractApiErrorMessage(err, 'No se pudo analizar el archivo.'), true),
       });
+  }
+
+  private mergeMapping(pv: PosImportPreviewResult): Record<string, string> {
+    const cols = pv.columnasObjetivo.length ? pv.columnasObjetivo : this.columnasMapeo();
+    const next: Record<string, string> = {};
+    for (const col of cols) {
+      next[col] = this.mappingDraft[col] || pv.mapeoAplicado[col] || pv.mapeoSugerido[col] || '';
+    }
+    return next;
+  }
+
+  private buildEffectiveMapping(): Record<string, string> | null {
+    const pv = this.preview();
+    const cols = pv?.columnasObjetivo?.length ? pv.columnasObjetivo : this.columnasMapeo();
+    const next: Record<string, string> = {};
+    for (const col of cols) {
+      const value = this.mappingDraft[col] || pv?.mapeoAplicado[col] || pv?.mapeoSugerido[col] || '';
+      if (value) {
+        next[col] = value;
+      }
+    }
+    return Object.keys(next).length ? next : null;
   }
 
   private assignFile(f: File): void {
@@ -785,14 +843,4 @@ export class PosMigracionPage implements OnInit {
     if (isError) this.toast.error(text);
   }
 
-  private errMsg(err: unknown, fallback: string): string {
-    if (err && typeof err === 'object' && 'error' in err) {
-      const e = (err as { error?: unknown }).error;
-      if (typeof e === 'string' && e.trim()) return e;
-      if (e && typeof e === 'object' && 'message' in e && typeof (e as { message: unknown }).message === 'string') {
-        return (e as { message: string }).message;
-      }
-    }
-    return fallback;
-  }
 }
