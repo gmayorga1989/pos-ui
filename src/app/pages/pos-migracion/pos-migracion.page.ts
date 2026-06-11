@@ -36,14 +36,15 @@ const TIPOS: MigracionTipoConfig[] = [
     kind: 'products',
     titulo: 'Productos',
     descripcion: 'Catálogo de venta: SKU, precio, categoría e impuestos.',
-    plantillaNombre: 'plantilla-productos-pos.csv',
+    plantillaNombre: 'plantilla-productos-pos.xlsx',
     obligatorias: ['sku', 'nombre', 'precio'],
     opcionales: ['codigo_barras', 'descripcion', 'categoria_codigo', 'etiqueta', 'iva_codigo', 'ref_externa'],
     ejemplo: 'PROD-001;Arroz premium 1kg;1.25;7890123456789;Arroz de grano largo;ALIMENTOS;Retail;4;ERP-1001',
     claveUpsert: 'Si el SKU ya existe, se actualiza el producto.',
     tips: [
-      'Acepta CSV o Excel (.xlsx) directamente.',
-      'El código de categoría debe coincidir con una categoría activa en POS.',
+      'La plantilla Excel incluye comentarios en cada columna (pase el mouse sobre el encabezado).',
+      'codigo_barras y sku van como Texto — evita que Excel los convierta a 7,89E+12.',
+      'precio = lista principal; columnas precio_* = listas adicionales de su empresa.',
       'iva_codigo: 4 = 15 % IVA (por defecto si se omite).',
     ],
   },
@@ -51,15 +52,15 @@ const TIPOS: MigracionTipoConfig[] = [
     kind: 'customers',
     titulo: 'Clientes',
     descripcion: 'Maestro de clientes para ventas y facturación electrónica.',
-    plantillaNombre: 'plantilla-clientes-pos.csv',
+    plantillaNombre: 'plantilla-clientes-pos.xlsx',
     obligatorias: ['tipo_identificacion', 'identificacion', 'razon_social'],
     opcionales: ['nombre_comercial', 'direccion', 'email', 'telefono'],
     ejemplo: '05;0912345678;Juan Pérez García;Juan PG;Av. Principal 123;juan@correo.com;0991234567',
     claveUpsert: 'Si la identificación ya existe, se actualiza el cliente.',
     tips: [
-      'tipo_identificacion: 04 RUC, 05 Cédula, 06 Pasaporte, 07 Consumidor final.',
+      'Plantilla Excel con comentarios en cada columna (tooltip en el encabezado).',
+      'tipo_identificacion e identificacion como Texto (04 RUC, 05 Cédula, 06 Pasaporte, 07 CF).',
       'Máximo 2.000 filas por archivo.',
-      'Ideal para migrar desde otro POS o ERP.',
     ],
   },
 ];
@@ -220,6 +221,11 @@ const COL_LABELS: Record<string, string> = {
               </div>
 
               <p class="pos-mig-guide__upsert">{{ config().claveUpsert }}</p>
+              <ul class="pos-mig-tips pos-mig-tips--compact">
+                @for (tip of config().tips; track tip) {
+                  <li>{{ tip }}</li>
+                }
+              </ul>
             </div>
 
             <footer class="pos-mig-panel__footer">
