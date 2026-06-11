@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 
-export type PosPageIcon = 'maestros' | 'catalogo' | 'clientes' | 'default';
+export type PosPageIcon = 'maestros' | 'catalogo' | 'categorias' | 'clientes' | 'default';
 
 @Component({
   selector: 'pos-page-layout',
@@ -17,6 +17,12 @@ export type PosPageIcon = 'maestros' | 'catalogo' | 'clientes' | 'default';
                   <rect x="14" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
                   <rect x="4" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
                   <rect x="14" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                </svg>
+              }
+              @case ('categorias') {
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 6h16M4 12h10M4 18h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  <path d="M17 11v6M14 14h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                 </svg>
               }
               @case ('clientes') {

@@ -63,6 +63,16 @@
   overflow: visible;
 }
 
+.ts-tabulator-grid .pos-catalog-thumb {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--pos-maestro-border, #e2e8f0);
+  background: #fff;
+  vertical-align: middle;
+}
+
 .ts-tabulator-grid.tabulator .tabulator-row .tabulator-cell:last-child {
   border-right: 0;
 }
@@ -288,4 +298,115 @@ html[data-theme='dark'] .ts-tabulator-empty__cta {
 .cust-picker-grid__id {
   font-family: var(--pos-mono);
   font-size: 0.76rem;
+}
+
+/* —— Paginación Tabulator (español, estilo Luxora) —— */
+.ts-tabulator-grid.tabulator .tabulator-footer {
+  border-top: 1px solid var(--pos-maestro-divider);
+  background: color-mix(in srgb, var(--pos-maestro-grid-head) 72%, var(--pos-maestro-card));
+  padding: 0.55rem 0.75rem;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-paginator {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  color: var(--pos-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-page-counter {
+  color: var(--pos-text);
+  font-size: 0.8rem;
+  letter-spacing: -0.01em;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-page-size label {
+  margin: 0;
+  color: var(--pos-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-page-size select {
+  min-width: 4.25rem;
+  border: 1px solid var(--pos-maestro-border);
+  border-radius: 8px;
+  background: var(--pos-maestro-card);
+  color: var(--pos-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.32rem 0.55rem;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-page-size select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lux-indigo) 45%, transparent);
+  outline-offset: 1px;
+  border-color: color-mix(in srgb, var(--lux-indigo) 35%, var(--pos-maestro-border));
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-page {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--pos-maestro-border);
+  border-radius: 8px;
+  background: var(--pos-maestro-card);
+  color: var(--pos-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-page:not(.disabled):hover {
+  border-color: color-mix(in srgb, var(--lux-indigo) 32%, var(--pos-maestro-border));
+  background: color-mix(in srgb, var(--lux-indigo) 8%, var(--pos-maestro-card));
+  color: var(--lux-primary-strong);
+  transform: translateY(-1px);
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-page.active {
+  border-color: color-mix(in srgb, var(--lux-indigo) 55%, var(--pos-maestro-border));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--lux-indigo) 88%, #4338ca) 0%,
+    color-mix(in srgb, var(--lux-indigo) 72%, #6366f1) 100%
+  );
+  color: #fff;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--lux-indigo) 28%, transparent);
+}
+
+.ts-tabulator-grid.tabulator .tabulator-footer .tabulator-page.disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
 }

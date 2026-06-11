@@ -19,6 +19,11 @@ import {
   type PosTabulatorEmptyContext,
   type PosTabulatorEmptyOptions,
 } from './tabulator-empty.util';
+import {
+  POS_TABULATOR_LOCALE,
+  posTabulatorLangs,
+  posTabulatorPaginationCounter,
+} from './pos-tabulator-locale.util';
 
 @Component({
   selector: 'pos-tabulator-local-grid',
@@ -117,10 +122,12 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
     const opts: Options = {
       layout: 'fitColumns',
       height: this.height,
+      locale: POS_TABULATOR_LOCALE,
+      langs: posTabulatorLangs(),
       pagination: this.pagination,
       paginationSize: this.paginationSize,
-      paginationSizeSelector: this.pagination ? [10, 20, 50] : undefined,
-      paginationCounter: this.pagination ? 'rows' : undefined,
+      paginationSizeSelector: this.pagination ? [10, 15, 20, 50] : undefined,
+      paginationCounter: this.pagination ? posTabulatorPaginationCounter : undefined,
       placeholder: this.buildPlaceholder(),
       data: [...this.data],
       columns: this.normalizedColumns(),
@@ -204,10 +211,12 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
     if (!this.table) {
       return;
     }
+    this.table.options.locale = POS_TABULATOR_LOCALE;
+    this.table.options.langs = posTabulatorLangs();
     this.table.options.pagination = this.pagination;
     this.table.options.paginationSize = this.paginationSize;
-    this.table.options.paginationSizeSelector = this.pagination ? [10, 20, 50] : undefined;
-    this.table.options.paginationCounter = this.pagination ? 'rows' : undefined;
+    this.table.options.paginationSizeSelector = this.pagination ? [10, 15, 20, 50] : undefined;
+    this.table.options.paginationCounter = this.pagination ? posTabulatorPaginationCounter : undefined;
     void this.table.redraw(true);
   }
 

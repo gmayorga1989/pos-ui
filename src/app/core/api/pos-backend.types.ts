@@ -350,6 +350,54 @@ export interface PayPhoneSaleStatusResponse {
   [key: string]: unknown;
 }
 
+export type PosCatalogSource = 'POS' | 'EFACTURA' | 'EXTERNAL';
+
+export interface PosProductCategoryResponse {
+  id: string;
+  parentId?: string | null;
+  code?: string | null;
+  name: string;
+  pathLabel: string;
+  sortOrder: number;
+  active: boolean;
+}
+
+export interface PosProductCategoryRequest {
+  code?: string | null;
+  name: string;
+  parentId?: string | null;
+  sortOrder?: number | null;
+  active?: boolean | null;
+}
+
+export interface PosPriceListResponse {
+  id: string;
+  code: string;
+  name: string;
+  primary: boolean;
+  currency: string;
+  active: boolean;
+}
+
+export interface PosPriceListRequest {
+  name: string;
+  code?: string | null;
+  currency?: string | null;
+}
+
+export interface PosProductPriceResponse {
+  priceListId: string;
+  priceListCode: string;
+  priceListName: string;
+  primary: boolean;
+  price: number;
+}
+
+export interface PosProductPriceEntry {
+  priceListId: string;
+  price: number;
+}
+
 export interface PosProductResponse {
   id: string;
   sku: string;
@@ -362,6 +410,11 @@ export interface PosProductResponse {
   tag: string;
   stockQty?: number | null;
   efacturaProductId?: string | null;
+  categoryId?: string | null;
+  categoryName?: string | null;
+  imageUrl?: string | null;
+  catalogSource?: PosCatalogSource | string | null;
+  externalRef?: string | null;
   active: boolean;
 }
 
@@ -375,6 +428,11 @@ export interface PosProductRequest {
   ivaTaxCode?: string | null;
   tag?: string | null;
   stockQty?: number | null;
+  categoryId?: string | null;
+  imageUrl?: string | null;
+  externalRef?: string | null;
+  catalogSource?: PosCatalogSource | string | null;
+  prices?: PosProductPriceEntry[] | null;
   active?: boolean | null;
 }
 

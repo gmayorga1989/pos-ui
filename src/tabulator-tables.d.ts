@@ -26,7 +26,11 @@ declare module 'tabulator-tables' {
     paginationMode?: string;
     paginationSize?: number;
     paginationSizeSelector?: number[];
-    paginationCounter?: string;
+    paginationCounter?:
+      | string
+      | ((pageSize: number, currentRow: number, currentPage: number, totalRows: number, totalPages: number) => string);
+    locale?: string;
+    langs?: Record<string, Record<string, unknown>>;
     placeholder?: string;
     ajaxURL?: string;
     ajaxRequestFunc?: (url: string, config: unknown, params: Record<string, unknown>) => Promise<unknown>;

@@ -29,6 +29,12 @@ import type {
   PosRucConsultaResponse,
   PosInvoicingConfigRequest,
   PosInvoicingConfigResponse,
+  PosPriceListRequest,
+  PosPriceListResponse,
+  PosProductCategoryRequest,
+  PosProductCategoryResponse,
+  PosProductPriceEntry,
+  PosProductPriceResponse,
   PosProductRequest,
   PosProductResponse,
   PosSalesReportResponse,
@@ -263,6 +269,89 @@ export class PosBackendApiService {
       throw new Error('posApiOrigin no configurado');
     }
     return this.http.delete<void>(`${root}/products/${encodeURIComponent(id)}`);
+  }
+
+  getProductCategories(includeInactive = false): Observable<PosProductCategoryResponse[]> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    const q = includeInactive ? '?includeInactive=true' : '';
+    return this.http.get<PosProductCategoryResponse[]>(`${root}/product-categories${q}`);
+  }
+
+  postProductCategory(body: PosProductCategoryRequest): Observable<PosProductCategoryResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<PosProductCategoryResponse>(`${root}/product-categories`, body);
+  }
+
+  getPriceLists(): Observable<PosPriceListResponse[]> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PosPriceListResponse[]>(`${root}/price-lists`);
+  }
+
+  postPriceList(body: PosPriceListRequest): Observable<PosPriceListResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<PosPriceListResponse>(`${root}/price-lists`, body);
+  }
+
+  getProductPrices(productId: string): Observable<PosProductPriceResponse[]> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PosProductPriceResponse[]>(
+      `${root}/products/${encodeURIComponent(productId)}/prices`,
+    );
+  }
+
+  uploadProductImage(productId: string, file: File): Observable<PosProductResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<PosProductResponse>(`${root}/products/${encodeURIComponent(productId)}/image`, form);
+  }
+
+  putProductCategory(id: string, body: PosProductCategoryRequest): Observable<PosProductCategoryResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.put<PosProductCategoryResponse>(
+      `${root}/product-categories/${encodeURIComponent(id)}`,
+      body,
+    );
+  }
+
+  deleteProductCategory(id: string): Observable<void> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.delete<void>(`${root}/product-categories/${encodeURIComponent(id)}`);
+  }
+
+  activateProductCategory(id: string): Observable<PosProductCategoryResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<PosProductCategoryResponse>(
+      `${root}/product-categories/${encodeURIComponent(id)}/activate`,
+      {},
+    );
   }
 
   getCustomers(q?: string, includeInactive = false): Observable<PosCustomerResponse[]> {

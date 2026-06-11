@@ -26,6 +26,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/pos-catalogo/pos-catalogo.page').then((m) => m.PosCatalogoPage),
       },
       {
+        path: 'categorias',
+        loadComponent: () => import('./pages/pos-categorias/pos-categorias.page').then((m) => m.PosCategoriasPage),
+      },
+      {
         path: 'clientes',
         loadComponent: () => import('./pages/pos-clientes/pos-clientes.page').then((m) => m.PosClientesPage),
       },
