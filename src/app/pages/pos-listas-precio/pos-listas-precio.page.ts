@@ -253,14 +253,18 @@ export class PosListasPrecioPage implements OnInit {
   }
 
   private actionsMenu(cell: unknown): string {
-    const row = (cell as { getData: () => Record<string, unknown> }).getData();
+    const row = (cell as { getRow: () => { getData: () => Record<string, unknown> } }).getRow().getData();
     const primary = row['primary'] === true;
     const active = row['active'] === true;
-    const items: GridActionItem[] = [{ action: 'edit', label: 'Editar' }];
+    const actions: GridActionItem[] = [{ action: 'edit', label: 'Editar', icon: 'edit' }];
     if (!primary) {
-      items.push(active ? { action: 'deactivate', label: 'Inactivar' } : { action: 'activate', label: 'Activar' });
+      if (active) {
+        actions.push({ action: 'deactivate', label: 'Inactivar', icon: 'inactivate', danger: true });
+      } else {
+        actions.push({ action: 'activate', label: 'Activar', icon: 'activate' });
+      }
     }
-    return gridActionsMenu(cell, items);
+    return gridActionsMenu(actions);
   }
 
   private estadoBadge(active: boolean): string {
