@@ -1394,6 +1394,12 @@ export class PosShellComponent implements OnInit {
         icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M14 19c.3-2 1.8-3.5 4-3.5" stroke="currentColor" stroke-width="1.5"/></svg>`,
       },
       {
+        path: '/migracion',
+        label: 'Migración',
+        desc: 'Importar productos y clientes desde Excel/CSV.',
+        icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v10M12 13l-3.5-3.5M12 13l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7 17v2M12 17v2M17 17v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+      },
+      {
         path: '/reportes',
         label: 'Reportes',
         desc: 'Ventas por día y top productos.',

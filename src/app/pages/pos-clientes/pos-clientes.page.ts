@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import type { ColumnDefinition } from 'tabulator-tables';
 import { finalize } from 'rxjs';
 import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
@@ -40,7 +41,7 @@ const TIPO_ID_LABEL: Record<string, string> = {
 @Component({
   selector: 'pos-clientes-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PosPageLayoutComponent, PosTabulatorLocalGridComponent],
+  imports: [CommonModule, FormsModule, RouterLink, PosPageLayoutComponent, PosTabulatorLocalGridComponent],
   host: { class: 'pos-page-host' },
   template: `
     <pos-page-layout
@@ -57,6 +58,7 @@ const TIPO_ID_LABEL: Record<string, string> = {
         @if (mostrarFiltros()) {
           <button type="button" class="pos-btn pos-btn--outline" (click)="limpiarFiltros()">Limpiar</button>
         }
+        <a routerLink="/migracion" [queryParams]="{ tipo: 'clientes' }" class="pos-btn pos-btn--soft">Importar</a>
         <button type="button" class="pos-btn pos-btn--soft" (click)="reload()">Refrescar</button>
       </div>
 

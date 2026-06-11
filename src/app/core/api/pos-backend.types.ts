@@ -510,3 +510,44 @@ export interface PosSalesReportResponse {
   dailyTotals: { date: string; saleCount: number; totalAmount: number }[];
   topProducts: { sku: string; name: string; quantity: number; amount: number }[];
 }
+
+export interface PosImportLineResult {
+  fila: number;
+  referencia: string;
+  estado: string;
+  mensaje: string;
+}
+
+export interface PosImportResult {
+  totalFilas: number;
+  creados: number;
+  actualizados: number;
+  errores: number;
+  detalles: PosImportLineResult[];
+}
+
+export type PosImportKind = 'products' | 'customers';
+
+export interface PosImportPreset {
+  id: string;
+  kind: string;
+  nombre: string;
+  descripcion: string;
+  mapeo: Record<string, string>;
+}
+
+export interface PosImportPreviewResult {
+  totalFilas: number;
+  columnasDetectadas: string[];
+  columnasObjetivo: string[];
+  mapeoSugerido: Record<string, string>;
+  mapeoAplicado: Record<string, string>;
+  mapeoCompleto: boolean;
+  columnasFaltantes: string[];
+  filasValidas: number;
+  filasConError: number;
+  estimadoCrear: number;
+  estimadoActualizar: number;
+  detalles: PosImportLineResult[];
+  muestra: Record<string, string>[];
+}

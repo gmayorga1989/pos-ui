@@ -63,6 +63,7 @@ interface PriceDraftRow {
           </button>
         }
         <a routerLink="/categorias" class="pos-btn pos-btn--soft">Categorías</a>
+        <a routerLink="/migracion" [queryParams]="{ tipo: 'productos' }" class="pos-btn pos-btn--soft">Importar</a>
         <button type="button" class="pos-btn pos-btn--soft" (click)="reload()">Refrescar</button>
       </div>
 

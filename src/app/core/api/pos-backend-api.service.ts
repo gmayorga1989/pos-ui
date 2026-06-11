@@ -35,6 +35,10 @@ import type {
   PosProductCategoryResponse,
   PosProductPriceEntry,
   PosProductPriceResponse,
+  PosImportKind,
+  PosImportPreset,
+  PosImportPreviewResult,
+  PosImportResult,
   PosProductRequest,
   PosProductResponse,
   PosSalesReportResponse,
@@ -458,5 +462,68 @@ export class PosBackendApiService {
     }
     const suffix = q.toString() ? `?${q}` : '';
     return this.http.get<PosSalesReportResponse>(`${root}/reports/sales${suffix}`);
+  }
+
+  getImportPresets(kind?: PosImportKind): Observable<PosImportPreset[]> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    const q = kind ? `?kind=${encodeURIComponent(kind)}` : '';
+    return this.http.get<PosImportPreset[]>(`${root}/import/presets${q}`);
+  }
+
+  downloadImportTemplate(kind: PosImportKind): Observable<Blob> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    const segment = kind === 'products' ? 'products' : 'customers';
+    return this.http.get(`${root}/import/${segment}/template`, { responseType: 'blob' });
+  }
+
+  previewImport(
+    kind: PosImportKind,
+    file: File,
+    mapping?: Record<string, string> | null,
+  ): Observable<PosImportPreviewResult> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    const segment = kind === 'products' ? 'products' : 'customers';
+    return this.http.post<PosImportPreviewResult>(`${root}/import/${segment}/preview`, this.importForm(file, mapping));
+  }
+
+  importFromTemplate(
+    kind: PosImportKind,
+    file: File,
+    mapping?: Record<string, string> | null,
+  ): Observable<PosImportResult> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    const segment = kind === 'products' ? 'products' : 'customers';
+    return this.http.post<PosImportResult>(`${root}/import/${segment}`, this.importForm(file, mapping));
+  }
+
+  private importForm(file: File, mapping?: Record<string, string> | null): FormData {
+    const form = new FormData();
+    form.append('file', file);
+    const clean = this.cleanMapping(mapping);
+    if (clean) {
+      form.append('mapping', new Blob([JSON.stringify(clean)], { type: 'application/json' }));
+    }
+    return form;
+  }
+
+  private cleanMapping(mapping?: Record<string, string> | null): Record<string, string> | null {
+    if (!mapping) return null;
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(mapping)) {
+      if (v?.trim()) out[k] = v.trim();
+    }
+    return Object.keys(out).length ? out : null;
   }
 }
