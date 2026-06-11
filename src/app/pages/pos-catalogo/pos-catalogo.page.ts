@@ -44,8 +44,8 @@ interface PriceDraftRow {
   host: { class: 'pos-page-host' },
   template: `
     <pos-page-layout
-      eyebrow="Maestros"
-      title="Catálogo"
+      eyebrow="Catálogo"
+      title="Productos"
       subtitle="Productos del tenant. Sincronice con eFactura si el modo de despliegue lo permite."
       icon="catalogo">
       <div page-actions class="pos-page-actions-group">
@@ -63,6 +63,7 @@ interface PriceDraftRow {
           </button>
         }
         <a routerLink="/categorias" class="pos-btn pos-btn--soft">Categorías</a>
+        <a routerLink="/listas-precio" class="pos-btn pos-btn--soft">Listas precio</a>
         <a routerLink="/migracion" [queryParams]="{ tipo: 'productos' }" class="pos-btn pos-btn--soft">Importar</a>
         <button type="button" class="pos-btn pos-btn--soft" (click)="reload()">Refrescar</button>
       </div>
@@ -212,7 +213,7 @@ interface PriceDraftRow {
                       <h4 class="pos-form-section__title" id="product-section-prices">Precios</h4>
                       <p class="pos-form-section__desc">La lista principal se usa en venta y checkout.</p>
                     </div>
-                    <button type="button" class="pos-btn pos-btn--outline pos-btn--sm" (click)="openPriceListForm()">Nueva lista</button>
+                    <a routerLink="/listas-precio" class="pos-btn pos-btn--outline pos-btn--sm">Gestionar listas</a>
                   </div>
                 </div>
                 <div class="pos-form-section__body pos-form-section__body--single">
@@ -349,34 +350,6 @@ interface PriceDraftRow {
       </section>
     }
 
-    @if (priceListFormOpen()) {
-      <div class="ts-modal-backdrop" (click)="closePriceListForm()"></div>
-      <section class="ts-form-modal ts-form-modal--compact" role="dialog" aria-modal="true">
-        <header class="ts-form-modal__header">
-          <div class="ts-form-modal__head-text">
-            <h3>Nueva lista de precios</h3>
-          </div>
-          <button type="button" class="ts-form-modal__close" aria-label="Cerrar" (click)="closePriceListForm()">
-            <svg class="ts-form-modal__close-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-            </svg>
-          </button>
-        </header>
-        <div class="ts-form-modal__body">
-          <label class="pos-form-field">
-            <span>Nombre</span>
-            <input [(ngModel)]="newPriceListName" name="newPriceListName" placeholder="Ej. Mayorista" />
-          </label>
-        </div>
-        <footer class="ts-form-modal__footer">
-          <button type="button" class="pos-btn pos-btn--ghost" (click)="closePriceListForm()">Cancelar</button>
-          <button type="button" class="pos-btn pos-btn--primary" [disabled]="savingPriceList()" (click)="createPriceList()">
-            {{ savingPriceList() ? 'Guardando…' : 'Crear lista' }}
-          </button>
-        </footer>
-      </section>
-    }
-
     @if (deactivateId()) {
       <div class="ts-modal-backdrop" (click)="cancelDeactivate()"></div>
       <section class="ts-confirm-modal" role="alertdialog" aria-modal="true">
@@ -498,8 +471,6 @@ export class PosCatalogoPage implements OnInit {
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly editingCatalogSource = signal<string | null>(null);
-  readonly priceListFormOpen = signal(false);
-  readonly savingPriceList = signal(false);
   readonly imagePreviewUrl = signal<string | null>(null);
   readonly imageDragOver = signal(false);
   readonly showImageUrlField = signal(false);
@@ -519,7 +490,6 @@ export class PosCatalogoPage implements OnInit {
 
   draft: PosProductRequest = this.emptyDraft();
   priceDrafts: PriceDraftRow[] = [];
-  newPriceListName = '';
   private pendingImageFile: File | null = null;
 
   async ngOnInit(): Promise<void> {
@@ -647,40 +617,6 @@ export class PosCatalogoPage implements OnInit {
     this.showImageUrlField.set(false);
     this.draft = this.emptyDraft();
     this.priceDrafts = [];
-  }
-
-  openPriceListForm(): void {
-    this.newPriceListName = '';
-    this.priceListFormOpen.set(true);
-  }
-
-  closePriceListForm(): void {
-    this.priceListFormOpen.set(false);
-    this.newPriceListName = '';
-  }
-
-  createPriceList(): void {
-    const name = this.newPriceListName.trim();
-    if (!name) {
-      this.setMessage('Indique el nombre de la lista', true);
-      return;
-    }
-    this.savingPriceList.set(true);
-    this.api
-      .postPriceList({ name })
-      .pipe(finalize(() => this.savingPriceList.set(false)))
-      .subscribe({
-        next: (created) => {
-          this.closePriceListForm();
-          this.reloadMasters();
-          this.priceDrafts = [
-            ...this.priceDrafts,
-            { priceListId: created.id, priceListName: created.name, primary: false, price: 0 },
-          ];
-          this.setMessage('Lista de precios creada', false);
-        },
-        error: () => this.setMessage('Error al crear la lista de precios', true),
-      });
   }
 
   onImageSelected(event: Event): void {

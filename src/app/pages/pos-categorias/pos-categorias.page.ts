@@ -19,7 +19,7 @@ import { PosPageLayoutComponent } from '../../shared/pos-page-layout.component';
   host: { class: 'pos-page-host' },
   template: `
     <pos-page-layout
-      eyebrow="Maestros"
+      eyebrow="Catálogo"
       title="Categorías"
       subtitle="Jerarquía de categorías para organizar el catálogo de productos."
       icon="categorias">
@@ -32,7 +32,8 @@ import { PosPageLayoutComponent } from '../../shared/pos-page-layout.component';
         @if (mostrarFiltros()) {
           <button type="button" class="pos-btn pos-btn--outline" (click)="limpiarFiltros()">Limpiar</button>
         }
-        <a routerLink="/catalogo" class="pos-btn pos-btn--soft">Ir a catálogo</a>
+        <a routerLink="/listas-precio" class="pos-btn pos-btn--soft">Listas precio</a>
+        <a routerLink="/catalogo" class="pos-btn pos-btn--soft">Productos</a>
         <button type="button" class="pos-btn pos-btn--soft" (click)="reload()">Refrescar</button>
       </div>
 

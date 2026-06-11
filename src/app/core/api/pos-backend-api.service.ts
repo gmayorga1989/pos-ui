@@ -292,12 +292,13 @@ export class PosBackendApiService {
     return this.http.post<PosProductCategoryResponse>(`${root}/product-categories`, body);
   }
 
-  getPriceLists(): Observable<PosPriceListResponse[]> {
+  getPriceLists(includeInactive = false): Observable<PosPriceListResponse[]> {
     const root = this.apiRoot();
     if (!root) {
       throw new Error('posApiOrigin no configurado');
     }
-    return this.http.get<PosPriceListResponse[]>(`${root}/price-lists`);
+    const q = includeInactive ? '?includeInactive=true' : '';
+    return this.http.get<PosPriceListResponse[]>(`${root}/price-lists${q}`);
   }
 
   postPriceList(body: PosPriceListRequest): Observable<PosPriceListResponse> {
@@ -306,6 +307,30 @@ export class PosBackendApiService {
       throw new Error('posApiOrigin no configurado');
     }
     return this.http.post<PosPriceListResponse>(`${root}/price-lists`, body);
+  }
+
+  putPriceList(id: string, body: PosPriceListRequest): Observable<PosPriceListResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.put<PosPriceListResponse>(`${root}/price-lists/${encodeURIComponent(id)}`, body);
+  }
+
+  activatePriceList(id: string): Observable<PosPriceListResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<PosPriceListResponse>(`${root}/price-lists/${encodeURIComponent(id)}/activate`, {});
+  }
+
+  deactivatePriceList(id: string): Observable<void> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<void>(`${root}/price-lists/${encodeURIComponent(id)}/deactivate`, {});
   }
 
   getProductPrices(productId: string): Observable<PosProductPriceResponse[]> {

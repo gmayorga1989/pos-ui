@@ -859,6 +859,16 @@ html[data-theme='dark'] .pos-page-actions-toolbar .pos-btn--outline {
   color: var(--pos-danger);
 }
 
+.pos-maestro-msg--info {
+  color: var(--pos-text);
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--pos-maestro-border);
+  background: color-mix(in srgb, var(--lux-indigo) 5%, var(--pos-maestro-card));
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 /* —— Centro de migración —— */
 
 .pos-mig-flow {

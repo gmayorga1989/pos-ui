@@ -30,6 +30,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/pos-categorias/pos-categorias.page').then((m) => m.PosCategoriasPage),
       },
       {
+        path: 'listas-precio',
+        loadComponent: () =>
+          import('./pages/pos-listas-precio/pos-listas-precio.page').then((m) => m.PosListasPrecioPage),
+      },
+      {
         path: 'clientes',
         loadComponent: () => import('./pages/pos-clientes/pos-clientes.page').then((m) => m.PosClientesPage),
       },
