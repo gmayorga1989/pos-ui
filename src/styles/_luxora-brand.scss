@@ -1,3 +1,6 @@
+@use 'luxora-theme';
+@use 'luxora-shell';
+
 /**
  * Paleta Luxora / Appluxora — usar en todas las UIs (efactura, suite, pos, cartera).
  * Cyan #00E5FF · Indigo #6366F1 · Magenta #C026D3 · Ink #0F1117 · Surface #F5F7FA
@@ -27,6 +30,3 @@
   --bs-primary: var(--lux-primary);
   --bs-primary-rgb: var(--lux-primary-rgb);
 }
-
-@import 'luxora-theme';
-@import 'luxora-shell';

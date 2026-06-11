@@ -1,4 +1,4 @@
-@import 'tabulator-tables/dist/css/tabulator_bootstrap5.min.css';
+@use 'tabulator-tables/dist/css/tabulator_bootstrap5.min.css';
 
 .ts-tabulator-grid.tabulator {
   border: 1px solid var(--pos-maestro-border);

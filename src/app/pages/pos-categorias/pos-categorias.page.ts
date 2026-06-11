@@ -167,16 +167,7 @@ export class PosCategoriasPage implements OnInit {
       width: 82,
       headerSort: false,
       hozAlign: 'center',
-      formatter: (cell) => {
-        const row = cell.getRow().getData() as PosProductCategoryResponse;
-        const actions: GridActionItem[] = [{ action: 'edit', label: 'Editar', icon: 'edit' }];
-        if (row.active) {
-          actions.push({ action: 'deactivate', label: 'Inactivar', icon: 'inactivate', danger: true });
-        } else {
-          actions.push({ action: 'activate', label: 'Activar', icon: 'activate' });
-        }
-        return gridActionsMenu(actions);
-      },
+      formatter: (cell) => this.categoryActionsMenu(cell),
     },
     {
       title: 'Ruta',
@@ -349,6 +340,18 @@ export class PosCategoriasPage implements OnInit {
     const label = active ? 'Activo' : 'Inactivo';
     const cls = active ? 'pos-badge pos-badge--ok' : 'pos-badge pos-badge--muted';
     return `<span class="${cls}">${escapeHtml(label)}</span>`;
+  }
+
+  private categoryActionsMenu(cell: unknown): string {
+    const row = (cell as { getRow: () => { getData: () => Record<string, unknown> } }).getRow().getData();
+    const active = row['active'] === true;
+    const actions: GridActionItem[] = [{ action: 'edit', label: 'Editar', icon: 'edit' }];
+    if (active) {
+      actions.push({ action: 'deactivate', label: 'Inactivar', icon: 'inactivate', danger: true });
+    } else {
+      actions.push({ action: 'activate', label: 'Activar', icon: 'activate' });
+    }
+    return gridActionsMenu(actions);
   }
 
   private bumpGrid(): void {

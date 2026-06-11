@@ -1,9 +1,8 @@
-@import 'styles/luxora-brand';
-@import 'styles/luxora-shell';
-@import 'styles/luxora-sso-bridge';
-@import 'styles/pos-maestro';
-@import 'styles/pos-ef-modals';
-@import 'styles/pos-tabulator';
+@use 'styles/luxora-brand';
+@use 'styles/luxora-sso-bridge';
+@use 'styles/pos-maestro';
+@use 'styles/pos-ef-modals';
+@use 'styles/pos-tabulator';
 
 /* —— Suite POS — tokens por tema y densidad —— */
 
