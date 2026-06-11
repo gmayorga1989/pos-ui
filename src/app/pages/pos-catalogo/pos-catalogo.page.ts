@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import type { ColumnDefinition } from 'tabulator-tables';
@@ -23,6 +23,11 @@ import {
   posSriIvaLabel,
   posSriIvaPercentForCode,
 } from '../../shared/catalog/pos-sri-iva.util';
+import {
+  POS_PRODUCT_IMAGE_ACCEPT,
+  POS_PRODUCT_IMAGE_HINT,
+  validateProductImageFile,
+} from '../../shared/catalog/pos-product-image.util';
 import { PosPageLayoutComponent } from '../../shared/pos-page-layout.component';
 
 interface PriceDraftRow {
@@ -115,7 +120,7 @@ interface PriceDraftRow {
 
     @if (formOpen()) {
       <div class="ts-modal-backdrop" (click)="closeForm()"></div>
-      <section class="ts-form-modal ts-form-modal--wide" role="dialog" aria-modal="true">
+      <section class="ts-form-modal ts-form-modal--product" role="dialog" aria-modal="true" aria-labelledby="product-form-title">
         <header class="ts-form-modal__header">
           <div class="ts-form-modal__icon" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -126,9 +131,9 @@ interface PriceDraftRow {
             </svg>
           </div>
           <div class="ts-form-modal__head-text">
-            <p class="ts-form-modal__eyebrow">Maestros</p>
-            <h3>{{ editingId() ? 'Editar producto' : 'Nuevo producto' }}</h3>
-            <p class="ts-form-modal__subtitle">Complete los datos del ítem de catálogo.</p>
+            <p class="ts-form-modal__eyebrow">Maestros · Catálogo</p>
+            <h3 id="product-form-title">{{ editingId() ? 'Editar producto' : 'Nuevo producto' }}</h3>
+            <p class="ts-form-modal__subtitle">Organice identificación, precios, fiscal e imagen del ítem.</p>
           </div>
           <button type="button" class="ts-form-modal__close" aria-label="Cerrar" (click)="closeForm()">
             <svg class="ts-form-modal__close-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -137,90 +142,207 @@ interface PriceDraftRow {
           </button>
         </header>
         <div class="ts-form-modal__body">
-          <div class="pos-form-grid">
-            <label class="pos-form-field"><span>SKU / Código interno</span><input [(ngModel)]="draft.sku" name="sku" required /></label>
-            <label class="pos-form-field">
-              <span>Código de barras</span>
-              <input [(ngModel)]="draft.barcode" name="barcode" placeholder="EAN / UPC — compatible con lector" />
-            </label>
-            <label class="pos-form-field pos-form-field--span2"><span>Nombre</span><input [(ngModel)]="draft.name" name="name" required /></label>
-            <label class="pos-form-field">
-              <span>Categoría</span>
-              <div class="pos-form-field__inline">
-                <select [(ngModel)]="draft.categoryId" name="categoryId">
-                  <option [ngValue]="null">Sin categoría</option>
-                  @for (c of categoryOptions(); track c.id) {
-                    <option [ngValue]="c.id">{{ categorySelectLabel(c) }}</option>
-                  }
-                </select>
-                <a routerLink="/categorias" class="pos-btn pos-btn--outline pos-btn--sm pos-form-field__action">Gestionar</a>
-              </div>
-            </label>
-            <label class="pos-form-field pos-form-field--span2">
-              <span>Imagen</span>
-              <div class="pos-catalog-image-field">
-                @if (imagePreviewUrl() || draft.imageUrl) {
-                  <img [src]="imagePreviewUrl() || resolveMediaUrl(draft.imageUrl)" alt="" class="pos-catalog-image-preview" />
-                }
-                <div class="pos-catalog-image-actions">
-                  <input type="file" accept="image/png,image/jpeg,image/webp" (change)="onImageSelected($event)" />
-                  <input [(ngModel)]="draft.imageUrl" name="imageUrl" placeholder="URL alternativa (https://…)" />
+          <div class="pos-product-form">
+            <div class="pos-product-form__main">
+              <section class="pos-form-section" aria-labelledby="product-section-ident">
+                <div class="pos-form-section__head">
+                  <h4 class="pos-form-section__title" id="product-section-ident">Identificación</h4>
+                  <p class="pos-form-section__desc">Datos básicos visibles en venta y facturación.</p>
                 </div>
-              </div>
-            </label>
-            <label class="pos-form-field">
-              <span>Ref. externa</span>
-              <input [(ngModel)]="draft.externalRef" name="externalRef" placeholder="ID en sistema externo" [readonly]="isEfacturaProduct()" />
-            </label>
-            @if (editingId() && editingCatalogSource()) {
-              <label class="pos-form-field">
-                <span>Origen catálogo</span>
-                <input [value]="catalogSourceLabel(editingCatalogSource())" readonly />
-              </label>
-            }
-            <label class="pos-form-field">
-              <span>Precio principal</span>
-              <input type="number" step="0.01" min="0" [(ngModel)]="draft.price" name="price" required (ngModelChange)="onPrimaryPriceChange($event)" />
-              @if (primaryPriceList()) {
-                <small class="pos-form-hint">Lista: {{ primaryPriceList()!.name }}</small>
-              }
-            </label>
-            <div class="pos-form-field pos-form-field--span2">
-              <div class="pos-form-field__inline pos-form-field__inline--between">
-                <span>Precios por lista</span>
-                <button type="button" class="pos-btn pos-btn--outline pos-btn--sm" (click)="openPriceListForm()">Nueva lista</button>
-              </div>
-              <div class="pos-price-list-grid">
-                @for (row of priceDrafts; track row.priceListId) {
-                  <label class="pos-price-list-row">
-                    <span>{{ row.priceListName }}@if (row.primary) { <em class="pos-form-hint"> (principal)</em> }</span>
-                    <input type="number" step="0.01" min="0" [(ngModel)]="row.price" [name]="'price_' + row.priceListId" (ngModelChange)="onListPriceChange(row)" />
+                <div class="pos-form-section__body">
+                  <label class="pos-form-field" [class.pos-form-field--invalid]="formErrors()['sku']">
+                    <span>SKU / Código interno <abbr class="pos-form-required" title="Obligatorio">*</abbr></span>
+                    <input [(ngModel)]="draft.sku" name="sku" autocomplete="off" placeholder="Ej. PROD-001" />
+                    @if (formErrors()['sku']) {
+                      <small class="pos-form-field__error">{{ formErrors()['sku'] }}</small>
+                    }
+                  </label>
+                  <label class="pos-form-field">
+                    <span>Código de barras</span>
+                    <input [(ngModel)]="draft.barcode" name="barcode" placeholder="EAN / UPC — compatible con lector" />
+                  </label>
+                  <label class="pos-form-field pos-form-field--span2" [class.pos-form-field--invalid]="formErrors()['name']">
+                    <span>Nombre del producto <abbr class="pos-form-required" title="Obligatorio">*</abbr></span>
+                    <input [(ngModel)]="draft.name" name="name" placeholder="Nombre comercial o descriptivo" />
+                    @if (formErrors()['name']) {
+                      <small class="pos-form-field__error">{{ formErrors()['name'] }}</small>
+                    }
+                  </label>
+                  <label class="pos-form-field pos-form-field--span2">
+                    <span>Descripción</span>
+                    <textarea [(ngModel)]="draft.description" name="description" rows="2" placeholder="Detalle opcional para uso interno"></textarea>
+                  </label>
+                </div>
+              </section>
+
+              <section class="pos-form-section" aria-labelledby="product-section-class">
+                <div class="pos-form-section__head">
+                  <h4 class="pos-form-section__title" id="product-section-class">Clasificación</h4>
+                  <p class="pos-form-section__desc">Agrupe y filtre en catálogo y reportes.</p>
+                </div>
+                <div class="pos-form-section__body">
+                  <label class="pos-form-field">
+                    <span>Categoría</span>
+                    <div class="pos-form-field__inline">
+                      <select [(ngModel)]="draft.categoryId" name="categoryId">
+                        <option [ngValue]="null">Sin categoría</option>
+                        @for (c of categoryOptions(); track c.id) {
+                          <option [ngValue]="c.id">{{ categorySelectLabel(c) }}</option>
+                        }
+                      </select>
+                      <a routerLink="/categorias" class="pos-btn pos-btn--outline pos-btn--sm pos-form-field__action">Gestionar</a>
+                    </div>
+                  </label>
+                  <label class="pos-form-field">
+                    <span>Etiqueta / grupo</span>
+                    <select [(ngModel)]="draft.tag" name="tag">
+                      <option>Retail</option>
+                      <option>Servicios</option>
+                      <option>Combo</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+
+              <section class="pos-form-section" aria-labelledby="product-section-prices">
+                <div class="pos-form-section__head">
+                  <div class="pos-form-field__inline pos-form-field__inline--between">
+                    <div>
+                      <h4 class="pos-form-section__title" id="product-section-prices">Precios</h4>
+                      <p class="pos-form-section__desc">La lista principal se usa en venta y checkout.</p>
+                    </div>
+                    <button type="button" class="pos-btn pos-btn--outline pos-btn--sm" (click)="openPriceListForm()">Nueva lista</button>
+                  </div>
+                </div>
+                <div class="pos-form-section__body pos-form-section__body--single">
+                  <div class="pos-price-table">
+                    <div class="pos-price-table__head">
+                      <span>Lista de precios</span>
+                      <span>Precio <abbr class="pos-form-required" title="Obligatorio">*</abbr></span>
+                    </div>
+                    @for (row of priceDrafts; track row.priceListId) {
+                      <label class="pos-price-table__row" [class.pos-form-field--invalid]="row.primary && formErrors()['price']">
+                        <span class="pos-price-table__name">
+                          {{ row.priceListName }}
+                          @if (row.primary) {
+                            <span class="pos-price-table__badge">Principal</span>
+                          }
+                        </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          [(ngModel)]="row.price"
+                          [name]="'price_' + row.priceListId"
+                          (ngModelChange)="onListPriceChange(row)" />
+                      </label>
+                    }
+                  </div>
+                  @if (formErrors()['price']) {
+                    <small class="pos-form-field__error">{{ formErrors()['price'] }}</small>
+                  }
+                </div>
+              </section>
+
+              <section class="pos-form-section" aria-labelledby="product-section-tax">
+                <div class="pos-form-section__head">
+                  <h4 class="pos-form-section__title" id="product-section-tax">Impuestos (SRI)</h4>
+                  <p class="pos-form-section__desc">Tarifa de IVA aplicable al comprobante electrónico.</p>
+                </div>
+                <div class="pos-form-section__body">
+                  <label class="pos-form-field">
+                    <span>Tarifa IVA <abbr class="pos-form-required" title="Obligatorio">*</abbr></span>
+                    <select [(ngModel)]="draft.ivaTaxCode" name="ivaTaxCode" (ngModelChange)="onIvaCodeChange($event)">
+                      @for (opt of ivaOptions; track opt.code) {
+                        <option [value]="opt.code">{{ opt.description }}</option>
+                      }
+                    </select>
+                  </label>
+                  <label class="pos-form-field">
+                    <span>% IVA aplicable</span>
+                    <input type="number" step="0.01" [ngModel]="draft.ivaPercent" name="ivaPercent" readonly />
+                  </label>
+                </div>
+              </section>
+
+              <section class="pos-form-section" aria-labelledby="product-section-integration">
+                <div class="pos-form-section__head">
+                  <h4 class="pos-form-section__title" id="product-section-integration">Integración</h4>
+                  <p class="pos-form-section__desc">Referencias externas y origen del registro.</p>
+                </div>
+                <div class="pos-form-section__body">
+                  <label class="pos-form-field">
+                    <span>Referencia externa</span>
+                    <input [(ngModel)]="draft.externalRef" name="externalRef" placeholder="ID en ERP u otro sistema" [readonly]="isEfacturaProduct()" />
+                  </label>
+                  @if (editingId() && editingCatalogSource()) {
+                    <label class="pos-form-field">
+                      <span>Origen catálogo</span>
+                      <input [value]="catalogSourceLabel(editingCatalogSource())" readonly />
+                    </label>
+                  }
+                </div>
+              </section>
+            </div>
+
+            <aside class="pos-product-form__aside">
+              <div class="pos-image-panel">
+                <h4 class="pos-image-panel__title">Imagen del producto</h4>
+                <div
+                  class="pos-image-dropzone"
+                  [class.is-dragover]="imageDragOver()"
+                  [class.has-preview]="hasImagePreview()"
+                  (dragover)="onImageDragOver($event)"
+                  (dragleave)="onImageDragLeave($event)"
+                  (drop)="onImageDrop($event)"
+                  (click)="onDropzoneClick($event)">
+                  <input
+                    #imageFileInput
+                    class="pos-image-dropzone__input"
+                    type="file"
+                    [accept]="imageAccept"
+                    (change)="onImageSelected($event)" />
+                  @if (hasImagePreview()) {
+                    <img [src]="imagePreviewUrl() || resolveMediaUrl(draft.imageUrl)" alt="Vista previa del producto" class="pos-image-dropzone__preview" />
+                    <div class="pos-image-dropzone__actions">
+                      <button type="button" class="pos-btn pos-btn--outline pos-btn--sm" (click)="triggerImageSelect($event)">Cambiar</button>
+                      <button type="button" class="pos-btn pos-btn--ghost pos-btn--sm" (click)="removeImage($event)">Quitar</button>
+                    </div>
+                  } @else {
+                    <div class="pos-image-dropzone__placeholder">
+                      <div class="pos-image-dropzone__icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 16V8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                          <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                      </div>
+                      <p class="pos-image-dropzone__label">Arrastre una imagen o haga clic</p>
+                      <p class="pos-image-dropzone__hint">{{ imageHint }}</p>
+                    </div>
+                  }
+                </div>
+                @if (imageError()) {
+                  <p class="pos-image-dropzone__error" role="alert">{{ imageError() }}</p>
+                }
+                <button type="button" class="pos-image-url-toggle" (click)="showImageUrlField.set(!showImageUrlField())">
+                  {{ showImageUrlField() ? 'Ocultar URL' : 'Usar URL en su lugar' }}
+                </button>
+                @if (showImageUrlField()) {
+                  <label class="pos-image-url-field">
+                    <span>URL de imagen</span>
+                    <input [(ngModel)]="draft.imageUrl" name="imageUrl" placeholder="https://…" />
+                    <small class="pos-form-hint">Alternativa si la imagen ya está alojada externamente.</small>
                   </label>
                 }
               </div>
-            </div>
-            <label class="pos-form-field">
-              <span>Tarifa IVA (SRI)</span>
-              <select [(ngModel)]="draft.ivaTaxCode" name="ivaTaxCode" (ngModelChange)="onIvaCodeChange($event)">
-                @for (opt of ivaOptions; track opt.code) {
-                  <option [value]="opt.code">{{ opt.description }}</option>
-                }
-              </select>
-            </label>
-            <label class="pos-form-field">
-              <span>Etiqueta / grupo</span>
-              <select [(ngModel)]="draft.tag" name="tag"><option>Retail</option><option>Servicios</option><option>Combo</option></select>
-            </label>
-            <label class="pos-form-field">
-              <span>% IVA aplicable</span>
-              <input type="number" step="0.01" [ngModel]="draft.ivaPercent" name="ivaPercent" readonly />
-            </label>
+            </aside>
           </div>
         </div>
         <footer class="ts-form-modal__footer">
+          <p class="pos-product-form__required-note"><abbr class="pos-form-required" title="Obligatorio">*</abbr> Campo obligatorio</p>
           <button type="button" class="pos-btn pos-btn--ghost" (click)="closeForm()">Cancelar</button>
           <button type="button" class="pos-btn pos-btn--primary" [disabled]="saving()" (click)="saveProduct()">
-            {{ saving() ? 'Guardando…' : 'Guardar' }}
+            {{ saving() ? 'Guardando…' : 'Guardar producto' }}
           </button>
         </footer>
       </section>
@@ -289,8 +411,6 @@ export class PosCatalogoPage implements OnInit {
   readonly categoryOptions = computed(() =>
     [...this.categories()].sort((a, b) => a.pathLabel.localeCompare(b.pathLabel, 'es')),
   );
-
-  readonly primaryPriceList = computed(() => this.priceLists().find((p) => p.primary) ?? null);
 
   readonly ivaOptions = POS_SRI_IVA_OPTIONS;
 
@@ -380,12 +500,21 @@ export class PosCatalogoPage implements OnInit {
   readonly priceListFormOpen = signal(false);
   readonly savingPriceList = signal(false);
   readonly imagePreviewUrl = signal<string | null>(null);
+  readonly imageDragOver = signal(false);
+  readonly showImageUrlField = signal(false);
+  readonly imageError = signal<string | null>(null);
+  readonly formErrors = signal<Record<string, string>>({});
   readonly saving = signal(false);
   readonly syncing = signal(false);
   readonly message = signal<string | null>(null);
   readonly messageIsError = signal(false);
   readonly deactivateId = signal<string | null>(null);
   readonly runtimeConfig = signal<{ catalogSource: string; invoicingProvider: string } | null>(null);
+
+  readonly imageAccept = POS_PRODUCT_IMAGE_ACCEPT;
+  readonly imageHint = POS_PRODUCT_IMAGE_HINT;
+
+  @ViewChild('imageFileInput') private imageFileInput?: ElementRef<HTMLInputElement>;
 
   draft: PosProductRequest = this.emptyDraft();
   priceDrafts: PriceDraftRow[] = [];
@@ -469,6 +598,9 @@ export class PosCatalogoPage implements OnInit {
     this.editingId.set(null);
     this.editingCatalogSource.set(null);
     this.clearImagePending();
+    this.formErrors.set({});
+    this.imageError.set(null);
+    this.showImageUrlField.set(false);
     this.draft = this.emptyDraft();
     this.initPriceDrafts();
     this.formOpen.set(true);
@@ -478,6 +610,9 @@ export class PosCatalogoPage implements OnInit {
     this.editingId.set(p.id);
     this.editingCatalogSource.set(p.catalogSource ?? 'POS');
     this.clearImagePending();
+    this.formErrors.set({});
+    this.imageError.set(null);
+    this.showImageUrlField.set(!!p.imageUrl?.trim());
     this.draft = {
       sku: p.sku,
       barcode: p.barcode ?? '',
@@ -506,6 +641,9 @@ export class PosCatalogoPage implements OnInit {
     this.editingId.set(null);
     this.editingCatalogSource.set(null);
     this.clearImagePending();
+    this.formErrors.set({});
+    this.imageError.set(null);
+    this.showImageUrlField.set(false);
     this.draft = this.emptyDraft();
     this.priceDrafts = [];
   }
@@ -547,25 +685,74 @@ export class PosCatalogoPage implements OnInit {
   onImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) return;
-    if (file.size > 3 * 1024 * 1024) {
-      this.setMessage('La imagen no puede superar 3 MB', true);
-      input.value = '';
+    if (file) void this.processImageFile(file);
+    input.value = '';
+  }
+
+  onImageDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.imageDragOver.set(true);
+  }
+
+  onImageDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.imageDragOver.set(false);
+  }
+
+  onImageDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.imageDragOver.set(false);
+    const file = event.dataTransfer?.files?.[0];
+    if (file) void this.processImageFile(file);
+  }
+
+  onDropzoneClick(event: MouseEvent): void {
+    if (this.hasImagePreview()) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('button')) return;
+    this.imageFileInput?.nativeElement.click();
+  }
+
+  triggerImageSelect(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.imageFileInput?.nativeElement.click();
+  }
+
+  removeImage(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.clearImagePending();
+    this.draft.imageUrl = '';
+    this.imageError.set(null);
+    if (this.imageFileInput?.nativeElement) {
+      this.imageFileInput.nativeElement.value = '';
+    }
+  }
+
+  async processImageFile(file: File): Promise<void> {
+    const error = await validateProductImageFile(file);
+    if (error) {
+      this.imageError.set(error);
       return;
     }
+    this.imageError.set(null);
     this.pendingImageFile = file;
+    this.draft.imageUrl = '';
     const prev = this.imagePreviewUrl();
     if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
     this.imagePreviewUrl.set(URL.createObjectURL(file));
   }
 
-  onPrimaryPriceChange(value: number): void {
-    const primary = this.priceDrafts.find((r) => r.primary);
-    if (primary) primary.price = Number(value) || 0;
-  }
-
   onListPriceChange(row: PriceDraftRow): void {
     if (row.primary) this.draft.price = Number(row.price) || 0;
+  }
+
+  hasImagePreview(): boolean {
+    return !!(this.imagePreviewUrl() || (this.draft.imageUrl ?? '').trim());
   }
 
   resolveMediaUrl(url?: string | null): string {
@@ -597,6 +784,7 @@ export class PosCatalogoPage implements OnInit {
   }
 
   saveProduct(): void {
+    if (!this.validateForm()) return;
     this.saving.set(true);
     const id = this.editingId();
     const primary = this.priceDrafts.find((r) => r.primary);
@@ -690,6 +878,19 @@ export class PosCatalogoPage implements OnInit {
     this.messageIsError.set(isError);
   }
 
+  private validateForm(): boolean {
+    const errors: Record<string, string> = {};
+    if (!this.draft.sku.trim()) errors['sku'] = 'Indique el SKU o código interno.';
+    if (!this.draft.name.trim()) errors['name'] = 'Indique el nombre del producto.';
+    const primary = this.priceDrafts.find((r) => r.primary);
+    const primaryPrice = Number(primary?.price ?? this.draft.price);
+    if (!Number.isFinite(primaryPrice) || primaryPrice < 0) {
+      errors['price'] = 'Indique un precio válido en la lista principal.';
+    }
+    this.formErrors.set(errors);
+    return Object.keys(errors).length === 0;
+  }
+
   private initPriceDrafts(fromPrices?: PosProductPriceResponse[]): void {
     const lists = this.priceLists();
     if (fromPrices?.length) {
@@ -721,6 +922,7 @@ export class PosCatalogoPage implements OnInit {
       sku: '',
       barcode: '',
       name: '',
+      description: '',
       price: 0,
       tag: 'Retail',
       categoryId: null,

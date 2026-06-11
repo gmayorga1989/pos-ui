@@ -30,6 +30,21 @@
   width: min(760px, calc(100vw - 2rem));
 }
 
+.ts-form-modal--product {
+  width: min(1040px, calc(100vw - 1.5rem));
+  max-height: calc(100vh - 1.5rem);
+}
+
+.ts-form-modal--product .ts-form-modal__footer {
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.ts-form-modal--product .ts-form-modal__footer .pos-product-form__required-note {
+  margin-right: auto;
+}
+
 .ts-form-modal--compact {
   width: min(440px, calc(100vw - 2rem));
 }
