@@ -5,7 +5,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { ColumnDefinition } from 'tabulator-tables';
 import { finalize } from 'rxjs';
 import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
-import type { PosImportKind, PosImportPreviewResult, PosImportPreset, PosImportResult } from '../../core/api/pos-backend.types';
+import type {
+  PosImportKind,
+  PosImportLineResult,
+  PosImportPreviewResult,
+  PosImportPreset,
+  PosImportResult,
+} from '../../core/api/pos-backend.types';
 import { PosToastService } from '../../core/ui/pos-toast.service';
 import { PosTabulatorLocalGridComponent } from '../../shared/grid/pos-tabulator-local-grid.component';
 import { escapeHtml, tabulatorCellValue, tabulatorTextareaCell } from '../../shared/grid/tabulator-formatters.util';
@@ -305,19 +311,19 @@ const COL_LABELS: Record<string, string> = {
               @if (pv.muestra.length) {
                 <h3 class="pos-mig-subtitle">Muestra (primeras filas)</h3>
                 <pos-tabulator-local-grid
-                  [data]="pv.muestra"
+                  [data]="asGridData(pv.muestra)"
                   [columns]="muestraColumns()"
                   height="220px"
-                  emptyMessage="Sin muestra." />
+                  emptyDescription="Sin muestra." />
               }
 
               @if (pv.detalles.length) {
                 <h3 class="pos-mig-subtitle">Validación por fila</h3>
                 <pos-tabulator-local-grid
-                  [data]="pv.detalles"
+                  [data]="asGridData(pv.detalles)"
                   [columns]="previewColumns"
                   height="min(320px, calc(100vh - 28rem))"
-                  emptyMessage="Sin detalle." />
+                  emptyDescription="Sin detalle." />
               }
 
               <div class="pos-mig-actions-row pos-mig-actions-row--end">
@@ -361,10 +367,10 @@ const COL_LABELS: Record<string, string> = {
               }
               @if (res.detalles.length) {
                 <pos-tabulator-local-grid
-                  [data]="res.detalles"
+                  [data]="asGridData(res.detalles)"
                   [columns]="resultColumns"
                   height="min(420px, calc(100vh - 22rem))"
-                  emptyMessage="Sin detalle de filas." />
+                  emptyDescription="Sin detalle de filas." />
               }
               <div class="pos-mig-actions-row">
                 @if (kind() === 'products') {
@@ -426,40 +432,46 @@ export class PosMigracionPage implements OnInit {
 
   readonly previewColumns: ColumnDefinition[] = [
     { title: 'Fila', field: 'fila', width: 72, hozAlign: 'right' },
-    { title: 'Referencia', field: 'referencia', minWidth: 120, formatter: tabulatorCellValue },
+    {
+      title: 'Referencia',
+      field: 'referencia',
+      minWidth: 120,
+      formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)),
+    },
     {
       title: 'Estado',
       field: 'estado',
       width: 130,
-      formatter: (cell) => {
-        const v = String(cell.getValue() ?? '');
-        const cls =
-          v === 'ERROR'
-            ? 'pos-mig-estado--err'
-            : v === 'CREAR'
-              ? 'pos-mig-estado--ok'
-              : 'pos-mig-estado--upd';
-        return `<span class="pos-mig-estado ${cls}">${escapeHtml(v)}</span>`;
-      },
+      formatter: (cell) => this.estadoPreviewBadge(String(tabulatorCellValue(cell) ?? '')),
     },
-    { title: 'Mensaje', field: 'mensaje', minWidth: 200, formatter: tabulatorTextareaCell },
+    {
+      title: 'Mensaje',
+      field: 'mensaje',
+      minWidth: 200,
+      formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)),
+    },
   ];
 
   readonly resultColumns: ColumnDefinition[] = [
     { title: 'Fila', field: 'fila', width: 72, hozAlign: 'right' },
-    { title: 'Referencia', field: 'referencia', minWidth: 120, formatter: tabulatorCellValue },
+    {
+      title: 'Referencia',
+      field: 'referencia',
+      minWidth: 120,
+      formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)),
+    },
     {
       title: 'Estado',
       field: 'estado',
       width: 130,
-      formatter: (cell) => {
-        const v = String(cell.getValue() ?? '');
-        const cls =
-          v === 'ERROR' ? 'pos-mig-estado--err' : v === 'CREADO' ? 'pos-mig-estado--ok' : 'pos-mig-estado--upd';
-        return `<span class="pos-mig-estado ${cls}">${escapeHtml(v)}</span>`;
-      },
+      formatter: (cell) => this.estadoResultadoBadge(String(tabulatorCellValue(cell) ?? '')),
     },
-    { title: 'Mensaje', field: 'mensaje', minWidth: 200, formatter: tabulatorTextareaCell },
+    {
+      title: 'Mensaje',
+      field: 'mensaje',
+      minWidth: 200,
+      formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)),
+    },
   ];
 
   ngOnInit(): void {
@@ -481,8 +493,24 @@ export class PosMigracionPage implements OnInit {
         title: this.colLabel(c),
         field: c,
         minWidth: 100,
-        formatter: tabulatorCellValue,
+        formatter: (cell: unknown) => tabulatorTextareaCell(tabulatorCellValue(cell)),
       }));
+  }
+
+  asGridData(rows: PosImportLineResult[] | Record<string, string>[]): Record<string, unknown>[] {
+    return rows as unknown as Record<string, unknown>[];
+  }
+
+  private estadoPreviewBadge(estado: string): string {
+    const cls =
+      estado === 'ERROR' ? 'pos-mig-estado--err' : estado === 'CREAR' ? 'pos-mig-estado--ok' : 'pos-mig-estado--upd';
+    return `<span class="pos-mig-estado ${cls}">${escapeHtml(estado)}</span>`;
+  }
+
+  private estadoResultadoBadge(estado: string): string {
+    const cls =
+      estado === 'ERROR' ? 'pos-mig-estado--err' : estado === 'CREADO' ? 'pos-mig-estado--ok' : 'pos-mig-estado--upd';
+    return `<span class="pos-mig-estado ${cls}">${escapeHtml(estado)}</span>`;
   }
 
   colLabel(col: string): string {
