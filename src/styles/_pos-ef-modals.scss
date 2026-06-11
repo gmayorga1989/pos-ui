@@ -94,17 +94,37 @@
   border-radius: 10px;
   color: var(--pos-muted);
   background: var(--pos-maestro-card, var(--pos-elevated));
+  line-height: 0;
   cursor: pointer;
   transition:
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease;
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.ts-form-modal__close-icon {
+  display: block;
+  width: 17px;
+  height: 17px;
+  transition: transform 0.42s cubic-bezier(0.34, 1.15, 0.64, 1);
+  transform-origin: center;
 }
 
 .ts-form-modal__close:hover {
   background: color-mix(in srgb, var(--lux-indigo) 10%, var(--pos-maestro-card, var(--pos-elevated)));
   border-color: color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-maestro-border, var(--pos-border)));
   color: var(--pos-text);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--lux-indigo) 18%, transparent);
+}
+
+.ts-form-modal__close:hover .ts-form-modal__close-icon {
+  transform: rotate(180deg);
+}
+
+.ts-form-modal__close:focus-visible {
+  outline: 2px solid var(--lux-indigo, #6366f1);
+  outline-offset: 2px;
 }
 
 .ts-form-modal__body {

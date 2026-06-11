@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import type { ColumnDefinition } from 'tabulator-tables';
 import { finalize } from 'rxjs';
 import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
-import type { PosCustomerResponse } from '../../core/api/pos-backend.types';
+import type { PosCustomerRequest, PosCustomerResponse } from '../../core/api/pos-backend.types';
 import {
   applyTipoIdentificacionDefaults,
   buildCustomerRequest,
@@ -24,7 +24,7 @@ import {
   validateCustomerForm,
 } from '../../shared/customer/pos-customer-form.util';
 import { applyCedulaConsultaToForm, applyRucConsultaToForm } from '../../shared/customer/pos-catastro.util';
-import { gridActionsMenu } from '../../shared/grid/grid-actions.util';
+import { gridActionsMenu, type GridActionItem } from '../../shared/grid/grid-actions.util';
 import { PosTabulatorLocalGridComponent } from '../../shared/grid/pos-tabulator-local-grid.component';
 import { escapeHtml, tabulatorCellValue, tabulatorTextareaCell } from '../../shared/grid/tabulator-formatters.util';
 import { PosToastService } from '../../core/ui/pos-toast.service';
@@ -93,6 +93,8 @@ const TIPO_ID_LABEL: Record<string, string> = {
         [data]="gridRows()"
         [columns]="columns"
         [reloadNonce]="gridNonce()"
+        [pagination]="true"
+        [paginationSize]="15"
         emptyContext="customers"
         (rowAction)="onRowAction($event)"
         (emptyAction)="onEmptyAction($event)" />
@@ -113,7 +115,11 @@ const TIPO_ID_LABEL: Record<string, string> = {
             <h3>{{ editingId() ? 'Editar cliente' : 'Nuevo cliente' }}</h3>
             <p class="ts-form-modal__subtitle">Datos según tipo de identificación para facturación electrónica.</p>
           </div>
-          <button type="button" class="ts-form-modal__close" aria-label="Cerrar" (click)="closeForm()">×</button>
+          <button type="button" class="ts-form-modal__close" aria-label="Cerrar" (click)="closeForm()">
+            <svg class="ts-form-modal__close-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
         </header>
         <div class="ts-form-modal__body">
           <div class="pos-form-grid">
@@ -236,6 +242,18 @@ const TIPO_ID_LABEL: Record<string, string> = {
         </footer>
       </section>
     }
+
+    @if (deactivateId()) {
+      <div class="ts-modal-backdrop" (click)="cancelDeactivate()"></div>
+      <section class="ts-confirm-modal" role="alertdialog" aria-modal="true">
+        <h3>Inactivar cliente</h3>
+        <p>El cliente dejará de mostrarse en venta. ¿Continuar?</p>
+        <div class="ts-confirm-modal__actions">
+          <button type="button" class="pos-btn pos-btn--ghost pos-btn--sm" (click)="cancelDeactivate()">Cancelar</button>
+          <button type="button" class="pos-btn pos-btn--danger pos-btn--sm" (click)="confirmDeactivate()">Inactivar</button>
+        </div>
+      </section>
+    }
   `,
 })
 export class PosClientesPage implements OnInit {
@@ -269,7 +287,7 @@ export class PosClientesPage implements OnInit {
       width: 82,
       headerSort: false,
       hozAlign: 'center',
-      formatter: () => gridActionsMenu([{ action: 'edit', label: 'Editar', icon: 'edit' }]),
+      formatter: (cell) => this.customerActionsMenu(cell),
     },
     { title: 'Tipo', field: 'tipoLabel', width: 120 },
     { title: 'Identificación', field: 'identificacion', minWidth: 140, formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)) },
@@ -287,7 +305,9 @@ export class PosClientesPage implements OnInit {
 
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);
+  readonly deactivateId = signal<string | null>(null);
   readonly saving = signal(false);
+  readonly togglingActive = signal(false);
   readonly catastroLoading = signal(false);
   readonly formErrors = signal<PosCustomerFormErrors>({});
 
@@ -413,7 +433,7 @@ export class PosClientesPage implements OnInit {
   }
 
   reload(): void {
-    this.api.getCustomers().subscribe({
+    this.api.getCustomers(undefined, true).subscribe({
       next: (rows) => {
         this.customers.set(rows);
         this.bumpGrid();
@@ -430,9 +450,40 @@ export class PosClientesPage implements OnInit {
 
   onRowAction(event: { action: string; row: Record<string, unknown> }): void {
     const id = String(event.row['id'] ?? '');
-    if (!id || event.action !== 'edit') return;
-    const c = this.customers().find((x) => x.id === id);
-    if (c) this.openEdit(c);
+    if (!id) {
+      return;
+    }
+    if (event.action === 'edit') {
+      const c = this.customers().find((x) => x.id === id);
+      if (c) {
+        this.openEdit(c);
+      }
+      return;
+    }
+    if (event.action === 'inactivate') {
+      this.askDeactivate(id);
+      return;
+    }
+    if (event.action === 'activate') {
+      this.setCustomerActive(id, true);
+    }
+  }
+
+  askDeactivate(id: string): void {
+    this.deactivateId.set(id);
+  }
+
+  cancelDeactivate(): void {
+    this.deactivateId.set(null);
+  }
+
+  confirmDeactivate(): void {
+    const id = this.deactivateId();
+    if (!id) {
+      return;
+    }
+    this.deactivateId.set(null);
+    this.setCustomerActive(id, false);
   }
 
   openCreate(): void {
@@ -498,6 +549,53 @@ export class PosClientesPage implements OnInit {
     return `${c.razonSocial} ${c.nombreComercial ?? ''} ${c.identificacion} ${c.email ?? ''} ${c.direccion ?? ''}`
       .toLowerCase()
       .includes(q);
+  }
+
+  private customerActionsMenu(cell: unknown): string {
+    const row = (cell as { getRow: () => { getData: () => Record<string, unknown> } }).getRow().getData();
+    const active = row['active'] === true;
+    const actions: GridActionItem[] = [{ action: 'edit', label: 'Editar', icon: 'edit' }];
+    if (active) {
+      actions.push({ action: 'inactivate', label: 'Inactivar', icon: 'inactivate', danger: true });
+    } else {
+      actions.push({ action: 'activate', label: 'Activar', icon: 'activate' });
+    }
+    return gridActionsMenu(actions);
+  }
+
+  private setCustomerActive(id: string, active: boolean): void {
+    const customer = this.customers().find((x) => x.id === id);
+    if (!customer) {
+      this.toast.error('Cliente no encontrado');
+      return;
+    }
+    this.togglingActive.set(true);
+    this.api
+      .putCustomer(id, this.customerToRequest(customer, active))
+      .pipe(finalize(() => this.togglingActive.set(false)))
+      .subscribe({
+        next: () => {
+          this.setMessage(active ? 'Cliente activado' : 'Cliente inactivado', false);
+          this.reload();
+        },
+        error: (err: unknown) => {
+          const msg = this.extractApiError(err) ?? (active ? 'No se pudo activar el cliente' : 'No se pudo inactivar el cliente');
+          this.setMessage(msg, true);
+        },
+      });
+  }
+
+  private customerToRequest(customer: PosCustomerResponse, active: boolean): PosCustomerRequest {
+    return {
+      tipoIdentificacion: customer.tipoIdentificacion,
+      identificacion: customer.identificacion,
+      razonSocial: customer.razonSocial,
+      nombreComercial: customer.nombreComercial ?? null,
+      direccion: customer.direccion ?? null,
+      email: customer.email ?? null,
+      phone: customer.phone ?? null,
+      active,
+    };
   }
 
   private estadoBadge(active: boolean): string {

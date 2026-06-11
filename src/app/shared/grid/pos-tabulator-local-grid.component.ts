@@ -39,6 +39,8 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
   @Input({ required: true }) data: Record<string, unknown>[] = [];
   @Input({ required: true }) columns: ColumnDefinition[] = [];
   @Input() height = 'min(620px, calc(100vh - 15.5rem))';
+  @Input() pagination = false;
+  @Input() paginationSize = 10;
   @Input() reloadNonce = 0;
   @Input() emptyContext: PosTabulatorEmptyContext = 'masters';
   @Input() emptyTitle = '';
@@ -87,6 +89,13 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
     if (changes['columns'] && !changes['columns'].firstChange) {
       this.table.setColumns(this.normalizedColumns());
     }
+    if (changes['pagination'] || changes['paginationSize']) {
+      this.table.setOptions({
+        pagination: this.pagination,
+        paginationSize: this.paginationSize,
+        paginationSizeSelector: this.pagination ? [10, 20, 50] : false,
+      });
+    }
     if (
       changes['emptyTitle'] ||
       changes['emptyDescription'] ||
@@ -112,7 +121,10 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
     const opts: Options = {
       layout: 'fitColumns',
       height: this.height,
-      pagination: false,
+      pagination: this.pagination,
+      paginationSize: this.paginationSize,
+      paginationSizeSelector: this.pagination ? [10, 20, 50] : false,
+      paginationCounter: this.pagination ? 'rows' : undefined,
       placeholder: this.buildPlaceholder(),
       data: [...this.data],
       columns: this.normalizedColumns(),

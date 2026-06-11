@@ -263,3 +263,29 @@ body > .ts-grid-actions__menu .dropdown-item:hover,
 html[data-theme='dark'] .ts-tabulator-empty__cta {
   background: color-mix(in srgb, var(--pos-maestro-card) 92%, #0f172a);
 }
+
+.cust-picker-grid__use {
+  border: 1px solid color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-maestro-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--lux-indigo) 10%, var(--pos-maestro-card));
+  color: var(--lux-primary-strong);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.28rem 0.62rem;
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.cust-picker-grid__use:hover {
+  background: color-mix(in srgb, var(--lux-indigo) 16%, var(--pos-maestro-card));
+  border-color: color-mix(in srgb, var(--lux-indigo) 42%, var(--pos-maestro-border));
+  transform: translateY(-1px);
+}
+
+.cust-picker-grid__id {
+  font-family: var(--pos-mono);
+  font-size: 0.76rem;
+}

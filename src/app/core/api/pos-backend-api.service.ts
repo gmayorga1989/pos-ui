@@ -265,13 +265,20 @@ export class PosBackendApiService {
     return this.http.delete<void>(`${root}/products/${encodeURIComponent(id)}`);
   }
 
-  getCustomers(q?: string): Observable<PosCustomerResponse[]> {
+  getCustomers(q?: string, includeInactive = false): Observable<PosCustomerResponse[]> {
     const root = this.apiRoot();
     if (!root) {
       throw new Error('posApiOrigin no configurado');
     }
-    const params = q?.trim() ? `?q=${encodeURIComponent(q.trim())}` : '';
-    return this.http.get<PosCustomerResponse[]>(`${root}/customers${params}`);
+    const search = new URLSearchParams();
+    if (q?.trim()) {
+      search.set('q', q.trim());
+    }
+    if (includeInactive) {
+      search.set('includeInactive', 'true');
+    }
+    const qs = search.toString();
+    return this.http.get<PosCustomerResponse[]>(`${root}/customers${qs ? `?${qs}` : ''}`);
   }
 
   postCustomer(body: PosCustomerRequest): Observable<PosCustomerResponse> {
