@@ -90,11 +90,7 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
       this.table.setColumns(this.normalizedColumns());
     }
     if (changes['pagination'] || changes['paginationSize']) {
-      this.table.setOptions({
-        pagination: this.pagination,
-        paginationSize: this.paginationSize,
-        paginationSizeSelector: this.pagination ? [10, 20, 50] : false,
-      });
+      this.applyPaginationOptions();
     }
     if (
       changes['emptyTitle'] ||
@@ -123,7 +119,7 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
       height: this.height,
       pagination: this.pagination,
       paginationSize: this.paginationSize,
-      paginationSizeSelector: this.pagination ? [10, 20, 50] : false,
+      paginationSizeSelector: this.pagination ? [10, 20, 50] : undefined,
       paginationCounter: this.pagination ? 'rows' : undefined,
       placeholder: this.buildPlaceholder(),
       data: [...this.data],
@@ -201,6 +197,17 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
       return;
     }
     this.table.options.placeholder = this.buildPlaceholder();
+    void this.table.redraw(true);
+  }
+
+  private applyPaginationOptions(): void {
+    if (!this.table) {
+      return;
+    }
+    this.table.options.pagination = this.pagination;
+    this.table.options.paginationSize = this.paginationSize;
+    this.table.options.paginationSizeSelector = this.pagination ? [10, 20, 50] : undefined;
+    this.table.options.paginationCounter = this.pagination ? 'rows' : undefined;
     void this.table.redraw(true);
   }
 
