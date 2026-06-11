@@ -94,19 +94,6 @@ const COL_LABELS: Record<string, string> = {
       title="Centro de migración"
       subtitle="Importe desde Excel o CSV. Elija el origen, revise la vista previa y confirme."
       icon="migracion">
-      <div page-actions class="pos-page-actions-group">
-        @if (paso() > 1 && paso() < 5) {
-          <button type="button" class="pos-btn pos-btn--outline" (click)="retroceder()">Atrás</button>
-        }
-        @if (paso() < 4) {
-          <button type="button" class="pos-btn pos-btn--soft" [disabled]="!puedeAvanzar() || previewing()" (click)="avanzar()">
-            {{ previewing() ? 'Analizando…' : 'Siguiente' }}
-          </button>
-        }
-        @if (paso() === 5) {
-          <button type="button" class="pos-btn pos-btn--primary" (click)="reiniciar()">Nueva importación</button>
-        }
-      </div>
 
       <nav class="pos-mig-steps" aria-label="Pasos de migración">
         @for (s of stepLabels; track s.n) {
@@ -124,12 +111,15 @@ const COL_LABELS: Record<string, string> = {
         <p class="pos-maestro-msg" [class.pos-maestro-msg--err]="messageIsError()">{{ message() }}</p>
       }
 
+      <div class="pos-mig-flow">
       @switch (paso()) {
         @case (1) {
           <section class="pos-mig-panel">
-            <h2 class="pos-mig-panel__title">¿Qué desea migrar?</h2>
-            <p class="pos-mig-panel__hint">Elija el tipo de datos. En el siguiente paso indicará de dónde provienen.</p>
-            <div class="pos-mig-tipo-grid">
+            <header class="pos-mig-panel__head">
+              <h2 class="pos-mig-panel__title">¿Qué desea migrar?</h2>
+              <p class="pos-mig-panel__hint">Elija el tipo de datos. En el siguiente paso indicará de dónde provienen.</p>
+            </header>
+            <div class="pos-mig-tipo-grid pos-mig-tipo-grid--pick">
               @for (t of tipos; track t.kind) {
                 <button
                   type="button"
@@ -158,56 +148,94 @@ const COL_LABELS: Record<string, string> = {
                 </button>
               }
             </div>
+            <footer class="pos-mig-panel__footer">
+              <button type="button" class="pos-btn pos-btn--soft" [disabled]="!puedeAvanzar()" (click)="avanzar()">Siguiente</button>
+            </footer>
           </section>
         }
         @case (2) {
           <section class="pos-mig-panel">
-            <h2 class="pos-mig-panel__title">Origen de los datos</h2>
-            <p class="pos-mig-panel__hint">Indique de dónde viene su archivo. Si usa nuestra plantilla, el mapeo será automático.</p>
-            <div class="pos-mig-tipo-grid">
+            <header class="pos-mig-panel__head">
+              <h2 class="pos-mig-panel__title">Origen de los datos</h2>
+              <p class="pos-mig-panel__hint">Seleccione el sistema del que exportó. Luxora ofrece plantilla lista; otros orígenes usan mapeo automático.</p>
+            </header>
+
+            <div class="pos-mig-preset-grid">
               @for (p of presetsFiltrados(); track p.id) {
                 <button
                   type="button"
-                  class="pos-mig-tipo-card pos-mig-tipo-card--preset pos-focus-ring"
-                  [class.pos-mig-tipo-card--on]="presetId() === p.id"
+                  class="pos-mig-preset-card pos-focus-ring"
+                  [class.pos-mig-preset-card--on]="presetId() === p.id"
                   (click)="seleccionarPreset(p)">
-                  <strong>{{ p.nombre }}</strong>
-                  <span>{{ p.descripcion }}</span>
+                  <span class="pos-mig-preset-card__radio" aria-hidden="true"></span>
+                  <span class="pos-mig-preset-card__body">
+                    <strong>{{ p.nombre }}</strong>
+                    <span>{{ p.descripcion }}</span>
+                  </span>
                 </button>
               }
             </div>
-            <div class="pos-mig-actions-row">
-              <button type="button" class="pos-btn pos-btn--primary" [disabled]="downloading()" (click)="descargarPlantilla()">
-                {{ downloading() ? 'Descargando…' : 'Descargar plantilla Luxora' }}
-              </button>
-            </div>
-            <div class="pos-mig-cols">
-              <div class="pos-mig-cols__block">
-                <h3>Columnas obligatorias</h3>
-                <ul>
-                  @for (c of config().obligatorias; track c) {
-                    <li><code>{{ c }}</code> — {{ colLabel(c) }}</li>
-                  }
-                </ul>
+
+            <div class="pos-mig-guide">
+              <div class="pos-mig-guide__toolbar">
+                <div class="pos-mig-guide__selected">
+                  <span class="pos-mig-guide__kicker">Origen activo</span>
+                  <strong>{{ presetNombre() }}</strong>
+                </div>
+                @if (esPlantillaLuxora()) {
+                  <button type="button" class="pos-btn pos-btn--primary" [disabled]="downloading()" (click)="descargarPlantilla()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 4v10M12 14l-4-4M12 14l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      <path d="M5 18h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                    {{ downloading() ? 'Descargando…' : 'Descargar plantilla' }}
+                  </button>
+                } @else {
+                  <p class="pos-mig-guide__hint">Al cargar el archivo podrá revisar y ajustar el mapeo de columnas.</p>
+                }
               </div>
-              <div class="pos-mig-cols__block">
-                <h3>Columnas opcionales</h3>
-                <ul>
-                  @for (c of config().opcionales; track c) {
-                    <li><code>{{ c }}</code></li>
-                  }
-                </ul>
+
+              <div class="pos-mig-guide__cols">
+                <div class="pos-mig-guide__group">
+                  <h3>Columnas obligatorias</h3>
+                  <div class="pos-mig-chips">
+                    @for (c of config().obligatorias; track c) {
+                      <span class="pos-mig-chip pos-mig-chip--req" [title]="colLabel(c)">
+                        <code>{{ c }}</code>
+                        <em>{{ colLabel(c) }}</em>
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="pos-mig-guide__group">
+                  <h3>Columnas opcionales</h3>
+                  <div class="pos-mig-chips pos-mig-chips--soft">
+                    @for (c of config().opcionales; track c) {
+                      <span class="pos-mig-chip" [title]="colLabel(c)">
+                        <code>{{ c }}</code>
+                      </span>
+                    }
+                  </div>
+                </div>
               </div>
+
+              <p class="pos-mig-guide__upsert">{{ config().claveUpsert }}</p>
             </div>
-            <p class="pos-mig-upsert">{{ config().claveUpsert }}</p>
+
+            <footer class="pos-mig-panel__footer">
+              <button type="button" class="pos-btn pos-btn--outline" (click)="retroceder()">Atrás</button>
+              <button type="button" class="pos-btn pos-btn--soft" (click)="avanzar()">Siguiente</button>
+            </footer>
           </section>
         }
         @case (3) {
           <section class="pos-mig-panel">
-            <h2 class="pos-mig-panel__title">Subir archivo</h2>
-            <p class="pos-mig-panel__hint">
-              Arrastre su archivo CSV o Excel (.xlsx). Origen seleccionado: <strong>{{ presetNombre() }}</strong>
-            </p>
+            <header class="pos-mig-panel__head">
+              <h2 class="pos-mig-panel__title">Subir archivo</h2>
+              <p class="pos-mig-panel__hint">
+                CSV o Excel (.xlsx) · origen <strong>{{ presetNombre() }}</strong> · máx. 2.000 filas
+              </p>
+            </header>
             <div
               class="pos-mig-dropzone pos-focus-ring"
               [class.pos-mig-dropzone--over]="dragOver()"
@@ -241,11 +269,24 @@ const COL_LABELS: Record<string, string> = {
                 <span>CSV o Excel (.xlsx) · máx. 2.000 filas</span>
               }
             </div>
+            <footer class="pos-mig-panel__footer">
+              <button type="button" class="pos-btn pos-btn--outline" (click)="retroceder()">Atrás</button>
+              <button
+                type="button"
+                class="pos-btn pos-btn--soft"
+                [disabled]="!file() || previewing()"
+                (click)="avanzar()">
+                {{ previewing() ? 'Analizando…' : 'Analizar archivo' }}
+              </button>
+            </footer>
           </section>
         }
         @case (4) {
           <section class="pos-mig-panel">
-            <h2 class="pos-mig-panel__title">Vista previa y mapeo</h2>
+            <header class="pos-mig-panel__head">
+              <h2 class="pos-mig-panel__title">Vista previa y mapeo</h2>
+              <p class="pos-mig-panel__hint">Revise el resumen, ajuste columnas si hace falta y confirme la importación.</p>
+            </header>
             @if (preview(); as pv) {
               <div class="pos-mig-summary">
                 <div class="pos-mig-summary__metric">
@@ -326,7 +367,8 @@ const COL_LABELS: Record<string, string> = {
                   emptyDescription="Sin detalle." />
               }
 
-              <div class="pos-mig-actions-row pos-mig-actions-row--end">
+              <footer class="pos-mig-panel__footer">
+                <button type="button" class="pos-btn pos-btn--outline" (click)="retroceder()">Atrás</button>
                 <button
                   type="button"
                   class="pos-btn pos-btn--primary"
@@ -334,13 +376,16 @@ const COL_LABELS: Record<string, string> = {
                   (click)="ejecutarImportacion()">
                   {{ importing() ? 'Importando…' : 'Confirmar importación' }}
                 </button>
-              </div>
+              </footer>
             }
           </section>
         }
         @case (5) {
           <section class="pos-mig-panel">
-            <h2 class="pos-mig-panel__title">Resultado</h2>
+            <header class="pos-mig-panel__head">
+              <h2 class="pos-mig-panel__title">Resultado</h2>
+              <p class="pos-mig-panel__hint">Resumen de la importación. Puede iniciar otra carga o ir al maestro.</p>
+            </header>
             @if (result(); as res) {
               <div class="pos-mig-summary" [class.pos-mig-summary--warn]="res.errores > 0">
                 <div class="pos-mig-summary__metric">
@@ -372,17 +417,19 @@ const COL_LABELS: Record<string, string> = {
                   height="min(420px, calc(100vh - 22rem))"
                   emptyDescription="Sin detalle de filas." />
               }
-              <div class="pos-mig-actions-row">
+              <footer class="pos-mig-panel__footer">
+                <button type="button" class="pos-btn pos-btn--outline" (click)="reiniciar()">Nueva importación</button>
                 @if (kind() === 'products') {
                   <a routerLink="/catalogo" class="pos-btn pos-btn--soft">Ir al catálogo</a>
                 } @else {
                   <a routerLink="/clientes" class="pos-btn pos-btn--soft">Ir a clientes</a>
                 }
-              </div>
+              </footer>
             }
           </section>
         }
       }
+      </div>
     </pos-page-layout>
   `,
 })
@@ -427,6 +474,8 @@ export class PosMigracionPage implements OnInit {
     const p = this.presets().find((x) => x.id === this.presetId());
     return p?.nombre ?? 'Plantilla POS Luxora';
   });
+
+  readonly esPlantillaLuxora = computed(() => this.presetId() === 'luxora');
 
   readonly columnasMapeo = computed(() => [...this.config().obligatorias, ...this.config().opcionales]);
 
