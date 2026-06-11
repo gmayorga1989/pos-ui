@@ -15,6 +15,7 @@ export interface PosCustomerFormState {
   direccion: string;
   phone: string;
   email: string;
+  priceListId: string;
   active?: boolean | null;
 }
 
@@ -185,6 +186,7 @@ export function buildCustomerRequest(form: PosCustomerFormState): PosCustomerReq
     direccion: form.direccion.trim() || null,
     phone: form.phone.trim() || null,
     email: form.email.trim() || null,
+    priceListId: form.priceListId.trim() || null,
     active: form.active ?? true,
   };
 }
@@ -284,6 +286,7 @@ export function emptyCustomerForm(tipo: PosTipoIdentificacion = '05'): PosCustom
     direccion: '',
     phone: '',
     email: '',
+    priceListId: '',
     active: true,
   };
   applyTipoIdentificacionDefaults(form);
@@ -298,6 +301,7 @@ export function customerFormFromResponse(c: {
   direccion?: string | null;
   phone?: string | null;
   email?: string | null;
+  priceListId?: string | null;
   active?: boolean;
 }): PosCustomerFormState {
   const tipo = (c.tipoIdentificacion || '05') as PosTipoIdentificacion;
@@ -311,6 +315,7 @@ export function customerFormFromResponse(c: {
     direccion: c.direccion ?? '',
     phone: c.phone ?? '',
     email: c.email ?? '',
+    priceListId: c.priceListId ?? '',
     active: c.active ?? true,
   };
   if (isPersonaNaturalTipo(tipo)) {

@@ -398,6 +398,12 @@ export interface PosProductPriceEntry {
   price: number;
 }
 
+export interface PosProductPriceMatrixEntry {
+  productId: string;
+  priceListId: string;
+  price: number;
+}
+
 export interface PosProductResponse {
   id: string;
   sku: string;
@@ -445,6 +451,8 @@ export interface PosCustomerResponse {
   direccion?: string | null;
   email?: string | null;
   phone?: string | null;
+  priceListId?: string | null;
+  priceListName?: string | null;
   active: boolean;
 }
 
@@ -456,6 +464,7 @@ export interface PosCustomerRequest {
   direccion?: string | null;
   email?: string | null;
   phone?: string | null;
+  priceListId?: string | null;
   active?: boolean | null;
 }
 

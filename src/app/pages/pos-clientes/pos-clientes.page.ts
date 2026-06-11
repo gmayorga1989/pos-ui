@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import type { ColumnDefinition } from 'tabulator-tables';
 import { finalize } from 'rxjs';
 import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
-import type { PosCustomerRequest, PosCustomerResponse } from '../../core/api/pos-backend.types';
+import type { PosCustomerRequest, PosCustomerResponse, PosPriceListResponse } from '../../core/api/pos-backend.types';
 import {
   applyTipoIdentificacionDefaults,
   buildCustomerRequest,
@@ -234,6 +234,17 @@ const TIPO_ID_LABEL: Record<string, string> = {
                 <small class="pos-form-field__error">{{ formErrors().email }}</small>
               }
             </label>
+
+            <label class="pos-form-field pos-form-field--span2">
+              <span>Lista de precio (venta)</span>
+              <select [(ngModel)]="draft.priceListId" name="priceListId">
+                <option value="">Sin lista asignada (usa la del cajero)</option>
+                @for (pl of priceLists(); track pl.id) {
+                  <option [value]="pl.id">{{ pl.name }}{{ pl.primary ? ' — principal' : '' }}</option>
+                }
+              </select>
+              <small class="pos-form-field__hint">Si desactiva el cambio manual en Ajustes, esta lista se aplicará automáticamente.</small>
+            </label>
           </div>
         </div>
         <footer class="ts-form-modal__footer">
@@ -263,6 +274,7 @@ export class PosClientesPage implements OnInit {
   private readonly toast = inject(PosToastService);
 
   readonly customers = signal<PosCustomerResponse[]>([]);
+  readonly priceLists = signal<PosPriceListResponse[]>([]);
   readonly mostrarFiltros = signal(false);
   readonly gridNonce = signal(0);
   filterQ = '';
@@ -317,6 +329,10 @@ export class PosClientesPage implements OnInit {
 
   ngOnInit(): void {
     this.reload();
+    this.api.getPriceLists().subscribe({
+      next: (rows) => this.priceLists.set(rows.filter((l) => l.active)),
+      error: () => this.toast.warning('No se pudieron cargar las listas de precio'),
+    });
   }
 
   isRuc(): boolean {

@@ -34,6 +34,7 @@ import type {
   PosProductCategoryRequest,
   PosProductCategoryResponse,
   PosProductPriceEntry,
+  PosProductPriceMatrixEntry,
   PosProductPriceResponse,
   PosBulkImageResult,
   PosImportKind,
@@ -342,6 +343,14 @@ export class PosBackendApiService {
     return this.http.get<PosProductPriceResponse[]>(
       `${root}/products/${encodeURIComponent(productId)}/prices`,
     );
+  }
+
+  getProductPriceMatrix(): Observable<PosProductPriceMatrixEntry[]> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PosProductPriceMatrixEntry[]>(`${root}/products/prices-matrix`);
   }
 
   uploadProductImage(productId: string, file: File): Observable<PosProductResponse> {

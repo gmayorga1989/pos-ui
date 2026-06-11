@@ -21,7 +21,9 @@ import type {
   PosCustomerResponse,
   PosOfflineComprobanteSyncRequest,
   PosPaymentCollectionResponse,
+  PosPriceListResponse,
   PosProductCategoryResponse,
+  PosProductPriceMatrixEntry,
 } from '../../core/api/pos-backend.types';
 import { resolveProductMediaUrl } from '../../shared/catalog/pos-product-media.util';
 import {
@@ -64,6 +66,8 @@ interface DemoProduct {
   /** Código de barras; si falta, en búsqueda se usa el SKU. */
   barcode?: string;
   price: number;
+  /** Precio por lista (incluye la principal). */
+  listPrices: Record<string, number>;
   tag: string;
   imageUrl?: string;
   categoryId?: string | null;
@@ -83,6 +87,8 @@ interface SaleTab {
   label: string;
   cart: CartLine[];
   customer: SaleCustomer | null;
+  /** Lista de precio activa en esta venta. */
+  priceListId?: string;
 }
 
 type CardPaymentChannel = 'terminal' | 'link' | 'manual';
@@ -198,7 +204,7 @@ type ModalState =
                       <span class="card__tag">{{ p.tag }}</span>
                       <span class="card__name">{{ p.name }}</span>
                       <span class="card__sku">{{ p.sku }}</span>
-                      <span class="card__price">{{ p.price | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                      <span class="card__price">{{ catalogDisplayPrice(p) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
                     </div>
                   </button>
                   <div class="card__actions">
@@ -302,6 +308,23 @@ type ModalState =
                   </button>
                 }
               </div>
+            }
+            @if (showPriceListPicker()) {
+              <label class="customer-panel__price-list">
+                <span class="customer-panel__price-list-lbl">Lista de precio</span>
+                <select
+                  class="customer-panel__price-list-select pos-focus-ring"
+                  [value]="activeTabPriceListId()"
+                  [disabled]="!canChangePriceList()"
+                  (change)="onPriceListChange($event)">
+                  @for (pl of priceListOptions(); track pl.id) {
+                    <option [value]="pl.id">{{ pl.name }}{{ pl.primary ? ' (principal)' : '' }}</option>
+                  }
+                </select>
+                @if (!canChangePriceList() && activeCustomer()?.priceListName) {
+                  <small class="customer-panel__price-list-hint">Fijada por el cliente: {{ activeCustomer()!.priceListName }}</small>
+                }
+              </label>
             }
             <div class="customer-panel__search">
               <input
@@ -1095,6 +1118,37 @@ type ModalState =
       border-color: var(--pos-status-ok-border);
       background: var(--pos-status-ok-bg);
     }
+    .customer-panel__price-list {
+      display: grid;
+      gap: 0.2rem;
+      margin-bottom: 0.42rem;
+    }
+    .customer-panel__price-list-lbl {
+      font-size: 0.58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--pos-faint);
+    }
+    .customer-panel__price-list-select {
+      width: 100%;
+      padding: 0.38rem 0.48rem;
+      border-radius: var(--pos-radius-xs);
+      border: 1px solid var(--pos-border-strong);
+      background: var(--pos-surface-2);
+      color: var(--pos-text);
+      font-size: 0.74rem;
+      font-weight: 600;
+    }
+    .customer-panel__price-list-select:disabled {
+      opacity: 0.72;
+      cursor: not-allowed;
+    }
+    .customer-panel__price-list-hint {
+      font-size: 0.64rem;
+      color: var(--pos-muted);
+      line-height: 1.3;
+    }
     .customer-panel__active {
       display: flex;
       align-items: center;
@@ -1400,9 +1454,9 @@ type ModalState =
     }
     .products {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
-      gap: 0.45rem;
-      padding: 0.55rem 0.6rem 0.65rem;
+      grid-template-columns: repeat(auto-fill, minmax(9.25rem, 1fr));
+      gap: 0.58rem;
+      padding: 0.62rem 0.68rem 0.72rem;
       align-content: start;
     }
     .card {
@@ -1483,10 +1537,10 @@ type ModalState =
       cursor: not-allowed;
     }
     .card__body {
-      padding: 0.45rem 0.5rem 0.42rem;
+      padding: 0.5rem 0.55rem 0.48rem;
       display: flex;
       flex-direction: column;
-      gap: 0.06rem;
+      gap: 0.08rem;
       flex: 1;
       min-width: 0;
     }
@@ -1509,10 +1563,10 @@ type ModalState =
       color: var(--pos-muted);
     }
     .card__name {
-      font-size: 0.7rem;
+      font-size: 0.76rem;
       font-weight: 600;
       color: var(--pos-text);
-      line-height: 1.2;
+      line-height: 1.25;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -1524,8 +1578,8 @@ type ModalState =
       font-family: var(--pos-mono);
     }
     .card__price {
-      margin-top: 0.22rem;
-      font-size: 0.92rem;
+      margin-top: 0.2rem;
+      font-size: 0.96rem;
       font-weight: 850;
       color: var(--pos-text);
     }
@@ -2659,7 +2713,20 @@ export class PosVentaPage {
     return ['Todos', ...Array.from(tags).sort()];
   });
 
-  readonly catalogPageSize = 24;
+  readonly priceListOptions = computed(() => this.priceLists().filter((l) => l.active));
+
+  readonly showPriceListPicker = computed(() => this.priceListOptions().length > 1);
+
+  readonly canChangePriceList = computed(() => {
+    if (this.prefs.allowManualPriceListSelection()) {
+      return true;
+    }
+    const cust = this.activeCustomer();
+    return !cust?.priceListId;
+  });
+
+  readonly catalogPageSize = 15;
+  readonly priceLists = signal<PosPriceListResponse[]>([]);
   readonly catalogQuery = signal('');
   readonly catalogPage = signal(1);
 
@@ -2914,6 +2981,25 @@ export class PosVentaPage {
     });
 
     effect(() => {
+      if (this.prefs.allowManualPriceListSelection()) {
+        return;
+      }
+      const cust = this.activeCustomer();
+      const listId = cust?.priceListId;
+      if (!listId) {
+        return;
+      }
+      untracked(() => {
+        this.patchActiveTab((t) => {
+          if (t.priceListId === listId) {
+            return t;
+          }
+          return this.repriceTabCart({ ...t, priceListId: listId }, listId);
+        });
+      });
+    });
+
+    effect(() => {
       const tabs = this.tabs();
       const activeTabId = this.activeTabId();
       untracked(() => this.persistPendingSaleTabs(tabs, activeTabId));
@@ -3013,23 +3099,36 @@ export class PosVentaPage {
     forkJoin({
       products: this.backend.getProducts(),
       categories: this.backend.getProductCategories(),
+      priceLists: this.backend.getPriceLists(),
+      priceMatrix: this.backend.getProductPriceMatrix(),
     }).subscribe({
-      next: ({ products, categories }) => {
+      next: ({ products, categories, priceLists, priceMatrix }) => {
+        this.priceLists.set(priceLists.filter((l) => l.active));
         this.categoryCatalog.set(categories.filter((c) => c.active));
+        const matrixByProduct = this.buildPriceMatrix(priceMatrix);
+        const primaryId = this.primaryPriceListIdFromLists(priceLists);
         this.catalog.set(
           products
             .filter((p) => p.active)
-            .map((p) => ({
-              id: p.id,
-              name: p.name,
-              sku: p.sku,
-              barcode: p.barcode ?? undefined,
-              price: Number(p.price),
-              tag: p.tag || 'Retail',
-              imageUrl: p.imageUrl ?? undefined,
-              categoryId: p.categoryId ?? null,
-              categoryName: p.categoryName ?? null,
-            })),
+            .map((p) => {
+              const listPrices: Record<string, number> = { ...(matrixByProduct.get(p.id) ?? {}) };
+              const primaryPrice = Number(p.price);
+              if (primaryId) {
+                listPrices[primaryId] = primaryPrice;
+              }
+              return {
+                id: p.id,
+                name: p.name,
+                sku: p.sku,
+                barcode: p.barcode ?? undefined,
+                price: primaryPrice,
+                listPrices,
+                tag: p.tag || 'Retail',
+                imageUrl: p.imageUrl ?? undefined,
+                categoryId: p.categoryId ?? null,
+                categoryName: p.categoryName ?? null,
+              };
+            }),
         );
         this.catalogLoading.set(false);
       },
@@ -3037,6 +3136,77 @@ export class PosVentaPage {
         this.catalogLoading.set(false);
       },
     });
+  }
+
+  private buildPriceMatrix(rows: PosProductPriceMatrixEntry[]): Map<string, Record<string, number>> {
+    const out = new Map<string, Record<string, number>>();
+    for (const row of rows) {
+      let map = out.get(row.productId);
+      if (!map) {
+        map = {};
+        out.set(row.productId, map);
+      }
+      map[row.priceListId] = Number(row.price);
+    }
+    return out;
+  }
+
+  private primaryPriceListIdFromLists(lists: PosPriceListResponse[]): string {
+    return lists.find((l) => l.primary)?.id ?? lists[0]?.id ?? '';
+  }
+
+  primaryPriceListId(): string {
+    return this.primaryPriceListIdFromLists(this.priceLists());
+  }
+
+  activeTabPriceListId(): string {
+    const tab = this.activeTab();
+    return tab.priceListId || this.primaryPriceListId();
+  }
+
+  catalogDisplayPrice(p: DemoProduct): number {
+    return this.resolvePrice(p, this.activeTabPriceListId());
+  }
+
+  resolvePrice(p: DemoProduct, listId: string): number {
+    const fromList = p.listPrices[listId];
+    if (fromList != null && fromList > 0) {
+      return fromList;
+    }
+    const primary = this.primaryPriceListId();
+    if (primary && p.listPrices[primary] != null && p.listPrices[primary]! > 0) {
+      return p.listPrices[primary]!;
+    }
+    return p.price;
+  }
+
+  onPriceListChange(ev: Event): void {
+    if (!this.canChangePriceList() || !this.requireOpenCaja()) {
+      return;
+    }
+    const listId = (ev.target as HTMLSelectElement).value;
+    this.patchActiveTab((t) => this.repriceTabCart({ ...t, priceListId: listId }, listId));
+  }
+
+  private repriceTabCart(tab: SaleTab, listId: string): SaleTab {
+    return {
+      ...tab,
+      priceListId: listId,
+      cart: tab.cart.map((row) => ({
+        ...row,
+        product: {
+          ...row.product,
+          price: this.resolvePrice(row.product, listId),
+        },
+      })),
+    };
+  }
+
+  private resolveTabPriceListForCustomer(customer: SaleCustomer | null, current?: string): string {
+    if (!this.prefs.allowManualPriceListSelection() && customer?.priceListId) {
+      return customer.priceListId;
+    }
+    return current || this.primaryPriceListId();
   }
 
   stockRows(p: DemoProduct): { warehouse: string; qty: number }[] {
@@ -3836,7 +4006,16 @@ export class PosVentaPage {
     this.tabSeq += 1;
     const id = `t-${this.tabSeq}`;
     const n = this.tabs().length + 1;
-    this.patchTabs((ts) => [...ts, { id, label: `Venta ${n}`, cart: [], customer: SALE_CONSUMIDOR_FINAL }]);
+    this.patchTabs((ts) => [
+      ...ts,
+      {
+        id,
+        label: `Venta ${n}`,
+        cart: [],
+        customer: SALE_CONSUMIDOR_FINAL,
+        priceListId: this.primaryPriceListId(),
+      },
+    ]);
     this.activeTabId.set(id);
     this.resetCustomerSearchUi();
     this.focusCatalogSearch();
@@ -4055,7 +4234,10 @@ export class PosVentaPage {
   }
 
   private applyCustomer(customer: SaleCustomer): void {
-    this.patchActiveTab((t) => ({ ...t, customer }));
+    this.patchActiveTab((t) => {
+      const listId = this.resolveTabPriceListForCustomer(customer, t.priceListId);
+      return this.repriceTabCart({ ...t, customer }, listId);
+    });
     this.resetCustomerSearchUi();
     this.saleActionMessage.set(null);
     this.focusCatalogSearch();
@@ -4242,6 +4424,8 @@ export class PosVentaPage {
     if (!this.requireOpenCaja()) {
       return;
     }
+    const listId = this.activeTabPriceListId();
+    const priced: DemoProduct = { ...p, price: this.resolvePrice(p, listId) };
     this.playUiSound('add');
     this.patchActiveTab((t) => {
       const rows = t.cart;
@@ -4250,14 +4434,15 @@ export class PosVentaPage {
         const next = [...rows];
         const row = next[i];
         const qty = row.qty + 1;
-        const gross = qty * row.product.price;
+        const unit = this.resolvePrice(row.product, listId);
+        const gross = qty * unit;
         const disc = Math.min(row.discountAmount ?? 0, gross);
-        next[i] = { ...row, qty, discountAmount: disc };
+        next[i] = { ...row, qty, product: { ...row.product, price: unit }, discountAmount: disc };
         return { ...t, cart: next };
       }
       return {
         ...t,
-        cart: [...rows, { lineId: this.newLineId(), product: p, qty: 1, discountAmount: 0 }],
+        cart: [...rows, { lineId: this.newLineId(), product: priced, qty: 1, discountAmount: 0 }],
       };
     });
     this.focusCatalogSearch();

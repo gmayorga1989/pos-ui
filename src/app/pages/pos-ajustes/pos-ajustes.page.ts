@@ -330,6 +330,19 @@ declare global {
                   [checked]="prefs.upsellOn()"
                   (change)="prefs.setUpsell(!prefs.upsellOn())" />
               </label>
+
+              <label class="toggle">
+                <span>
+                  <strong>Cambio manual de lista de precio</strong>
+                  <small>
+                    Si está desactivado, en venta se usa la lista asignada al cliente y el cajero no puede cambiarla.
+                  </small>
+                </span>
+                <input
+                  type="checkbox"
+                  [checked]="prefs.allowManualPriceListSelection()"
+                  (change)="prefs.setAllowManualPriceListSelection(!prefs.allowManualPriceListSelection())" />
+              </label>
             </div>
           }
 

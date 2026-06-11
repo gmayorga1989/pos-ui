@@ -23,6 +23,7 @@ const K_SOUND = 'pos_ui_sound';
 const K_SEPARATE_SAME_PRODUCT = 'pos_ui_separate_same_product';
 const K_UPSELL = 'pos_ui_upsell';
 const K_SHOW_IMG = 'pos_ui_show_product_images';
+const K_MANUAL_PRICE_LIST = 'pos_ui_manual_price_list';
 const K_RECEIPT_PRINTER = 'pos_ui_receipt_printer';
 const K_LABEL_PRINTER = 'pos_ui_label_printer';
 const K_LABEL_FORMAT = 'pos_ui_label_format';
@@ -57,6 +58,8 @@ export class PosLayoutPreferencesService {
   readonly upsellOn = signal(false);
   /** Miniatura de producto en cartillas del catálogo. */
   readonly showProductImages = signal(true);
+  /** Permite al cajero cambiar la lista de precio en venta (si está desactivado, se usa la del cliente). */
+  readonly allowManualPriceListSelection = signal(true);
   readonly receiptPrinter = signal('');
   readonly labelPrinter = signal('');
   readonly labelFormat = signal('58x40');
@@ -144,6 +147,9 @@ export class PosLayoutPreferencesService {
     }
     if (localStorage.getItem(K_SHOW_IMG) === '0') {
       this.showProductImages.set(false);
+    }
+    if (localStorage.getItem(K_MANUAL_PRICE_LIST) === '0') {
+      this.allowManualPriceListSelection.set(false);
     }
     this.receiptPrinter.set(localStorage.getItem(K_RECEIPT_PRINTER)?.trim() ?? '');
     this.labelPrinter.set(localStorage.getItem(K_LABEL_PRINTER)?.trim() ?? '');
@@ -276,6 +282,12 @@ export class PosLayoutPreferencesService {
   setShowProductImages(on: boolean): void {
     this.showProductImages.set(on);
     localStorage.setItem(K_SHOW_IMG, on ? '1' : '0');
+    this.layoutTick.update((n) => n + 1);
+  }
+
+  setAllowManualPriceListSelection(on: boolean): void {
+    this.allowManualPriceListSelection.set(on);
+    localStorage.setItem(K_MANUAL_PRICE_LIST, on ? '1' : '0');
     this.layoutTick.update((n) => n + 1);
   }
 
