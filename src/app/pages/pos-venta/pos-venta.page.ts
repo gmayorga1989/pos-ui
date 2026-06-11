@@ -78,6 +78,8 @@ interface CartLine {
   lineId: string;
   product: DemoProduct;
   qty: number;
+  /** Lista de precio aplicada a esta línea. */
+  priceListId: string;
   /** Descuento fijo en USD sobre el ítem (no por unidad). */
   discountAmount: number;
 }
@@ -87,8 +89,20 @@ interface SaleTab {
   label: string;
   cart: CartLine[];
   customer: SaleCustomer | null;
-  /** Lista de precio activa en esta venta. */
-  priceListId?: string;
+}
+
+interface LinePriceOption {
+  listId: string;
+  listName: string;
+  price: number;
+  primary: boolean;
+}
+
+interface CartStatusHint {
+  id: string;
+  kind: 'warn' | 'err';
+  label: string;
+  detail: string;
 }
 
 type CardPaymentChannel = 'terminal' | 'link' | 'manual';
@@ -128,6 +142,7 @@ type ModalState =
   | { kind: 'newCustomer' }
   | { kind: 'pickCustomer' }
   | { kind: 'lineDiscount'; lineId: string }
+  | { kind: 'linePrice'; lineId: string }
   | { kind: 'cobro' };
 
 @Component({
@@ -284,47 +299,41 @@ type ModalState =
                 </button>
               </div>
             </div>
-            <span class="badge">{{ lineCount() }} ítems</span>
+            <div class="cart-head__aside">
+              @if (cartStatusHints().length) {
+                <div class="cart-head__hints" role="status" aria-live="polite">
+                  @for (h of cartStatusHints(); track h.id) {
+                    <span class="cart-hint cart-hint--{{ h.kind }}" [title]="h.detail">{{ h.label }}</span>
+                  }
+                </div>
+              }
+              @if (lastTicketId()) {
+                <button type="button" class="cart-hint cart-hint--link pos-focus-ring" (click)="openLastTicket()" title="Imprimir último ticket">
+                  Ticket
+                </button>
+              }
+              <span class="badge">{{ lineCount() }} ítems</span>
+            </div>
           </div>
 
           <div class="customer-panel">
-            <div class="customer-panel__head">
-              <span class="customer-panel__lbl">Cliente</span>
-              @if (activeCustomer(); as ac) {
-                <span class="customer-panel__badge" [class.customer-panel__badge--cf]="ac.isConsumidorFinal">
-                  {{ saleCustomerTipoLabel(ac.tipoIdentificacion) }}
-                </span>
-              }
-            </div>
             @if (activeCustomer(); as ac) {
-              <div class="customer-panel__active">
+              <div class="customer-panel__active customer-panel__active--compact">
                 <div class="customer-panel__active-text">
                   <strong>{{ ac.name }}</strong>
-                  <span>{{ ac.doc }}</span>
+                  <span class="customer-panel__meta">
+                    {{ saleCustomerTipoLabel(ac.tipoIdentificacion) }} · {{ ac.doc }}
+                    @if (ac.priceListName && !canChangeLinePrice()) {
+                      · {{ ac.priceListName }}
+                    }
+                  </span>
                 </div>
                 @if (!ac.isConsumidorFinal) {
-                  <button type="button" class="customer-panel__reset pos-focus-ring" (click)="applyConsumidorFinal()">
-                    Usar CF
+                  <button type="button" class="customer-panel__reset pos-focus-ring" (click)="applyConsumidorFinal()" title="Usar consumidor final">
+                    CF
                   </button>
                 }
               </div>
-            }
-            @if (showPriceListPicker()) {
-              <label class="customer-panel__price-list">
-                <span class="customer-panel__price-list-lbl">Lista de precio</span>
-                <select
-                  class="customer-panel__price-list-select pos-focus-ring"
-                  [value]="activeTabPriceListId()"
-                  [disabled]="!canChangePriceList()"
-                  (change)="onPriceListChange($event)">
-                  @for (pl of priceListOptions(); track pl.id) {
-                    <option [value]="pl.id">{{ pl.name }}{{ pl.primary ? ' (principal)' : '' }}</option>
-                  }
-                </select>
-                @if (!canChangePriceList() && activeCustomer()?.priceListName) {
-                  <small class="customer-panel__price-list-hint">Fijada por el cliente: {{ activeCustomer()!.priceListName }}</small>
-                }
-              </label>
             }
             <div class="customer-panel__search">
               <input
@@ -337,44 +346,18 @@ type ModalState =
               <button type="button" class="customer-panel__btn pos-focus-ring" [disabled]="custSearchLoading()" (click)="searchCustomer()">
                 {{ custSearchLoading() ? '…' : 'Buscar' }}
               </button>
-            </div>
-            <div class="customer-panel__quick">
               <button
                 type="button"
                 class="customer-panel__chip pos-focus-ring"
                 [class.customer-panel__chip--active]="activeCustomer()?.isConsumidorFinal"
-                (click)="applyConsumidorFinal()">
-                Consumidor final
+                (click)="applyConsumidorFinal()"
+                title="Consumidor final">
+                CF
               </button>
-              <button type="button" class="customer-panel__chip customer-panel__chip--ghost pos-focus-ring" (click)="openNewCustomer()">
-                + Nuevo cliente
+              <button type="button" class="customer-panel__chip customer-panel__chip--ghost pos-focus-ring" (click)="openNewCustomer()" title="Nuevo cliente">
+                + Nuevo
               </button>
             </div>
-          </div>
-
-          <div class="cart__state">
-            @if (ping(); as pong) {
-              <div class="api-ok" role="status">
-                <span class="api-ok__dot"></span>
-                API · {{ pong.companyId }}
-              </div>
-            } @else if (error()) {
-              <div class="api-err" role="alert">{{ error() }}</div>
-            }
-            @if (invoicingEnabled() && posApiConfigured() && !prefs.puntoEmisionId().trim()) {
-              <div class="api-warn" role="status">Se usara sucursal/emision local si no hay punto eFactura seleccionado.</div>
-            }
-            @if (lastTicketId()) {
-              <button type="button" class="api-ok api-ok--link pos-focus-ring" (click)="openLastTicket()">
-                Imprimir último ticket
-              </button>
-            }
-            @if (!desk.cajaOpen()) {
-              <div class="api-warn" role="status">Debe aperturar caja para proceder con la venta.</div>
-            }
-            @if (saleActionMessage()) {
-              <div class="api-warn" role="status">{{ saleActionMessage() }}</div>
-            }
           </div>
 
           <div class="lines">
@@ -383,9 +366,18 @@ type ModalState =
                 <div class="line__info">
                   <span class="line__name">{{ line.product.name }}</span>
                   <span class="line__sku">{{ line.product.sku }}</span>
-                  <span class="line__unit">
-                    Unit. {{ line.product.price | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}
-                  </span>
+                  <button
+                    type="button"
+                    class="line__unit line__unit--btn pos-focus-ring"
+                    [class.line__unit--locked]="!canChangeLinePrice()"
+                    [disabled]="!canChangeLinePrice()"
+                    [title]="canChangeLinePrice() ? 'Cambiar lista de precio' : linePriceListLabel(line) || 'Precio fijado'"
+                    (click)="openLinePrice(line)">
+                    {{ line.product.price | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}
+                    @if (linePriceListLabel(line); as listLbl) {
+                      <span class="line__list">{{ listLbl }}</span>
+                    }
+                  </button>
                   @if (line.discountAmount > 0) {
                     <span class="line__disc">−{{ line.discountAmount | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
                   }
@@ -697,6 +689,35 @@ type ModalState =
             <p class="modal__p">2x1 fines de semana - combo con bebida incluida (contenido demo).</p>
             <button type="button" class="btn-modal pos-focus-ring" (click)="closeModal()">Cerrar</button>
           }
+          @case ('linePrice') {
+            @if (lineById(m.lineId); as dl) {
+              <h3 class="modal__title" id="mdl-linePrice">Precio · {{ dl.product.name }}</h3>
+              <p class="modal__sub">{{ dl.product.sku }}</p>
+              @if (!canChangeLinePrice()) {
+                <p class="modal__p">
+                  Precio según
+                  {{ linePriceListLabel(dl) || 'lista asignada' }}.
+                  El cambio manual está desactivado en Ajustes o el cliente tiene lista fija.
+                </p>
+              } @else if (linePriceOptions(dl.product).length <= 1) {
+                <p class="modal__p">Solo hay un precio disponible para este producto.</p>
+              } @else {
+                <div class="price-pick" role="listbox" aria-label="Listas de precio">
+                  @for (opt of linePriceOptions(dl.product); track opt.listId) {
+                    <button
+                      type="button"
+                      class="price-pick__opt pos-focus-ring"
+                      [class.price-pick__opt--on]="dl.priceListId === opt.listId"
+                      (click)="applyLinePrice(m.lineId, opt.listId)">
+                      <span class="price-pick__name">{{ opt.listName }}{{ opt.primary ? ' · principal' : '' }}</span>
+                      <strong class="price-pick__val">{{ opt.price | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                    </button>
+                  }
+                </div>
+              }
+              <button type="button" class="btn-modal pos-focus-ring" (click)="closeModal()">Cerrar</button>
+            }
+          }
           @case ('lineDiscount') {
             @if (lineById(m.lineId); as dl) {
               <h3 class="modal__title" id="mdl-lineDiscount">Descuento - linea</h3>
@@ -1002,10 +1023,54 @@ type ModalState =
       align-items: center;
       justify-content: space-between;
       gap: 0.5rem;
-      padding: 0.6rem 0.7rem;
+      padding: 0.5rem 0.65rem;
       border-bottom: 1px solid var(--pos-border);
       background: var(--pos-elevated);
       flex-shrink: 0;
+    }
+    .cart-head__aside {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-shrink: 0;
+    }
+    .cart-head__hints {
+      display: flex;
+      align-items: center;
+      gap: 0.28rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      max-width: 14rem;
+    }
+    .cart-hint {
+      font-size: 0.58rem;
+      font-weight: 700;
+      padding: 0.14rem 0.38rem;
+      border-radius: 999px;
+      border: 1px solid var(--pos-border-strong);
+      background: var(--pos-surface-2);
+      color: var(--pos-muted);
+      white-space: nowrap;
+      cursor: default;
+    }
+    .cart-hint--warn {
+      border-color: rgba(217, 119, 6, 0.35);
+      background: rgba(251, 191, 36, 0.12);
+      color: #92400e;
+    }
+    html[data-theme='dark'] .cart-hint--warn {
+      color: #fcd34d;
+    }
+    .cart-hint--err {
+      border-color: rgba(251, 113, 133, 0.28);
+      background: rgba(251, 113, 133, 0.1);
+      color: #e11d48;
+    }
+    .cart-hint--link {
+      cursor: pointer;
+      border-color: var(--pos-status-ok-border);
+      background: var(--pos-status-ok-bg);
+      color: var(--pos-status-ok);
     }
     .cart-tabs-scroll {
       flex: 1;
@@ -1085,10 +1150,12 @@ type ModalState =
     }
     .customer-panel {
       position: relative;
-      padding: 0.62rem 0.65rem 0.58rem;
+      padding: 0.45rem 0.6rem 0.5rem;
       border-bottom: 1px solid var(--pos-border);
       background: var(--pos-elevated);
       flex-shrink: 0;
+      display: grid;
+      gap: 0.38rem;
     }
     .customer-panel__head {
       display: flex;
@@ -1118,44 +1185,12 @@ type ModalState =
       border-color: var(--pos-status-ok-border);
       background: var(--pos-status-ok-bg);
     }
-    .customer-panel__price-list {
-      display: grid;
-      gap: 0.2rem;
-      margin-bottom: 0.42rem;
-    }
-    .customer-panel__price-list-lbl {
-      font-size: 0.58rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--pos-faint);
-    }
-    .customer-panel__price-list-select {
-      width: 100%;
-      padding: 0.38rem 0.48rem;
-      border-radius: var(--pos-radius-xs);
-      border: 1px solid var(--pos-border-strong);
-      background: var(--pos-surface-2);
-      color: var(--pos-text);
-      font-size: 0.74rem;
-      font-weight: 600;
-    }
-    .customer-panel__price-list-select:disabled {
-      opacity: 0.72;
-      cursor: not-allowed;
-    }
-    .customer-panel__price-list-hint {
-      font-size: 0.64rem;
-      color: var(--pos-muted);
-      line-height: 1.3;
-    }
     .customer-panel__active {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 0.45rem;
-      margin-bottom: 0.42rem;
-      padding: 0.42rem 0.5rem;
+      padding: 0.34rem 0.45rem;
       border-radius: 8px;
       border: 1px solid var(--pos-border);
       background: var(--pos-surface-2);
@@ -1172,10 +1207,14 @@ type ModalState =
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .customer-panel__active-text span {
+    .customer-panel__active-text span,
+    .customer-panel__meta {
       font-family: var(--pos-mono);
       font-size: 0.64rem;
       color: var(--pos-muted);
+    }
+    .customer-panel__active--compact {
+      margin-bottom: 0;
     }
     .customer-panel__reset {
       border: 1px solid var(--pos-border-strong);
@@ -1190,7 +1229,8 @@ type ModalState =
     }
     .customer-panel__search {
       display: flex;
-      gap: 0.35rem;
+      flex-wrap: wrap;
+      gap: 0.32rem;
       align-items: center;
     }
     .customer-panel__input {
@@ -1218,21 +1258,17 @@ type ModalState =
       opacity: 0.6;
       cursor: wait;
     }
-    .customer-panel__quick {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-      margin-top: 0.42rem;
-    }
     .customer-panel__chip {
-      border-radius: 999px;
+      border-radius: 8px;
       border: 1px solid color-mix(in srgb, var(--lux-indigo) 24%, var(--pos-border-strong));
       background: var(--pos-surface);
       color: var(--pos-text);
-      font-size: 0.68rem;
+      font-size: 0.66rem;
       font-weight: 650;
-      padding: 0.28rem 0.58rem;
+      padding: 0.34rem 0.5rem;
       cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
     .customer-panel__chip--active {
       border-color: color-mix(in srgb, var(--lux-indigo) 42%, var(--pos-border-strong));
@@ -1617,67 +1653,11 @@ type ModalState =
       background: var(--pos-surface-2);
       font-variant-numeric: tabular-nums;
     }
-    .cart__state {
-      flex-shrink: 0;
-      padding: 0.45rem 0.65rem 0;
-    }
-    .api-ok,
-    .api-err {
-      padding: 0.38rem 0.55rem;
-      border-radius: var(--pos-radius-sm);
-      font-size: 0.68rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-    .api-ok {
-      background: var(--pos-status-ok-bg);
-      border: 1px solid var(--pos-status-ok-border);
-      color: var(--pos-status-ok);
-    }
-    .api-ok--link {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      margin-top: 0.35rem;
-      padding: 0.3rem 0.55rem;
-      border-radius: 6px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .api-ok__dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--pos-status-ok);
-    }
-    .api-err {
-      background: rgba(251, 113, 133, 0.1);
-      border: 1px solid rgba(251, 113, 133, 0.28);
-      color: #e11d48;
-    }
-    html[data-theme='dark'] .api-err {
-      color: #fda4af;
-    }
-    .api-warn {
-      margin-top: 0.35rem;
-      padding: 0.38rem 0.55rem;
-      border-radius: var(--pos-radius-sm);
-      font-size: 0.68rem;
-      border: 1px solid rgba(217, 119, 6, 0.35);
-      background: rgba(251, 191, 36, 0.12);
-      color: #92400e;
-    }
-    html[data-theme='dark'] .api-warn {
-      color: #fcd34d;
-      border-color: rgba(251, 191, 36, 0.35);
-    }
     .lines {
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 0.45rem 0.65rem 0.35rem;
+      padding: 0.35rem 0.6rem 0.3rem;
     }
     .line {
       display: grid;
@@ -1731,15 +1711,70 @@ type ModalState =
     }
     .line__unit {
       display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.04rem;
       margin-top: 0.14rem;
-      padding: 0.08rem 0.34rem;
-      border-radius: 999px;
+      padding: 0.1rem 0.36rem;
+      border-radius: 8px;
       border: 1px solid var(--pos-border);
       background: var(--pos-surface-2);
-      color: var(--pos-muted);
+      color: var(--pos-text);
       font-family: var(--pos-mono);
-      font-size: 0.62rem;
+      font-size: 0.66rem;
       font-weight: 750;
+      font-variant-numeric: tabular-nums;
+    }
+    .line__unit--btn {
+      cursor: pointer;
+      text-align: left;
+    }
+    .line__unit--btn:hover:not(:disabled) {
+      border-color: color-mix(in srgb, var(--pos-accent) 35%, var(--pos-border-strong));
+      background: color-mix(in srgb, var(--pos-accent-muted) 28%, var(--pos-surface-2));
+    }
+    .line__unit--locked,
+    .line__unit--btn:disabled {
+      cursor: default;
+      opacity: 0.88;
+    }
+    .line__list {
+      font-size: 0.54rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--pos-muted);
+      font-family: inherit;
+    }
+    .price-pick {
+      display: grid;
+      gap: 0.4rem;
+      margin: 0.5rem 0 0.65rem;
+    }
+    .price-pick__opt {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      width: 100%;
+      padding: 0.55rem 0.65rem;
+      border-radius: 10px;
+      border: 1px solid var(--pos-border-strong);
+      background: var(--pos-surface-2);
+      color: var(--pos-text);
+      cursor: pointer;
+      text-align: left;
+    }
+    .price-pick__opt--on {
+      border-color: color-mix(in srgb, var(--pos-accent) 42%, var(--pos-border-strong));
+      background: color-mix(in srgb, var(--pos-accent-muted) 35%, var(--pos-surface-2));
+    }
+    .price-pick__name {
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .price-pick__val {
+      font-size: 0.92rem;
       font-variant-numeric: tabular-nums;
     }
     .line__ctrl {
@@ -2715,14 +2750,31 @@ export class PosVentaPage {
 
   readonly priceListOptions = computed(() => this.priceLists().filter((l) => l.active));
 
-  readonly showPriceListPicker = computed(() => this.priceListOptions().length > 1);
-
-  readonly canChangePriceList = computed(() => {
-    if (this.prefs.allowManualPriceListSelection()) {
-      return true;
+  readonly cartStatusHints = computed((): CartStatusHint[] => {
+    const hints: CartStatusHint[] = [];
+    if (this.error()) {
+      hints.push({ id: 'api-err', kind: 'err', label: 'Sin API', detail: this.error()! });
     }
-    const cust = this.activeCustomer();
-    return !cust?.priceListId;
+    if (!this.desk.cajaOpen()) {
+      hints.push({
+        id: 'caja',
+        kind: 'warn',
+        label: 'Caja cerrada',
+        detail: 'Debe aperturar caja para proceder con la venta.',
+      });
+    }
+    if (this.invoicingEnabled() && this.posApiConfigured() && !this.prefs.puntoEmisionId().trim()) {
+      hints.push({
+        id: 'pe',
+        kind: 'warn',
+        label: 'Emisión local',
+        detail: 'Se usará sucursal/emisión local si no hay punto eFactura seleccionado.',
+      });
+    }
+    if (this.saleActionMessage()) {
+      hints.push({ id: 'sale', kind: 'warn', label: 'Aviso', detail: this.saleActionMessage()! });
+    }
+    return hints;
   });
 
   readonly catalogPageSize = 15;
@@ -2990,12 +3042,7 @@ export class PosVentaPage {
         return;
       }
       untracked(() => {
-        this.patchActiveTab((t) => {
-          if (t.priceListId === listId) {
-            return t;
-          }
-          return this.repriceTabCart({ ...t, priceListId: listId }, listId);
-        });
+        this.patchActiveTab((t) => this.repriceAllLinesToList(t, listId));
       });
     });
 
@@ -3159,13 +3206,23 @@ export class PosVentaPage {
     return this.primaryPriceListIdFromLists(this.priceLists());
   }
 
-  activeTabPriceListId(): string {
-    const tab = this.activeTab();
-    return tab.priceListId || this.primaryPriceListId();
+  defaultPriceListId(customer?: SaleCustomer | null): string {
+    const c = customer ?? this.activeCustomer();
+    if (c?.priceListId) {
+      return c.priceListId;
+    }
+    return this.primaryPriceListId();
+  }
+
+  canChangeLinePrice(): boolean {
+    if (!this.prefs.allowManualPriceListSelection()) {
+      return false;
+    }
+    return this.priceListOptions().length > 1;
   }
 
   catalogDisplayPrice(p: DemoProduct): number {
-    return this.resolvePrice(p, this.activeTabPriceListId());
+    return this.resolvePrice(p, this.defaultPriceListId());
   }
 
   resolvePrice(p: DemoProduct, listId: string): number {
@@ -3180,33 +3237,79 @@ export class PosVentaPage {
     return p.price;
   }
 
-  onPriceListChange(ev: Event): void {
-    if (!this.canChangePriceList() || !this.requireOpenCaja()) {
+  linePriceListName(listId: string): string {
+    return this.priceListOptions().find((l) => l.id === listId)?.name ?? 'Lista';
+  }
+
+  linePriceListLabel(line: CartLine): string | null {
+    const name = this.linePriceListName(line.priceListId);
+    if (!name || this.priceListOptions().length <= 1) {
+      return null;
+    }
+    return name;
+  }
+
+  linePriceOptions(product: DemoProduct): LinePriceOption[] {
+    const catalogProduct = this.catalog().find((p) => p.id === product.id) ?? product;
+    return this.priceListOptions()
+      .map((pl) => ({
+        listId: pl.id,
+        listName: pl.name,
+        price: this.resolvePrice(catalogProduct, pl.id),
+        primary: pl.primary,
+      }))
+      .filter((opt) => opt.price > 0);
+  }
+
+  openLinePrice(line: CartLine): void {
+    if (!this.requireOpenCaja() || !this.canChangeLinePrice()) {
       return;
     }
-    const listId = (ev.target as HTMLSelectElement).value;
-    this.patchActiveTab((t) => this.repriceTabCart({ ...t, priceListId: listId }, listId));
+    this.modal.set({ kind: 'linePrice', lineId: line.lineId });
   }
 
-  private repriceTabCart(tab: SaleTab, listId: string): SaleTab {
-    return {
-      ...tab,
-      priceListId: listId,
-      cart: tab.cart.map((row) => ({
-        ...row,
-        product: {
-          ...row.product,
-          price: this.resolvePrice(row.product, listId),
-        },
-      })),
-    };
-  }
-
-  private resolveTabPriceListForCustomer(customer: SaleCustomer | null, current?: string): string {
-    if (!this.prefs.allowManualPriceListSelection() && customer?.priceListId) {
-      return customer.priceListId;
+  applyLinePrice(lineId: string, listId: string): void {
+    if (!this.requireOpenCaja() || !this.canChangeLinePrice()) {
+      return;
     }
-    return current || this.primaryPriceListId();
+    this.patchActiveTab((t) => ({
+      ...t,
+      cart: t.cart.map((row) => {
+        if (row.lineId !== lineId) {
+          return row;
+        }
+        const catalogProduct = this.catalog().find((p) => p.id === row.product.id) ?? row.product;
+        const unit = this.resolvePrice(catalogProduct, listId);
+        const gross = row.qty * unit;
+        return {
+          ...row,
+          priceListId: listId,
+          product: { ...row.product, listPrices: catalogProduct.listPrices, price: unit },
+          discountAmount: Math.min(row.discountAmount ?? 0, gross),
+        };
+      }),
+    }));
+    this.closeModal();
+  }
+
+  private repriceAllLinesToList(tab: SaleTab, listId: string): SaleTab {
+    const cart = tab.cart.map((row) => {
+      const catalogProduct = this.catalog().find((p) => p.id === row.product.id) ?? row.product;
+      const unit = this.resolvePrice(catalogProduct, listId);
+      const gross = row.qty * unit;
+      return {
+        ...row,
+        priceListId: listId,
+        product: { ...row.product, listPrices: catalogProduct.listPrices, price: unit },
+        discountAmount: Math.min(row.discountAmount ?? 0, gross),
+      };
+    });
+    const unchanged =
+      tab.cart.length === cart.length &&
+      tab.cart.every(
+        (row, i) => row.priceListId === cart[i]!.priceListId && row.product.price === cart[i]!.product.price,
+      );
+    return unchanged ? tab : { ...tab, cart };
   }
 
   stockRows(p: DemoProduct): { warehouse: string; qty: number }[] {
@@ -3305,7 +3408,20 @@ export class PosVentaPage {
       if (!tabs.length) {
         return;
       }
-      this.tabs.set(tabs);
+      const primaryId = this.primaryPriceListId();
+      this.tabs.set(
+        tabs.map((tab) => ({
+          ...tab,
+          cart: tab.cart.map((row) => ({
+            ...row,
+            priceListId: row.priceListId || primaryId,
+            product: {
+              ...row.product,
+              listPrices: row.product.listPrices ?? {},
+            },
+          })),
+        })),
+      );
       const active = tabs.some((tab) => tab.id === parsed.activeTabId) ? parsed.activeTabId! : tabs[0]!.id;
       this.activeTabId.set(active);
       const maxSeq = tabs.reduce((max, tab) => {
@@ -4013,7 +4129,6 @@ export class PosVentaPage {
         label: `Venta ${n}`,
         cart: [],
         customer: SALE_CONSUMIDOR_FINAL,
-        priceListId: this.primaryPriceListId(),
       },
     ]);
     this.activeTabId.set(id);
@@ -4235,8 +4350,11 @@ export class PosVentaPage {
 
   private applyCustomer(customer: SaleCustomer): void {
     this.patchActiveTab((t) => {
-      const listId = this.resolveTabPriceListForCustomer(customer, t.priceListId);
-      return this.repriceTabCart({ ...t, customer }, listId);
+      const next = { ...t, customer };
+      if (!this.prefs.allowManualPriceListSelection() && customer.priceListId) {
+        return this.repriceAllLinesToList(next, customer.priceListId);
+      }
+      return next;
     });
     this.resetCustomerSearchUi();
     this.saleActionMessage.set(null);
@@ -4424,25 +4542,28 @@ export class PosVentaPage {
     if (!this.requireOpenCaja()) {
       return;
     }
-    const listId = this.activeTabPriceListId();
+    const listId = this.defaultPriceListId();
     const priced: DemoProduct = { ...p, price: this.resolvePrice(p, listId) };
     this.playUiSound('add');
     this.patchActiveTab((t) => {
       const rows = t.cart;
-      const i = rows.findIndex((r) => r.product.id === p.id);
+      const i = rows.findIndex((r) => r.product.id === p.id && r.priceListId === listId);
       if (i >= 0 && !this.prefs.separateSameProductLines()) {
         const next = [...rows];
         const row = next[i];
         const qty = row.qty + 1;
-        const unit = this.resolvePrice(row.product, listId);
+        const unit = row.product.price;
         const gross = qty * unit;
         const disc = Math.min(row.discountAmount ?? 0, gross);
-        next[i] = { ...row, qty, product: { ...row.product, price: unit }, discountAmount: disc };
+        next[i] = { ...row, qty, discountAmount: disc };
         return { ...t, cart: next };
       }
       return {
         ...t,
-        cart: [...rows, { lineId: this.newLineId(), product: priced, qty: 1, discountAmount: 0 }],
+        cart: [
+          ...rows,
+          { lineId: this.newLineId(), product: priced, priceListId: listId, qty: 1, discountAmount: 0 },
+        ],
       };
     });
     this.focusCatalogSearch();
