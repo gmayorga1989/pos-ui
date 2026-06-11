@@ -112,8 +112,11 @@ type ModalState =
   | { kind: 'stock'; product: DemoProduct }
   | { kind: 'promo'; product: DemoProduct }
   | { kind: 'newCustomer' }
+  | { kind: 'pickCustomer' }
   | { kind: 'lineDiscount'; lineId: string }
   | { kind: 'cobro' };
+
+const CUST_PICKER_PAGE_SIZE = 10;
 
 @Component({
   selector: 'pos-venta-page',
@@ -293,23 +296,6 @@ type ModalState =
                 + Nuevo cliente
               </button>
             </div>
-            @if (custResultsOpen() && custResults().length > 0) {
-              <ul class="customer-panel__results" role="listbox">
-                @for (row of custResults(); track row.id) {
-                  <li>
-                    <button type="button" class="customer-panel__result pos-focus-ring" (click)="selectCustomer(row)">
-                      <span class="customer-panel__result-name">{{ row.nombreComercial || row.razonSocial }}</span>
-                      <span class="customer-panel__result-meta">
-                        {{ saleCustomerTipoLabel(row.tipoIdentificacion) }} · {{ row.identificacion }}
-                      </span>
-                    </button>
-                  </li>
-                }
-              </ul>
-            }
-            @if (custSearchMsg()) {
-              <p class="customer-panel__msg">{{ custSearchMsg() }}</p>
-            }
           </div>
 
           <div class="cart__state">
@@ -553,6 +539,110 @@ type ModalState =
           <button type="button" class="pos-btn pos-btn--primary" [disabled]="newCustSaving()" (click)="saveNewCustomer()">
             {{ newCustSaving() ? 'Guardando…' : 'Guardar y usar' }}
           </button>
+        </footer>
+      </section>
+      } @else if (m.kind === 'pickCustomer') {
+      <div class="ts-modal-backdrop" (click)="closeModal()"></div>
+      <section class="ts-form-modal ts-form-modal--wide cust-picker-modal" role="dialog" aria-modal="true" aria-labelledby="mdl-pickc">
+        <header class="ts-form-modal__header">
+          <div class="ts-form-modal__icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="10" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
+              <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" />
+              <path d="M15 11h6M18 8v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="ts-form-modal__head-text">
+            <p class="ts-form-modal__eyebrow">Venta</p>
+            <h3 id="mdl-pickc">Buscar cliente</h3>
+            <p class="ts-form-modal__subtitle">Seleccione un cliente del maestro para asignarlo al ticket.</p>
+          </div>
+          <button type="button" class="ts-form-modal__close" aria-label="Cerrar" (click)="closeModal()">×</button>
+        </header>
+        <div class="ts-form-modal__body">
+          <div class="cust-picker-toolbar">
+            <input
+              type="search"
+              class="cust-picker-toolbar__input pos-focus-ring"
+              placeholder="RUC, cédula, nombre o correo…"
+              [value]="custPickerQuery()"
+              (input)="onCustPickerQueryInput($event)"
+              (keydown.enter)="reloadCustomerPicker()" />
+            <button type="button" class="pos-btn pos-btn--soft" [disabled]="custPickerLoading()" (click)="reloadCustomerPicker()">
+              {{ custPickerLoading() ? '…' : 'Buscar' }}
+            </button>
+          </div>
+
+          <p class="cust-picker-meta">
+            @if (custPickerLoading()) {
+              Cargando clientes…
+            } @else if (custPickerRows().length === 0) {
+              Sin coincidencias. Pruebe otro criterio o cree un cliente nuevo.
+            } @else {
+              {{ custPickerRows().length }} resultado{{ custPickerRows().length === 1 ? '' : 's' }}
+              · Página {{ custPickerPage() }} de {{ custPickerPageCount() }}
+            }
+          </p>
+
+          <div class="cust-picker-table-wrap">
+            <table class="cust-picker-table">
+              <thead>
+                <tr>
+                  <th>Nombre / Razón social</th>
+                  <th>Tipo</th>
+                  <th>Identificación</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of custPickerPagedRows(); track row.id) {
+                  <tr>
+                    <td>
+                      <span class="cust-picker-table__name">{{ row.nombreComercial || row.razonSocial }}</span>
+                      @if (row.email) {
+                        <span class="cust-picker-table__sub">{{ row.email }}</span>
+                      }
+                    </td>
+                    <td>{{ saleCustomerTipoLabel(row.tipoIdentificacion) }}</td>
+                    <td class="cust-picker-table__id">{{ row.identificacion }}</td>
+                    <td class="cust-picker-table__act">
+                      <button type="button" class="pos-btn pos-btn--soft pos-btn--sm" (click)="selectCustomer(row)">Usar</button>
+                    </td>
+                  </tr>
+                } @empty {
+                  @if (!custPickerLoading()) {
+                    <tr>
+                      <td colspan="4" class="cust-picker-table__empty">No hay clientes para mostrar.</td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (custPickerPageCount() > 1) {
+            <nav class="cust-picker-pager" aria-label="Paginación de clientes">
+              <button
+                type="button"
+                class="pos-btn pos-btn--ghost pos-btn--sm"
+                [disabled]="custPickerPage() <= 1"
+                (click)="custPickerPrevPage()">
+                Anterior
+              </button>
+              <span class="cust-picker-pager__info">{{ custPickerPage() }} / {{ custPickerPageCount() }}</span>
+              <button
+                type="button"
+                class="pos-btn pos-btn--ghost pos-btn--sm"
+                [disabled]="custPickerPage() >= custPickerPageCount()"
+                (click)="custPickerNextPage()">
+                Siguiente
+              </button>
+            </nav>
+          }
+        </div>
+        <footer class="ts-form-modal__footer">
+          <button type="button" class="pos-btn pos-btn--ghost" (click)="closeModal()">Cancelar</button>
+          <button type="button" class="pos-btn pos-btn--soft" (click)="openNewCustomerFromPicker()">+ Nuevo cliente</button>
         </footer>
       </section>
       } @else {
@@ -1105,51 +1195,96 @@ type ModalState =
       background: transparent;
       color: var(--pos-muted);
     }
-    .customer-panel__results {
-      list-style: none;
-      margin: 0.42rem 0 0;
-      padding: 0;
-      max-height: 9.5rem;
-      overflow: auto;
-      border: 1px solid var(--pos-border);
-      border-radius: 10px;
-      background: var(--pos-surface);
-      box-shadow: var(--pos-shadow-soft);
-    }
-    .customer-panel__result {
+    .cust-picker-toolbar {
       display: grid;
-      gap: 0.12rem;
+      grid-template-columns: 1fr auto;
+      gap: 0.55rem;
+      margin-bottom: 0.65rem;
+    }
+    .cust-picker-toolbar__input {
       width: 100%;
-      padding: 0.48rem 0.55rem;
-      border: none;
-      border-bottom: 1px solid var(--pos-border);
-      background: transparent;
+      border: 1px solid var(--pos-maestro-border, var(--pos-border));
+      border-radius: 10px;
+      background: var(--pos-maestro-card, var(--pos-surface));
+      color: var(--pos-text);
+      padding: 0.55rem 0.7rem;
+      font-size: 0.84rem;
+    }
+    .cust-picker-meta {
+      margin: 0 0 0.55rem;
+      font-size: 0.72rem;
+      color: var(--pos-muted);
+    }
+    .cust-picker-table-wrap {
+      max-height: min(52vh, 26rem);
+      overflow: auto;
+      border: 1px solid var(--pos-maestro-border, var(--pos-border));
+      border-radius: 12px;
+      background: var(--pos-maestro-card, var(--pos-surface));
+    }
+    .cust-picker-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .cust-picker-table th,
+    .cust-picker-table td {
+      padding: 0.55rem 0.65rem;
+      border-bottom: 1px solid var(--pos-maestro-divider, var(--pos-border));
       text-align: left;
-      cursor: pointer;
+      vertical-align: middle;
     }
-    .customer-panel__result:last-child {
-      border-bottom: none;
+    .cust-picker-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--pos-maestro-grid-head, var(--pos-surface-2));
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--pos-muted);
     }
-    .customer-panel__result:hover {
-      background: var(--pos-surface-2);
+    .cust-picker-table tbody tr:hover {
+      background: color-mix(in srgb, var(--lux-indigo) 6%, var(--pos-maestro-card, var(--pos-surface)));
     }
-    .customer-panel__result-name {
-      font-size: 0.76rem;
+    .cust-picker-table__name {
+      display: block;
       font-weight: 700;
       color: var(--pos-text);
     }
-    .customer-panel__result-meta {
-      font-size: 0.64rem;
+    .cust-picker-table__sub {
+      display: block;
+      margin-top: 0.12rem;
+      font-size: 0.68rem;
+      color: var(--pos-muted);
+    }
+    .cust-picker-table__id {
+      font-family: var(--pos-mono);
+      font-size: 0.74rem;
+      white-space: nowrap;
+    }
+    .cust-picker-table__act {
+      width: 5.5rem;
+      text-align: right;
+    }
+    .cust-picker-table__empty {
+      text-align: center;
+      color: var(--pos-muted);
+      padding: 1.25rem;
+    }
+    .cust-picker-pager {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      margin-top: 0.75rem;
+    }
+    .cust-picker-pager__info {
+      font-size: 0.74rem;
       color: var(--pos-muted);
       font-family: var(--pos-mono);
-    }
-    .customer-panel__msg {
-      margin: 0.35rem 0 0;
-      font-size: 0.66rem;
-      color: var(--pos-muted);
-    }
-    .customer-panel__msg--warn {
-      color: var(--pos-warn);
+      min-width: 4.5rem;
+      text-align: center;
     }
     .btn-xs {
       border-radius: 6px;
@@ -2553,11 +2688,19 @@ export class PosVentaPage {
   readonly tabs = signal<SaleTab[]>([{ id: 't-1', label: 'Venta 1', cart: [], customer: SALE_CONSUMIDOR_FINAL }]);
   readonly activeTabId = signal('t-1');
   readonly custQuery = signal('');
-  readonly custResults = signal<PosCustomerResponse[]>([]);
-  readonly custResultsOpen = signal(false);
   readonly custSearchLoading = signal(false);
-  readonly custSearchMsg = signal<string | null>(null);
-  private custSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  readonly custPickerQuery = signal('');
+  readonly custPickerRows = signal<PosCustomerResponse[]>([]);
+  readonly custPickerPage = signal(1);
+  readonly custPickerLoading = signal(false);
+  readonly custPickerPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.custPickerRows().length / CUST_PICKER_PAGE_SIZE)),
+  );
+  readonly custPickerPagedRows = computed(() => {
+    const page = this.custPickerPage();
+    const start = (page - 1) * CUST_PICKER_PAGE_SIZE;
+    return this.custPickerRows().slice(start, start + CUST_PICKER_PAGE_SIZE);
+  });
   readonly modal = signal<ModalState | null>(null);
   readonly newCustFormErrors = signal<PosCustomerFormErrors>({});
   readonly newCustCatastroLoading = signal(false);
@@ -2836,19 +2979,11 @@ export class PosVentaPage {
   }
 
   onCustQuery(ev: Event): void {
-    const v = (ev.target as HTMLInputElement).value;
-    this.custQuery.set(v);
-    if (this.custSearchTimer) {
-      clearTimeout(this.custSearchTimer);
-    }
-    const trimmed = v.trim();
-    if (trimmed.length < 2) {
-      this.custResults.set([]);
-      this.custResultsOpen.set(false);
-      this.custSearchMsg.set(null);
-      return;
-    }
-    this.custSearchTimer = setTimeout(() => this.runCustomerSearch(trimmed), 300);
+    this.custQuery.set((ev.target as HTMLInputElement).value);
+  }
+
+  onCustPickerQueryInput(ev: Event): void {
+    this.custPickerQuery.set((ev.target as HTMLInputElement).value);
   }
 
   private focusCatalogSearch(): void {
@@ -3761,66 +3896,88 @@ export class PosVentaPage {
 
   searchCustomer(): void {
     const raw = this.custQuery().trim();
-    if (!raw) {
-      this.applyConsumidorFinal();
+    if (raw) {
+      const q = raw.toLowerCase();
+      if (q.includes('consum') || q === 'cf' || q === '999') {
+        this.applyConsumidorFinal();
+        return;
+      }
+    }
+    this.openCustomerPicker(raw);
+  }
+
+  openCustomerPicker(query = ''): void {
+    if (!this.posApiConfigured()) {
+      this.toast.error('Configure la API del POS para buscar en el maestro de clientes.');
       return;
     }
-    const q = raw.toLowerCase();
-    if (q.includes('consum') || q === 'cf' || q === '999') {
-      this.applyConsumidorFinal();
-      return;
+    this.custPickerQuery.set(query);
+    this.custPickerPage.set(1);
+    this.modal.set({ kind: 'pickCustomer' });
+    this.loadCustomerPicker(query);
+  }
+
+  reloadCustomerPicker(): void {
+    this.custPickerPage.set(1);
+    this.loadCustomerPicker(this.custPickerQuery().trim());
+  }
+
+  custPickerPrevPage(): void {
+    if (this.custPickerPage() > 1) {
+      this.custPickerPage.update((p) => p - 1);
     }
-    this.runCustomerSearch(raw);
+  }
+
+  custPickerNextPage(): void {
+    if (this.custPickerPage() < this.custPickerPageCount()) {
+      this.custPickerPage.update((p) => p + 1);
+    }
+  }
+
+  openNewCustomerFromPicker(): void {
+    const q = this.custPickerQuery().trim();
+    this.openNewCustomer();
+    if (/^\d{13}$/.test(q)) {
+      this.newCustDraft.tipoIdentificacion = '04';
+      this.newCustDraft.identificacion = q;
+      this.newCustOnTipoChange();
+    } else if (/^\d{10}$/.test(q)) {
+      this.newCustDraft.tipoIdentificacion = '05';
+      this.newCustDraft.identificacion = q;
+      this.newCustOnTipoChange();
+    } else if (q) {
+      this.newCustDraft.razonSocial = q;
+    }
   }
 
   selectCustomer(row: PosCustomerResponse): void {
     this.applyCustomer(customerResponseToSale(row));
+    this.closeModal();
   }
 
   applyConsumidorFinal(): void {
     this.applyCustomer(SALE_CONSUMIDOR_FINAL);
   }
 
-  private runCustomerSearch(raw: string): void {
-    const q = raw.trim();
-    if (!q) {
-      return;
-    }
-    if (!this.posApiConfigured()) {
-      this.custResults.set([]);
-      this.custResultsOpen.set(false);
-      this.custSearchMsg.set('Configure la API del POS para buscar en el maestro de clientes.');
-      return;
-    }
+  private loadCustomerPicker(query: string): void {
+    this.custPickerLoading.set(true);
     this.custSearchLoading.set(true);
-    this.custSearchMsg.set(null);
-    this.backend.getCustomers(q).subscribe({
+    const q = query.trim();
+    this.backend.getCustomers(q || undefined).subscribe({
       next: (rows) => {
+        this.custPickerLoading.set(false);
         this.custSearchLoading.set(false);
-        const digits = q.replace(/\D/g, '');
-        const exact =
-          rows.find((c) => c.identificacion === q) ??
-          (digits ? rows.find((c) => c.identificacion === digits) : undefined) ??
-          (rows.length === 1 ? rows[0] : null);
-        if (exact) {
-          this.applyCustomer(customerResponseToSale(exact));
-          return;
+        this.custPickerRows.set(rows);
+        this.custPickerPage.set(1);
+        if (rows.length === 0) {
+          this.toast.warning('Sin coincidencias. Pruebe otro criterio o cree un cliente nuevo.');
         }
-        this.custResults.set(rows);
-        this.custResultsOpen.set(rows.length > 0);
-        this.custSearchMsg.set(
-          rows.length > 1
-            ? 'Seleccione un cliente de la lista.'
-            : rows.length === 0
-              ? 'Sin coincidencias. Use Consumidor final o cree un cliente nuevo.'
-              : null,
-        );
       },
       error: () => {
+        this.custPickerLoading.set(false);
         this.custSearchLoading.set(false);
-        this.custResults.set([]);
-        this.custResultsOpen.set(false);
-        this.custSearchMsg.set('No se pudo consultar clientes. Verifique la conexión con pos-app.');
+        this.custPickerRows.set([]);
+        this.toast.error('No se pudo consultar clientes. Verifique la conexión con pos-app.');
       },
     });
   }
@@ -3834,10 +3991,11 @@ export class PosVentaPage {
 
   private resetCustomerSearchUi(): void {
     this.custQuery.set('');
-    this.custResults.set([]);
-    this.custResultsOpen.set(false);
-    this.custSearchMsg.set(null);
+    this.custPickerQuery.set('');
+    this.custPickerRows.set([]);
+    this.custPickerPage.set(1);
     this.custSearchLoading.set(false);
+    this.custPickerLoading.set(false);
   }
 
   openNewCustomer(): void {
