@@ -1,0 +1,175 @@
+/**
+ * Superficies de venta (catálogo + carrito) — acentos Luxora en modo claro.
+ */
+
+html[data-theme='light'] {
+  .panel {
+    position: relative;
+    border-color: color-mix(in srgb, var(--lux-indigo) 14%, var(--pos-border));
+    box-shadow: var(--pos-panel-shadow);
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--lux-gradient);
+    opacity: 0.8;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .catalog-toolbar {
+    background: var(--lux-brand-wash);
+    border-bottom-color: color-mix(in srgb, var(--lux-indigo) 12%, var(--pos-border));
+  }
+
+  .catalog-search:focus-within {
+    border-color: color-mix(in srgb, var(--lux-cyan) 48%, var(--lux-indigo));
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--lux-cyan) 22%, transparent),
+      0 6px 18px -8px rgba(var(--lux-cyan-rgb), 0.35);
+  }
+
+  .catalog-filter__select:focus {
+    border-color: color-mix(in srgb, var(--lux-indigo) 45%, var(--pos-border-strong));
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--lux-indigo) 16%, transparent);
+  }
+
+  .cat--on {
+    border-color: color-mix(in srgb, var(--lux-indigo) 38%, var(--pos-border-strong));
+    color: var(--lux-primary-deep);
+    background: var(--lux-cyan-soft);
+  }
+
+  .card::before,
+  .line-card::before {
+    width: 3px;
+    background: var(--lux-gradient-vertical);
+    box-shadow: 0 0 10px var(--lux-glow-cyan);
+  }
+
+  .card {
+    border-color: color-mix(in srgb, var(--lux-indigo) 10%, var(--pos-border));
+  }
+
+  .card:hover {
+    border-color: color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-border-strong));
+    box-shadow:
+      0 1px 2px rgba(var(--lux-ink-rgb), 0.04),
+      0 16px 36px -18px rgba(var(--lux-primary-rgb), 0.28);
+  }
+
+  .card__cat {
+    background: var(--lux-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .card__price {
+    color: var(--lux-primary-deep);
+  }
+
+  .card__thumb {
+    background: linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--lux-cyan) 10%, #ffffff) 0%,
+      color-mix(in srgb, var(--lux-indigo) 6%, #f8fafc) 100%
+    );
+  }
+
+  .line-card {
+    border-color: color-mix(in srgb, var(--lux-indigo) 12%, var(--pos-border));
+    box-shadow:
+      0 1px 2px rgba(var(--lux-ink-rgb), 0.03),
+      0 8px 22px -16px rgba(var(--lux-primary-rgb), 0.2);
+  }
+
+  .line-card__sum {
+    color: var(--lux-primary-deep);
+  }
+
+  .line-card__price {
+    border-color: color-mix(in srgb, var(--lux-cyan) 38%, var(--pos-border-strong));
+    background: var(--lux-cyan-soft);
+  }
+
+  .line-card__price:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--lux-indigo) 42%, var(--pos-border-strong));
+    background: color-mix(in srgb, var(--lux-cyan) 30%, #ffffff);
+  }
+
+  .line-card__price-tag {
+    color: var(--lux-primary-strong);
+  }
+
+  .sale-tab--on {
+    border-color: color-mix(in srgb, var(--lux-indigo) 40%, var(--pos-border-strong));
+    background: var(--lux-cyan-soft);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--lux-cyan) 20%, transparent);
+  }
+
+  .cart-hint--link {
+    border-color: color-mix(in srgb, var(--lux-cyan) 42%, transparent);
+    background: var(--lux-cyan-soft);
+    color: #0e7490;
+  }
+
+  .btn-pay {
+    background: var(--lux-gradient-diagonal);
+    border: 1px solid color-mix(in srgb, var(--lux-magenta) 28%, var(--lux-indigo));
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.2) inset,
+      0 12px 32px -10px rgba(var(--lux-primary-rgb), 0.45);
+  }
+
+  .btn-pay:hover:not(:disabled) {
+    filter: brightness(1.04) saturate(1.06);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.22) inset,
+      0 16px 38px -12px rgba(var(--lux-magenta-rgb), 0.32);
+  }
+
+  .totals {
+    background: var(--lux-brand-wash);
+    border-top-color: color-mix(in srgb, var(--lux-indigo) 14%, var(--pos-border));
+  }
+
+  .totals__row--total span:last-child {
+    color: var(--lux-primary-deep);
+  }
+
+  .mini:hover {
+    color: var(--lux-primary-deep);
+    background: var(--lux-cyan-soft);
+  }
+
+  .customer-panel__chip--active {
+    border-color: color-mix(in srgb, var(--lux-indigo) 40%, var(--pos-border-strong));
+    background: var(--lux-cyan-soft);
+    color: var(--lux-primary-deep);
+  }
+}
+
+/* Modo oscuro — refuerzo gradiente en superficies de venta */
+html[data-theme='dark'] {
+  .card::before,
+  .line-card::before {
+    background: var(--lux-gradient-vertical);
+    box-shadow: 0 0 12px var(--lux-glow-cyan);
+  }
+
+  .btn-pay {
+    background: var(--lux-gradient-diagonal);
+  }
+
+  .sale-tab--on {
+    border-color: color-mix(in srgb, var(--lux-cyan) 32%, var(--pos-border-strong));
+    background: color-mix(in srgb, var(--lux-indigo) 18%, var(--pos-elevated));
+  }
+}

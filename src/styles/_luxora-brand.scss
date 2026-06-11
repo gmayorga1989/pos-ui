@@ -11,17 +11,28 @@
   --lux-magenta: #c026d3;
   --lux-ink: #0f1117;
   --lux-surface: #f5f7fa;
+  --lux-surface-tint: #f8f2fa;
 
   --lux-gradient: linear-gradient(90deg, #00e5ff 0%, #6366f1 50%, #c026d3 100%);
   --lux-gradient-diagonal: linear-gradient(135deg, #00e5ff 0%, #6366f1 48%, #c026d3 100%);
+  --lux-gradient-vertical: linear-gradient(180deg, #00e5ff 0%, #6366f1 55%, #c026d3 100%);
 
   --lux-primary: var(--lux-indigo);
   --lux-primary-rgb: 99, 102, 241;
+  --lux-cyan-rgb: 0, 229, 255;
+  --lux-magenta-rgb: 192, 38, 211;
+  --lux-ink-rgb: 15, 17, 23;
   --lux-primary-strong: #4f46e5;
   --lux-primary-deep: #4338ca;
   --lux-primary-soft: color-mix(in srgb, var(--lux-indigo) 14%, #ffffff);
-  --lux-cyan-soft: color-mix(in srgb, var(--lux-cyan) 18%, #ffffff);
-  --lux-magenta-soft: color-mix(in srgb, var(--lux-magenta) 14%, #ffffff);
+  --lux-cyan-soft: color-mix(in srgb, var(--lux-cyan) 22%, #ffffff);
+  --lux-magenta-soft: color-mix(in srgb, var(--lux-magenta) 16%, #ffffff);
+  --lux-brand-wash: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--lux-cyan) 14%, #ffffff) 0%,
+    color-mix(in srgb, var(--lux-indigo) 10%, #ffffff) 48%,
+    color-mix(in srgb, var(--lux-magenta) 8%, #ffffff) 100%
+  );
 
   --lux-glow-cyan: rgba(0, 229, 255, 0.35);
   --lux-glow-indigo: rgba(99, 102, 241, 0.45);

@@ -4,14 +4,20 @@
 
 html[data-theme='light'] {
   --pos-maestro-card: #ffffff;
-  --pos-maestro-border: #e2e8f0;
-  --pos-maestro-divider: #e2e8f0;
-  --pos-maestro-header-bg: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
-  --pos-maestro-icon-bg: linear-gradient(180deg, #f6f8ff 0%, #eef3ff 100%);
-  --pos-maestro-icon-border: #dfe7ff;
-  --pos-maestro-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(99, 102, 241, 0.12);
-  --pos-maestro-grid-head: #f8fafc;
-  --pos-maestro-grid-hover: color-mix(in srgb, var(--lux-indigo) 4%, #ffffff);
+  --pos-maestro-border: color-mix(in srgb, var(--lux-indigo) 12%, #e2e8f0);
+  --pos-maestro-divider: color-mix(in srgb, var(--lux-indigo) 8%, #e2e8f0);
+  --pos-maestro-header-bg: var(--lux-brand-wash);
+  --pos-maestro-icon-bg: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--lux-cyan) 18%, #ffffff) 0%,
+    color-mix(in srgb, var(--lux-indigo) 14%, #ffffff) 100%
+  );
+  --pos-maestro-icon-border: color-mix(in srgb, var(--lux-indigo) 28%, #ffffff);
+  --pos-maestro-shadow:
+    0 1px 2px rgba(var(--lux-ink-rgb), 0.04),
+    0 10px 28px -14px rgba(var(--lux-primary-rgb), 0.22);
+  --pos-maestro-grid-head: color-mix(in srgb, var(--lux-indigo) 4%, #f8fafc);
+  --pos-maestro-grid-hover: color-mix(in srgb, var(--lux-cyan) 8%, #ffffff);
 }
 
 html[data-theme='dark'] {
@@ -73,6 +79,14 @@ html[data-theme='dark'] {
   font-weight: 700;
   line-height: 1;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+html[data-theme='light'] .pos-page-eyebrow {
+  background: var(--lux-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .pos-page-title h1 {
@@ -231,8 +245,20 @@ html[data-theme='dark'] .pos-page-actions-toolbar .pos-btn--outline {
   box-shadow: 0 8px 18px color-mix(in srgb, var(--lux-indigo) 28%, transparent);
 }
 
+html[data-theme='light'] .pos-btn--primary {
+  background: var(--lux-gradient-diagonal);
+  border-color: color-mix(in srgb, var(--lux-magenta) 35%, var(--lux-indigo));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 10px 24px -8px rgba(var(--lux-primary-rgb), 0.42);
+}
+
 .pos-btn--primary:hover:not(:disabled) {
   filter: brightness(1.06);
+}
+
+html[data-theme='light'] .pos-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.04) saturate(1.08);
 }
 
 .pos-btn--soft {
@@ -241,8 +267,19 @@ html[data-theme='dark'] .pos-page-actions-toolbar .pos-btn--outline {
   border-color: color-mix(in srgb, var(--lux-indigo) 22%, var(--pos-maestro-border));
 }
 
+html[data-theme='light'] .pos-btn--soft {
+  color: var(--lux-primary-deep);
+  background: var(--lux-cyan-soft);
+  border-color: color-mix(in srgb, var(--lux-cyan) 38%, var(--pos-maestro-border));
+}
+
 .pos-btn--soft:hover:not(:disabled) {
   background: color-mix(in srgb, var(--lux-indigo) 16%, var(--pos-maestro-card));
+}
+
+html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--lux-cyan) 28%, #ffffff);
+  border-color: color-mix(in srgb, var(--lux-indigo) 32%, var(--pos-maestro-border));
 }
 
 .pos-btn--ghost {

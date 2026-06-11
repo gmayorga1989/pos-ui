@@ -450,6 +450,11 @@ type CashPanelMode = 'open' | 'close' | 'history';
       background: var(--pos-accent);
       box-shadow: 0 0 14px var(--pos-accent-glow);
     }
+    html[data-theme='light'] .rail__btn--active::before {
+      width: 3px;
+      background: var(--lux-gradient-vertical);
+      box-shadow: 0 0 16px var(--lux-glow-cyan);
+    }
     .rail__ico {
       display: flex;
       align-items: center;
@@ -570,6 +575,10 @@ type CashPanelMode = 'open' | 'close' | 'history';
       opacity: 0.85;
       pointer-events: none;
     }
+    html[data-theme='light'] .topbar__brand-line {
+      height: 3px;
+      opacity: 1;
+    }
     .topbar__left {
       display: flex;
       align-items: center;
@@ -631,6 +640,10 @@ type CashPanelMode = 'open' | 'close' | 'history';
     }
     .caja-chip__state--on {
       color: var(--pos-status-ok);
+    }
+    html[data-theme='light'] .caja-chip__state--on {
+      color: #0d9488;
+      font-weight: 800;
     }
     .caja-chip__sep {
       opacity: 0.45;
@@ -1159,12 +1172,30 @@ type CashPanelMode = 'open' | 'close' | 'history';
       border-color: var(--pos-status-ok-border);
       color: var(--pos-status-ok);
     }
+    html[data-theme='light'] .chip--ok {
+      border-color: color-mix(in srgb, var(--lux-cyan) 45%, transparent);
+      background: var(--lux-cyan-soft);
+      color: #0c6b74;
+    }
+    html[data-theme='light'] .chip--ok .chip__dot {
+      background: var(--lux-cyan);
+      box-shadow: 0 0 7px var(--lux-glow-cyan);
+    }
     .chip--warn {
       border-color: rgba(248, 113, 113, 0.35);
       color: #b91c1c;
     }
     html[data-theme='dark'] .chip--warn {
       color: #fca5a5;
+    }
+    html[data-theme='light'] .chip--pos {
+      border-color: color-mix(in srgb, var(--lux-indigo) 32%, var(--pos-border));
+      background: color-mix(in srgb, var(--lux-indigo) 9%, #ffffff);
+      color: var(--lux-primary-deep);
+    }
+    html[data-theme='light'] .chip--pos .chip__dot {
+      background: var(--lux-indigo);
+      box-shadow: 0 0 6px var(--lux-glow-indigo);
     }
     .chip__dot {
       width: 5px;
