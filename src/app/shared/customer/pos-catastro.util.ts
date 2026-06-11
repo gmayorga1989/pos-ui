@@ -1,5 +1,5 @@
 import type { PosCedulaConsultaResponse, PosRucConsultaResponse } from '../../core/api/pos-backend.types';
-import { splitRazonSocialPersona, type PosCustomerFormState } from './pos-customer-form.util';
+import { splitNombreCompletoEcuador, type PosCustomerFormState } from './pos-customer-form.util';
 
 export function applyCedulaConsultaToForm(
   form: PosCustomerFormState,
@@ -9,7 +9,7 @@ export function applyCedulaConsultaToForm(
     return;
   }
   form.identificacion = res.identificacion;
-  const { nombres, apellidos } = splitRazonSocialPersona(res.nombres);
+  const { nombres, apellidos } = splitNombreCompletoEcuador(res.nombres);
   form.nombres = nombres;
   form.apellidos = apellidos;
   if (res.lugarNacimiento?.trim() && !form.direccion.trim()) {

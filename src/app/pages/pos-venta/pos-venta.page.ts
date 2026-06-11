@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import {
   afterNextRender,
   Component,
@@ -21,6 +22,24 @@ import type {
   PosPaymentCollectionResponse,
 } from '../../core/api/pos-backend.types';
 import {
+  applyTipoIdentificacionDefaults,
+  buildCustomerRequest,
+  CONSUMIDOR_FINAL_ID,
+  direccionRequired,
+  emptyCustomerForm,
+  hasCustomerFormErrors,
+  identificacionInputMode,
+  identificacionLabel,
+  identificacionMaxLength,
+  isConsumidorFinalTipo,
+  isPersonaNaturalTipo,
+  isRucTipo,
+  type PosCustomerFormErrors,
+  type PosCustomerFormState,
+  validateCustomerForm,
+} from '../../shared/customer/pos-customer-form.util';
+import { applyCedulaConsultaToForm, applyRucConsultaToForm } from '../../shared/customer/pos-catastro.util';
+import {
   customerResponseToSale,
   SALE_CONSUMIDOR_FINAL,
   saleCustomerTipoLabel,
@@ -31,6 +50,7 @@ import { PosAuthService } from '../../core/auth/pos-auth.service';
 import { PosConfigService } from '../../core/config/pos-config.service';
 import { PosLayoutPreferencesService } from '../../core/layout/pos-layout-preferences.service';
 import { PosOfflineSyncService } from '../../core/offline/pos-offline-sync.service';
+import { PosToastService } from '../../core/ui/pos-toast.service';
 
 interface DemoProduct {
   id: string;
@@ -98,7 +118,7 @@ type ModalState =
 @Component({
   selector: 'pos-venta-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="venta">
       <div class="venta__grid" [class.venta__grid--left]="prefs.handedness() === 'left'">
@@ -395,7 +415,7 @@ type ModalState =
     @if (modal(); as m) {
       @if (m.kind === 'newCustomer') {
       <div class="ts-modal-backdrop" (click)="closeModal()"></div>
-      <section class="ts-form-modal ts-form-modal--compact" role="dialog" aria-modal="true" aria-labelledby="mdl-newc">
+      <section class="ts-form-modal" role="dialog" aria-modal="true" aria-labelledby="mdl-newc">
         <header class="ts-form-modal__header">
           <div class="ts-form-modal__icon" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -406,41 +426,133 @@ type ModalState =
           <div class="ts-form-modal__head-text">
             <p class="ts-form-modal__eyebrow">Venta</p>
             <h3 id="mdl-newc">Nuevo cliente</h3>
-            <p class="ts-form-modal__subtitle">Registro rápido para asignar al ticket actual.</p>
+            <p class="ts-form-modal__subtitle">Datos según tipo de identificación para facturación electrónica.</p>
           </div>
           <button type="button" class="ts-form-modal__close" aria-label="Cerrar" (click)="closeModal()">×</button>
         </header>
         <div class="ts-form-modal__body">
-          @if (checkoutError()) {
-            <p class="customer-panel__msg customer-panel__msg--warn">{{ checkoutError() }}</p>
-          }
-          <label class="pos-form-field">
-            <span>Nombre o razón social</span>
-            <input class="pos-focus-ring" type="text" [value]="newCustName()" (input)="onNewCustNameInput($event)" />
-          </label>
-          <label class="pos-form-field">
-            <span>RUC / cédula</span>
-            <div class="pos-form-field__inline">
-              <input class="pos-focus-ring" type="text" inputmode="numeric" [value]="newCustDoc()" (input)="onNewCustDocInput($event)" />
-              @if (posApiConfigured()) {
-                <button
-                  type="button"
-                  class="pos-btn pos-btn--soft pos-form-field__action"
-                  [disabled]="newCustConsultLoading()"
-                  (click)="consultarNewCustDoc()">
-                  {{ newCustConsultLoading() ? '…' : 'Consultar' }}
-                </button>
+          <div class="pos-form-grid">
+            <label class="pos-form-field" [class.pos-form-field--invalid]="newCustFormErrors().tipoIdentificacion">
+              <span>Tipo identificación</span>
+              <select
+                class="pos-focus-ring"
+                [(ngModel)]="newCustDraft.tipoIdentificacion"
+                name="newCustTipoIdentificacion"
+                (ngModelChange)="newCustOnTipoChange()">
+                <option value="04">04 — RUC</option>
+                <option value="05">05 — Cédula</option>
+                <option value="06">06 — Pasaporte</option>
+                <option value="07">07 — Consumidor final</option>
+              </select>
+              @if (newCustFormErrors().tipoIdentificacion) {
+                <small class="pos-form-field__error">{{ newCustFormErrors().tipoIdentificacion }}</small>
               }
-            </div>
-          </label>
-          <label class="pos-form-field">
-            <span>Correo (opcional)</span>
-            <input class="pos-focus-ring" type="email" autocomplete="email" [value]="newCustEmail()" (input)="onNewCustEmailInput($event)" />
-          </label>
+            </label>
+
+            <label class="pos-form-field" [class.pos-form-field--invalid]="newCustFormErrors().identificacion">
+              <span>{{ newCustIdLabel() }}</span>
+              <div class="pos-form-field__inline">
+                <input
+                  class="pos-focus-ring"
+                  [(ngModel)]="newCustDraft.identificacion"
+                  name="newCustIdentificacion"
+                  [readonly]="newCustIsConsumidorFinal()"
+                  [attr.inputmode]="newCustIdInputMode()"
+                  [maxlength]="newCustIdMaxLength()"
+                  (input)="newCustOnIdentificacionInput()"
+                  [placeholder]="newCustIdPlaceholder()" />
+                @if (newCustCanConsultarCatastro()) {
+                  <button
+                    type="button"
+                    class="pos-btn pos-btn--soft pos-form-field__action"
+                    [disabled]="newCustCatastroLoading()"
+                    (click)="consultarNewCustCatastro()">
+                    {{ newCustCatastroLoading() ? '…' : 'Consultar' }}
+                  </button>
+                }
+              </div>
+              @if (newCustFormErrors().identificacion) {
+                <small class="pos-form-field__error">{{ newCustFormErrors().identificacion }}</small>
+              }
+            </label>
+
+            @if (newCustIsRuc()) {
+              <label class="pos-form-field pos-form-field--span2" [class.pos-form-field--invalid]="newCustFormErrors().razonSocial">
+                <span>Razón social</span>
+                <input class="pos-focus-ring" [(ngModel)]="newCustDraft.razonSocial" name="newCustRazonSocial" maxlength="300" placeholder="Razón social registrada" />
+                @if (newCustFormErrors().razonSocial) {
+                  <small class="pos-form-field__error">{{ newCustFormErrors().razonSocial }}</small>
+                }
+              </label>
+              <label class="pos-form-field pos-form-field--span2" [class.pos-form-field--invalid]="newCustFormErrors().nombreComercial">
+                <span>Nombre comercial</span>
+                <input class="pos-focus-ring" [(ngModel)]="newCustDraft.nombreComercial" name="newCustNombreComercial" maxlength="300" placeholder="Nombre comercial o marca" />
+                @if (newCustFormErrors().nombreComercial) {
+                  <small class="pos-form-field__error">{{ newCustFormErrors().nombreComercial }}</small>
+                }
+              </label>
+            } @else if (newCustIsPersona()) {
+              <label class="pos-form-field" [class.pos-form-field--invalid]="newCustFormErrors().nombres">
+                <span>Nombres</span>
+                <input class="pos-focus-ring" [(ngModel)]="newCustDraft.nombres" name="newCustNombres" maxlength="150" placeholder="Nombres" />
+                @if (newCustFormErrors().nombres) {
+                  <small class="pos-form-field__error">{{ newCustFormErrors().nombres }}</small>
+                }
+              </label>
+              <label class="pos-form-field" [class.pos-form-field--invalid]="newCustFormErrors().apellidos">
+                <span>Apellidos</span>
+                <input class="pos-focus-ring" [(ngModel)]="newCustDraft.apellidos" name="newCustApellidos" maxlength="150" placeholder="Apellidos" />
+                @if (newCustFormErrors().apellidos) {
+                  <small class="pos-form-field__error">{{ newCustFormErrors().apellidos }}</small>
+                }
+              </label>
+              <label class="pos-form-field pos-form-field--span2" [class.pos-form-field--invalid]="newCustFormErrors().nombreComercial">
+                <span>Nombre comercial</span>
+                <input class="pos-focus-ring" [(ngModel)]="newCustDraft.nombreComercial" name="newCustNombreComercialAlias" maxlength="300" placeholder="Alias o nombre comercial (opcional)" />
+                @if (newCustFormErrors().nombreComercial) {
+                  <small class="pos-form-field__error">{{ newCustFormErrors().nombreComercial }}</small>
+                }
+              </label>
+            } @else {
+              <label class="pos-form-field pos-form-field--span2" [class.pos-form-field--invalid]="newCustFormErrors().razonSocial">
+                <span>Nombre</span>
+                <input class="pos-focus-ring" [(ngModel)]="newCustDraft.razonSocial" name="newCustRazonSocialCf" maxlength="300" placeholder="Nombre del consumidor final" />
+                @if (newCustFormErrors().razonSocial) {
+                  <small class="pos-form-field__error">{{ newCustFormErrors().razonSocial }}</small>
+                }
+              </label>
+            }
+
+            <label class="pos-form-field pos-form-field--span2" [class.pos-form-field--invalid]="newCustFormErrors().direccion">
+              <span>Dirección{{ newCustDireccionObligatoria() ? '' : ' (opcional)' }}</span>
+              <input class="pos-focus-ring" [(ngModel)]="newCustDraft.direccion" name="newCustDireccion" maxlength="500" placeholder="Calle principal, número, ciudad" />
+              @if (newCustFormErrors().direccion) {
+                <small class="pos-form-field__error">{{ newCustFormErrors().direccion }}</small>
+              }
+            </label>
+
+            <label class="pos-form-field" [class.pos-form-field--invalid]="newCustFormErrors().phone">
+              <span>Teléfono</span>
+              <input class="pos-focus-ring" [(ngModel)]="newCustDraft.phone" name="newCustPhone" maxlength="20" placeholder="Ej. 0991234567" inputmode="tel" />
+              @if (newCustFormErrors().phone) {
+                <small class="pos-form-field__error">{{ newCustFormErrors().phone }}</small>
+              }
+            </label>
+
+            <label class="pos-form-field" [class.pos-form-field--invalid]="newCustFormErrors().email">
+              <span>Correo</span>
+              <input class="pos-focus-ring" type="email" [(ngModel)]="newCustDraft.email" name="newCustEmail" maxlength="200" placeholder="correo@ejemplo.com" autocomplete="email" />
+              @if (newCustFormErrors().email) {
+                <small class="pos-form-field__error">{{ newCustFormErrors().email }}</small>
+              }
+            </label>
+          </div>
         </div>
         <footer class="ts-form-modal__footer">
           <button type="button" class="pos-btn pos-btn--ghost" (click)="closeModal()">Cancelar</button>
-          <button type="button" class="pos-btn pos-btn--primary" (click)="saveNewCustomer()">Guardar y usar</button>
+          <button type="button" class="pos-btn pos-btn--primary" [disabled]="newCustSaving()" (click)="saveNewCustomer()">
+            {{ newCustSaving() ? 'Guardando…' : 'Guardar y usar' }}
+          </button>
         </footer>
       </section>
       } @else {
@@ -2412,6 +2524,7 @@ export class PosVentaPage {
   readonly runtimeConfig = inject(PosConfigService);
   readonly prefs = inject(PosLayoutPreferencesService);
   readonly offline = inject(PosOfflineSyncService);
+  private readonly toast = inject(PosToastService);
 
   readonly invoicingEnabled = signal(false);
 
@@ -2446,10 +2559,10 @@ export class PosVentaPage {
   readonly custSearchMsg = signal<string | null>(null);
   private custSearchTimer: ReturnType<typeof setTimeout> | null = null;
   readonly modal = signal<ModalState | null>(null);
-  readonly newCustName = signal('');
-  readonly newCustDoc = signal('');
-  readonly newCustEmail = signal('');
-  readonly newCustConsultLoading = signal(false);
+  readonly newCustFormErrors = signal<PosCustomerFormErrors>({});
+  readonly newCustCatastroLoading = signal(false);
+  readonly newCustSaving = signal(false);
+  newCustDraft: PosCustomerFormState = emptyCustomerForm('05');
   readonly calcBuffer = signal('0');
   readonly calcKeys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫'] as const;
   readonly tenderDenominations = [1, 5, 10, 20, 50, 100] as const;
@@ -3543,59 +3656,107 @@ export class PosVentaPage {
     this.closeTab(ev, id);
   }
 
-  onNewCustNameInput(ev: Event): void {
-    this.newCustName.set((ev.target as HTMLInputElement).value);
+  newCustIsRuc(): boolean {
+    return isRucTipo(this.newCustDraft.tipoIdentificacion);
   }
 
-  onNewCustDocInput(ev: Event): void {
-    this.newCustDoc.set((ev.target as HTMLInputElement).value);
+  newCustIsPersona(): boolean {
+    return isPersonaNaturalTipo(this.newCustDraft.tipoIdentificacion);
   }
 
-  onNewCustEmailInput(ev: Event): void {
-    this.newCustEmail.set((ev.target as HTMLInputElement).value);
+  newCustIsConsumidorFinal(): boolean {
+    return isConsumidorFinalTipo(this.newCustDraft.tipoIdentificacion);
   }
 
-  consultarNewCustDoc(): void {
-    const doc = this.newCustDoc().trim();
-    if (/^\d{13}$/.test(doc)) {
-      this.newCustConsultLoading.set(true);
-      this.backend.consultarRuc(doc).subscribe({
+  newCustIdLabel(): string {
+    return identificacionLabel(this.newCustDraft.tipoIdentificacion);
+  }
+
+  newCustIdMaxLength(): number {
+    return identificacionMaxLength(this.newCustDraft.tipoIdentificacion);
+  }
+
+  newCustIdInputMode(): string {
+    return identificacionInputMode(this.newCustDraft.tipoIdentificacion);
+  }
+
+  newCustIdPlaceholder(): string {
+    if (this.newCustIsRuc()) return '13 dígitos';
+    if (this.newCustDraft.tipoIdentificacion === '05') return '10 dígitos';
+    if (this.newCustIsConsumidorFinal()) return CONSUMIDOR_FINAL_ID;
+    return 'Número de pasaporte';
+  }
+
+  newCustDireccionObligatoria(): boolean {
+    return direccionRequired(this.newCustDraft.tipoIdentificacion);
+  }
+
+  newCustOnTipoChange(): void {
+    applyTipoIdentificacionDefaults(this.newCustDraft);
+    this.newCustFormErrors.set({});
+  }
+
+  newCustOnIdentificacionInput(): void {
+    if (this.newCustIsRuc() || this.newCustDraft.tipoIdentificacion === '05') {
+      this.newCustDraft.identificacion = this.newCustDraft.identificacion
+        .replace(/\D/g, '')
+        .slice(0, this.newCustIdMaxLength());
+    }
+  }
+
+  newCustCanConsultarCatastro(): boolean {
+    return this.newCustIsRuc() || this.newCustDraft.tipoIdentificacion === '05';
+  }
+
+  consultarNewCustCatastro(): void {
+    const id = this.newCustDraft.identificacion.trim();
+    if (this.newCustIsRuc()) {
+      if (!/^\d{13}$/.test(id)) {
+        this.toast.warning('Ingrese un RUC de 13 dígitos');
+        return;
+      }
+      this.newCustCatastroLoading.set(true);
+      this.backend.consultarRuc(id).subscribe({
         next: (res) => {
-          this.newCustConsultLoading.set(false);
-          if (!res.encontrado || !res.razonSocial?.trim()) {
-            this.checkoutError.set('RUC no encontrado en el SRI.');
+          this.newCustCatastroLoading.set(false);
+          if (!res.encontrado) {
+            this.toast.error('RUC no encontrado en el SRI');
             return;
           }
-          this.newCustName.set(res.razonSocial.trim());
-          this.checkoutError.set(null);
+          applyRucConsultaToForm(this.newCustDraft, res);
+          const stale = res.obsoleto ? ' (datos en caché)' : '';
+          this.toast.success(`Datos del SRI cargados${stale}`);
         },
         error: () => {
-          this.newCustConsultLoading.set(false);
-          this.checkoutError.set('No se pudo consultar el RUC.');
+          this.newCustCatastroLoading.set(false);
+          this.toast.error('No se pudo consultar el RUC. Verifique la conexión con api-sri.');
         },
       });
       return;
     }
-    if (/^\d{10}$/.test(doc)) {
-      this.newCustConsultLoading.set(true);
-      this.backend.consultarCedula(doc).subscribe({
+    if (this.newCustDraft.tipoIdentificacion === '05') {
+      if (!/^\d{10}$/.test(id)) {
+        this.toast.warning('Ingrese una cédula de 10 dígitos');
+        return;
+      }
+      this.newCustCatastroLoading.set(true);
+      this.backend.consultarCedula(id).subscribe({
         next: (res) => {
-          this.newCustConsultLoading.set(false);
+          this.newCustCatastroLoading.set(false);
           if (!res.encontrado || !res.nombres?.trim()) {
-            this.checkoutError.set('Cédula no encontrada.');
+            this.toast.error('Cédula no encontrada');
             return;
           }
-          this.newCustName.set(res.nombres.trim());
-          this.checkoutError.set(null);
+          applyCedulaConsultaToForm(this.newCustDraft, res);
+          const stale = res.obsoleto ? ' (datos en caché)' : '';
+          this.toast.success(`Datos de cédula cargados${stale}`);
         },
         error: () => {
-          this.newCustConsultLoading.set(false);
-          this.checkoutError.set('No se pudo consultar la cédula.');
+          this.newCustCatastroLoading.set(false);
+          this.toast.error('No se pudo consultar la cédula. Verifique la conexión con api-sri.');
         },
       });
-      return;
     }
-    this.checkoutError.set('Ingrese un RUC de 13 dígitos o una cédula de 10 dígitos.');
   }
 
   searchCustomer(): void {
@@ -3680,53 +3841,55 @@ export class PosVentaPage {
   }
 
   openNewCustomer(): void {
-    this.checkoutError.set(null);
-    this.newCustName.set('');
-    this.newCustDoc.set('');
-    this.newCustEmail.set('');
-    this.newCustConsultLoading.set(false);
+    this.newCustDraft = emptyCustomerForm('05');
+    this.newCustFormErrors.set({});
+    this.newCustCatastroLoading.set(false);
+    this.newCustSaving.set(false);
     this.modal.set({ kind: 'newCustomer' });
   }
 
   saveNewCustomer(): void {
-    const name = this.newCustName().trim();
-    const doc = this.newCustDoc().trim();
-    if (!name || !doc) {
-      this.checkoutError.set('Ingrese nombre y RUC/cedula para guardar el cliente.');
+    const errors = validateCustomerForm(this.newCustDraft);
+    this.newCustFormErrors.set(errors);
+    if (hasCustomerFormErrors(errors)) {
+      this.toast.warning('Revise los campos marcados en el formulario.');
       return;
     }
-    const em = this.newCustEmail().trim();
-    const assign = () => {
-      this.patchActiveTab((t) => ({
-        ...t,
-        customer: {
-          name,
-          doc,
-          email: em ? em : null,
-          tipoIdentificacion: this.inferTipoIdentificacion(doc),
-        },
-      }));
-      this.checkoutError.set(null);
+
+    const assignLocal = (warnFallback = false) => {
+      const body = buildCustomerRequest(this.newCustDraft);
+      this.applyCustomer({
+        name: body.nombreComercial?.trim() || body.razonSocial,
+        doc: body.identificacion,
+        tipoIdentificacion: body.tipoIdentificacion,
+        email: body.email ?? null,
+        isConsumidorFinal: body.tipoIdentificacion === '07',
+      });
+      if (warnFallback) {
+        this.toast.warning('No se pudo guardar en el maestro; se usará solo en esta venta.');
+      } else {
+        this.toast.success('Cliente asignado al ticket');
+      }
       this.closeModal();
     };
+
     if (!this.posApiConfigured()) {
-      assign();
+      assignLocal();
       return;
     }
+
+    this.newCustSaving.set(true);
+    const body = buildCustomerRequest(this.newCustDraft);
     this.backend
-      .postCustomer({
-        tipoIdentificacion: this.inferTipoIdentificacion(doc),
-        identificacion: doc,
-        razonSocial: name,
-        email: em || null,
-        phone: null,
-      })
+      .postCustomer(body)
+      .pipe(finalize(() => this.newCustSaving.set(false)))
       .subscribe({
-        next: () => assign(),
-        error: () => {
-          this.checkoutError.set('No se pudo guardar en el maestro; se usará solo en esta venta.');
-          assign();
+        next: (res) => {
+          this.applyCustomer(customerResponseToSale(res));
+          this.toast.success('Cliente guardado y asignado al ticket');
+          this.closeModal();
         },
+        error: () => assignLocal(true),
       });
   }
 

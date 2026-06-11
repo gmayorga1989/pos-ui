@@ -27,6 +27,7 @@ import { applyCedulaConsultaToForm, applyRucConsultaToForm } from '../../shared/
 import { gridActionsMenu } from '../../shared/grid/grid-actions.util';
 import { PosTabulatorLocalGridComponent } from '../../shared/grid/pos-tabulator-local-grid.component';
 import { escapeHtml, tabulatorCellValue, tabulatorTextareaCell } from '../../shared/grid/tabulator-formatters.util';
+import { PosToastService } from '../../core/ui/pos-toast.service';
 import { PosPageLayoutComponent } from '../../shared/pos-page-layout.component';
 
 const TIPO_ID_LABEL: Record<string, string> = {
@@ -58,10 +59,6 @@ const TIPO_ID_LABEL: Record<string, string> = {
         }
         <button type="button" class="pos-btn pos-btn--soft" (click)="reload()">Refrescar</button>
       </div>
-
-      @if (message()) {
-        <p class="pos-maestro-msg" [class.pos-maestro-msg--err]="messageIsError()">{{ message() }}</p>
-      }
 
       <div class="pos-maestro-filters-panel" [class.is-open]="mostrarFiltros()">
         <div class="pos-maestro-filters-panel__inner">
@@ -243,6 +240,7 @@ const TIPO_ID_LABEL: Record<string, string> = {
 })
 export class PosClientesPage implements OnInit {
   private readonly api = inject(PosBackendApiService);
+  private readonly toast = inject(PosToastService);
 
   readonly customers = signal<PosCustomerResponse[]>([]);
   readonly mostrarFiltros = signal(false);
@@ -291,8 +289,6 @@ export class PosClientesPage implements OnInit {
   readonly editingId = signal<string | null>(null);
   readonly saving = signal(false);
   readonly catastroLoading = signal(false);
-  readonly message = signal<string | null>(null);
-  readonly messageIsError = signal(false);
   readonly formErrors = signal<PosCustomerFormErrors>({});
 
   draft: PosCustomerFormState = emptyCustomerForm();
@@ -464,7 +460,7 @@ export class PosClientesPage implements OnInit {
     const errors = validateCustomerForm(this.draft);
     this.formErrors.set(errors);
     if (hasCustomerFormErrors(errors)) {
-      this.setMessage('Revise los campos marcados en el formulario', true);
+      this.toast.warning('Revise los campos marcados en el formulario');
       return;
     }
 
@@ -515,7 +511,10 @@ export class PosClientesPage implements OnInit {
   }
 
   private setMessage(text: string, isError: boolean): void {
-    this.message.set(text);
-    this.messageIsError.set(isError);
+    if (isError) {
+      this.toast.error(text);
+      return;
+    }
+    this.toast.success(text);
   }
 }

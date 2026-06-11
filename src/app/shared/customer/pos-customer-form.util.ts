@@ -82,20 +82,96 @@ export function applyTipoIdentificacionDefaults(form: PosCustomerFormState): voi
   }
 }
 
-export function splitRazonSocialPersona(razonSocial: string): { nombres: string; apellidos: string } {
-  const parts = razonSocial.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
+const NAME_PARTICLES = new Set(['DE', 'DEL', 'LA', 'LAS', 'LOS', 'Y', 'VON', 'VAN', 'MC', 'MAC', 'SAN', 'SANTA']);
+
+function isNameParticle(token: string): boolean {
+  return NAME_PARTICLES.has(token.toUpperCase());
+}
+
+/**
+ * Agrupa palabras respetando partículas de apellido compuesto (p. ej. DE LA CRUZ).
+ */
+export function groupNombreCompletoUnits(fullName: string): string[] {
+  const tokens = fullName.trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) {
+    return [];
+  }
+
+  const units: string[] = [];
+  let i = 0;
+
+  while (i < tokens.length) {
+    const parts: string[] = [tokens[i]];
+    i++;
+
+    while (i < tokens.length) {
+      const lastWord = parts[parts.length - 1].toUpperCase();
+      const next = tokens[i].toUpperCase();
+
+      if (isNameParticle(lastWord)) {
+        parts.push(tokens[i]);
+        i++;
+        continue;
+      }
+      if (isNameParticle(next)) {
+        parts.push(tokens[i]);
+        i++;
+        if (i < tokens.length) {
+          parts.push(tokens[i]);
+          i++;
+        }
+        continue;
+      }
+      break;
+    }
+
+    units.push(parts.join(' '));
+  }
+
+  return units;
+}
+
+/**
+ * Separa el nombre completo del registro civil ecuatoriano:
+ * apellido paterno + apellido materno + nombres (simples o compuestos).
+ */
+function apellidoCompuesto(unit: string): boolean {
+  const words = unit.trim().split(/\s+/);
+  return words.length > 1 || words.some((word) => isNameParticle(word));
+}
+
+export function splitNombreCompletoEcuador(fullName: string): { nombres: string; apellidos: string } {
+  const units = groupNombreCompletoUnits(fullName);
+  if (units.length === 0) {
     return { nombres: '', apellidos: '' };
   }
-  if (parts.length === 1) {
-    return { nombres: parts[0], apellidos: '' };
+  if (units.length === 1) {
+    return { nombres: '', apellidos: units[0] };
   }
-  return { nombres: parts[0], apellidos: parts.slice(1).join(' ') };
+  if (units.length === 2) {
+    return { nombres: units[1], apellidos: units[0] };
+  }
+  if (units.length === 3) {
+    if (apellidoCompuesto(units[0])) {
+      return { apellidos: units[0], nombres: `${units[1]} ${units[2]}`.trim() };
+    }
+    return { apellidos: `${units[0]} ${units[1]}`.trim(), nombres: units[2] };
+  }
+
+  return {
+    apellidos: `${units[0]} ${units[1]}`.trim(),
+    nombres: units.slice(2).join(' '),
+  };
+}
+
+/** Alias histórico: asume orden registro civil (apellidos antes que nombres). */
+export function splitRazonSocialPersona(razonSocial: string): { nombres: string; apellidos: string } {
+  return splitNombreCompletoEcuador(razonSocial);
 }
 
 export function buildRazonSocialFromForm(form: PosCustomerFormState): string {
   if (isPersonaNaturalTipo(form.tipoIdentificacion)) {
-    return `${form.nombres.trim()} ${form.apellidos.trim()}`.trim();
+    return `${form.apellidos.trim()} ${form.nombres.trim()}`.trim();
   }
   return form.razonSocial.trim();
 }
