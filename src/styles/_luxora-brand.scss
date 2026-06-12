@@ -13,6 +13,26 @@
   --lux-surface: #f5f7fa;
   --lux-surface-tint: #f8f2fa;
 
+  /* LUXORA DESIGN SYSTEM v1.0 */
+  --lux-ds-bg-dark: #050816;
+  --lux-ds-surface-dark: #0b1020;
+  --lux-ds-card-dark: #12192b;
+  --lux-ds-text-primary: #f5f7fa;
+  --lux-ds-text-secondary: #94a3b8;
+  --lux-ds-border-dark: rgba(255, 255, 255, 0.08);
+  --lux-ds-bg-light: #f8fafc;
+  --lux-ds-surface-light: #ffffff;
+  --lux-ds-text-light: #0f172a;
+  --lux-ds-border-light: #e2e8f0;
+  --lux-ds-radius-input: 12px;
+  --lux-ds-radius-card: 16px;
+  --lux-ds-input-h: 2.75rem;
+  --lux-ds-btn-h: 2.75rem;
+  --lux-ds-pay-h: 4rem;
+  --lux-ds-header-h: 4.375rem;
+  --lux-ds-rail-w: 4.5rem;
+  --lux-ds-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
   --lux-gradient: linear-gradient(90deg, #00e5ff 0%, #6366f1 50%, #c026d3 100%);
   --lux-gradient-diagonal: linear-gradient(135deg, #00e5ff 0%, #6366f1 48%, #c026d3 100%);
   --lux-gradient-vertical: linear-gradient(180deg, #00e5ff 0%, #6366f1 55%, #c026d3 100%);

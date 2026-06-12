@@ -156,12 +156,87 @@ html[data-theme='light'] {
   }
 }
 
-/* Modo oscuro — refuerzo gradiente en superficies de venta */
+/* Modo oscuro — Dark Enterprise DS v1.0 */
 html[data-theme='dark'] {
+  .panel {
+    position: relative;
+    border-color: var(--lux-ds-border-dark);
+    background: var(--pos-night-card);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04),
+      0 20px 50px -28px rgba(0, 0, 0, 0.55);
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.35), transparent);
+    opacity: 0.9;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .catalog-toolbar {
+    background: color-mix(in srgb, var(--pos-night-panel) 88%, var(--lux-indigo) 4%);
+    border-bottom-color: var(--lux-ds-border-dark);
+  }
+
+  .catalog-search:focus-within {
+    border-color: color-mix(in srgb, var(--lux-cyan) 45%, var(--pos-border-strong));
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--lux-cyan) 20%, transparent),
+      0 0 24px -8px var(--lux-glow-cyan);
+  }
+
+  .cat--on {
+    border-color: color-mix(in srgb, var(--lux-cyan) 35%, var(--pos-border-strong));
+    color: var(--lux-cyan);
+    background: color-mix(in srgb, var(--lux-cyan) 10%, var(--pos-night-card));
+  }
+
   .card::before,
   .line-card::before {
     background: var(--lux-gradient-vertical);
     box-shadow: 0 0 12px var(--lux-glow-cyan);
+  }
+
+  .card {
+    background: var(--pos-night-card);
+    border-color: var(--lux-ds-border-dark);
+  }
+
+  .card:hover {
+    border-color: color-mix(in srgb, var(--lux-cyan) 28%, var(--pos-border-strong));
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04),
+      0 0 28px -12px var(--lux-glow-cyan);
+  }
+
+  .card__cat {
+    color: var(--lux-cyan);
+  }
+
+  .card__price {
+    color: var(--lux-cyan);
+  }
+
+  .line-card {
+    background: var(--pos-night-card);
+    border-color: var(--lux-ds-border-dark);
+  }
+
+  .line-card__sum,
+  .line-card__price-val {
+    color: var(--lux-cyan);
+  }
+
+  .line-card__price {
+    border-color: color-mix(in srgb, var(--lux-cyan) 28%, var(--pos-border-strong));
+    background: color-mix(in srgb, var(--lux-cyan) 8%, var(--pos-night-panel));
   }
 
   .btn-pay {
@@ -171,5 +246,21 @@ html[data-theme='dark'] {
   .sale-tab--on {
     border-color: color-mix(in srgb, var(--lux-cyan) 32%, var(--pos-border-strong));
     background: color-mix(in srgb, var(--lux-indigo) 18%, var(--pos-elevated));
+    box-shadow: 0 0 18px -10px var(--lux-glow-cyan);
+  }
+
+  .totals {
+    background: color-mix(in srgb, var(--pos-night-panel) 90%, var(--lux-indigo) 5%);
+    border-top-color: var(--lux-ds-border-dark);
+  }
+
+  .totals__row--total span:last-child {
+    color: var(--lux-cyan);
+  }
+
+  .customer-panel__chip--active {
+    border-color: color-mix(in srgb, var(--lux-cyan) 35%, var(--pos-border-strong));
+    background: color-mix(in srgb, var(--lux-cyan) 10%, var(--pos-night-card));
+    color: var(--lux-cyan);
   }
 }

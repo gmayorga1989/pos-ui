@@ -1,4 +1,5 @@
 @use 'styles/luxora-brand';
+@use 'styles/luxora-ds-v1';
 @use 'styles/luxora-sso-bridge';
 @use 'styles/pos-maestro';
 @use 'styles/pos-ef-modals';
@@ -8,11 +9,12 @@
 /* —— Suite POS — tokens por tema y densidad —— */
 
 html {
-  /* Modo nocturno Luxora POS (por defecto) */
-  --pos-night-bg: #070b14;
-  --pos-night-panel: #0b1324;
-  --pos-nav-rail-w: 3.45rem;
-  --pos-topbar-h: 3.35rem;
+  /* LUXORA DS v1.0 — dimensiones base */
+  --pos-night-bg: var(--lux-ds-bg-dark);
+  --pos-night-panel: var(--lux-ds-surface-dark);
+  --pos-night-card: var(--lux-ds-card-dark);
+  --pos-nav-rail-w: var(--lux-ds-rail-w);
+  --pos-topbar-h: var(--lux-ds-header-h);
   --pos-content-pad-x: 1.05rem;
   --pos-content-pad-y: 0.8rem;
   --pos-card-art-h: 3.1rem;
@@ -20,19 +22,19 @@ html {
   --pos-product-gap: 0.55rem;
   --pos-qty-size: 1.65rem;
   --pos-font-base: 15px;
-  --pos-radius-xs: 5px;
-  --pos-radius-sm: 7px;
-  --pos-radius: 11px;
-  --pos-radius-lg: 15px;
-  --pos-transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  --pos-radius-xs: 6px;
+  --pos-radius-sm: var(--lux-ds-radius-input);
+  --pos-radius: var(--lux-ds-radius-card);
+  --pos-radius-lg: 18px;
+  --pos-transition: var(--lux-ds-transition);
   --pos-font: 'Sora', 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --pos-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
 }
 
 /* Densidad táctil / escritorio */
 [data-density='compact'] {
-  --pos-nav-rail-w: 3.15rem;
-  --pos-topbar-h: 3.05rem;
+  --pos-nav-rail-w: 4rem;
+  --pos-topbar-h: 4rem;
   --pos-content-pad-x: 0.85rem;
   --pos-content-pad-y: 0.55rem;
   --pos-card-art-h: 2.55rem;
@@ -45,7 +47,7 @@ html {
 }
 
 [data-density='comfortable'] {
-  --pos-nav-rail-w: 3.45rem;
+  --pos-nav-rail-w: var(--lux-ds-rail-w);
   --pos-card-art-h: 3.1rem;
   --pos-product-minw: 9.25rem;
   --pos-product-gap: 0.55rem;
@@ -54,8 +56,8 @@ html {
 }
 
 [data-density='touch'] {
-  --pos-nav-rail-w: 3.65rem;
-  --pos-topbar-h: 3.55rem;
+  --pos-nav-rail-w: 4.75rem;
+  --pos-topbar-h: 4.5rem;
   --pos-content-pad-x: 1.1rem;
   --pos-content-pad-y: 0.85rem;
   --pos-card-art-h: 4rem;
@@ -70,16 +72,16 @@ html {
 /* Tema claro — superficie marca #F5F7FA + acentos cyan/indigo/magenta visibles */
 html[data-theme='light'] {
   color-scheme: light;
-  --pos-bg-deep: var(--lux-surface);
-  --pos-bg: color-mix(in srgb, var(--lux-indigo) 5%, var(--lux-surface));
-  --pos-surface: #ffffff;
-  --pos-surface-2: color-mix(in srgb, var(--lux-cyan) 4%, #ffffff);
+  --pos-bg-deep: var(--lux-ds-bg-light);
+  --pos-bg: color-mix(in srgb, var(--lux-indigo) 4%, var(--lux-ds-bg-light));
+  --pos-surface: var(--lux-ds-surface-light);
+  --pos-surface-2: color-mix(in srgb, var(--lux-cyan) 3%, #ffffff);
   --pos-elevated: #ffffff;
-  --pos-border: rgba(var(--lux-ink-rgb), 0.08);
-  --pos-border-strong: rgba(var(--lux-ink-rgb), 0.14);
-  --pos-text: var(--lux-ink);
-  --pos-muted: #4b5563;
-  --pos-faint: #6b7280;
+  --pos-border: var(--lux-ds-border-light);
+  --pos-border-strong: color-mix(in srgb, var(--lux-ds-border-light) 70%, #94a3b8);
+  --pos-text: var(--lux-ds-text-light);
+  --pos-muted: #64748b;
+  --pos-faint: #94a3b8;
   --pos-accent: var(--lux-indigo);
   --pos-accent-secondary: var(--lux-cyan);
   --pos-accent-tertiary: var(--lux-magenta);
@@ -101,13 +103,13 @@ html[data-theme='light'] {
   --pos-panel-shadow:
     0 1px 2px rgba(var(--lux-ink-rgb), 0.04),
     0 16px 44px -24px rgba(var(--lux-primary-rgb), 0.2);
-  --pos-rail-bg: linear-gradient(175deg, var(--lux-ink) 0%, #1a1d2e 52%, var(--lux-ink) 100%);
-  --pos-rail-border: rgba(255, 255, 255, 0.07);
-  --pos-rail-fg: #94a3b8;
-  --pos-rail-fg-hover: var(--lux-surface-tint);
-  --pos-rail-well: rgba(255, 255, 255, 0.07);
-  --pos-rail-active-bg: color-mix(in srgb, var(--lux-indigo) 24%, transparent);
-  --pos-rail-active-fg: var(--lux-cyan);
+  --pos-rail-bg: var(--lux-ds-surface-light);
+  --pos-rail-border: var(--lux-ds-border-light);
+  --pos-rail-fg: #64748b;
+  --pos-rail-fg-hover: var(--lux-ds-text-light);
+  --pos-rail-well: color-mix(in srgb, var(--lux-indigo) 6%, #f1f5f9);
+  --pos-rail-active-bg: color-mix(in srgb, var(--lux-cyan) 14%, #ffffff);
+  --pos-rail-active-fg: var(--lux-indigo);
   --pos-flyout-bg: #ffffff;
   --pos-flyout-shadow: 0 24px 56px -20px rgba(var(--lux-ink-rgb), 0.2);
   --pos-topbar-bg: color-mix(in srgb, #ffffff 90%, var(--lux-cyan-soft));
@@ -118,14 +120,14 @@ html[data-theme='light'] {
 html[data-theme='dark'] {
   color-scheme: dark;
   --pos-bg-deep: var(--pos-night-bg);
-  --pos-bg: color-mix(in srgb, var(--lux-ink) 88%, var(--pos-night-bg));
+  --pos-bg: color-mix(in srgb, var(--lux-ink) 82%, var(--pos-night-bg));
   --pos-surface: var(--pos-night-panel);
-  --pos-surface-2: color-mix(in srgb, var(--pos-night-panel) 86%, var(--lux-ink));
-  --pos-elevated: var(--pos-night-panel);
-  --pos-border: rgba(148, 163, 184, 0.12);
-  --pos-border-strong: rgba(148, 163, 184, 0.22);
-  --pos-text: #f1f5f9;
-  --pos-muted: #94a3b8;
+  --pos-surface-2: color-mix(in srgb, var(--pos-night-card) 72%, var(--pos-night-panel));
+  --pos-elevated: var(--pos-night-card);
+  --pos-border: var(--lux-ds-border-dark);
+  --pos-border-strong: rgba(255, 255, 255, 0.14);
+  --pos-text: var(--lux-ds-text-primary);
+  --pos-muted: var(--lux-ds-text-secondary);
   --pos-faint: #64748b;
   --pos-accent: var(--lux-cyan);
   --pos-accent-hover: #67efff;
@@ -175,10 +177,10 @@ body {
 
 html[data-theme='light'] body {
   background:
-    radial-gradient(ellipse 90% 65% at 100% -5%, color-mix(in srgb, var(--lux-cyan) 16%, transparent) 0%, transparent 55%),
-    radial-gradient(ellipse 75% 55% at 0% 100%, color-mix(in srgb, var(--lux-magenta) 10%, transparent) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 45% at 50% 0%, color-mix(in srgb, var(--lux-indigo) 9%, transparent) 0%, transparent 45%),
-    linear-gradient(180deg, var(--lux-surface) 0%, var(--lux-surface-tint) 42%, var(--lux-app-bg, var(--lux-surface)) 100%);
+    radial-gradient(ellipse 90% 65% at 100% -5%, color-mix(in srgb, var(--lux-cyan) 12%, transparent) 0%, transparent 55%),
+    radial-gradient(ellipse 75% 55% at 0% 100%, color-mix(in srgb, var(--lux-magenta) 8%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 45% at 50% 0%, color-mix(in srgb, var(--lux-indigo) 7%, transparent) 0%, transparent 45%),
+    var(--lux-ds-bg-light);
 }
 
 html[data-theme='dark'] body {

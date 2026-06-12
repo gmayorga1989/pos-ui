@@ -151,7 +151,7 @@ type ModalState =
   imports: [CommonModule, FormsModule, PosTabulatorLocalGridComponent],
   template: `
     <div class="venta">
-      <div class="venta__grid" [class.venta__grid--left]="prefs.handedness() === 'left'">
+      <div class="venta__grid" [class.venta__grid--catalog-left]="prefs.handedness() === 'right'">
         <section class="panel panel--wide" aria-label="Catálogo de venta">
           <div class="catalog-toolbar">
             <label class="catalog-search">
@@ -166,7 +166,7 @@ type ModalState =
                 type="search"
                 autocomplete="off"
                 class="catalog-search__input pos-focus-ring"
-                placeholder="Nombre, SKU o código de barras…"
+                placeholder="Buscar productos, SKU o código de barras…"
                 [value]="catalogQuery()"
                 (input)="onCatalogQuery($event)"
                 (keydown.enter)="onCatalogEnter($event)" />
@@ -225,7 +225,7 @@ type ModalState =
                   <div class="card__actions">
                     <button
                       type="button"
-                      class="mini pos-focus-ring"
+                      class="mini mini--stock pos-focus-ring"
                       title="Stock en otras bodegas"
                       [class.mini--locked]="!desk.cajaOpen()"
                       (click)="openModal('stock', p)">
@@ -233,7 +233,7 @@ type ModalState =
                     </button>
                     <button
                       type="button"
-                      class="mini pos-focus-ring"
+                      class="mini mini--promo pos-focus-ring"
                       title="Promociones"
                       [class.mini--locked]="!desk.cajaOpen()"
                       (click)="openModal('promo', p)">
@@ -363,20 +363,31 @@ type ModalState =
           <div class="lines">
             @for (line of cart(); track line.lineId) {
               <article class="line-card">
-                <header class="line-card__head">
-                  <div class="line-card__identity">
-                    <span class="line-card__name">{{ line.product.name }}</span>
-                    <span class="line-card__sku">{{ line.product.sku }}</span>
+                @if (prefs.showProductImages()) {
+                  <div class="line-card__thumb">
+                    <img
+                      [src]="productImageUrl(line.product)"
+                      [alt]="line.product.name"
+                      loading="lazy"
+                      decoding="async"
+                      (error)="onProductImageError($event)" />
                   </div>
-                  <div class="line-card__amount">
-                    @if (line.discountAmount > 0) {
-                      <span class="line-card__gross">{{ lineGross(line) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
-                      <span class="line-card__disc">−{{ line.discountAmount | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
-                    }
-                    <span class="line-card__sum">{{ lineNet(line) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
-                  </div>
-                </header>
-                <div class="line-card__actions">
+                }
+                <div class="line-card__body">
+                  <header class="line-card__head">
+                    <div class="line-card__identity">
+                      <span class="line-card__name">{{ line.product.name }}</span>
+                      <span class="line-card__sku">{{ line.product.sku }}</span>
+                    </div>
+                    <div class="line-card__amount">
+                      @if (line.discountAmount > 0) {
+                        <span class="line-card__gross">{{ lineGross(line) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                        <span class="line-card__disc">−{{ line.discountAmount | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                      }
+                      <span class="line-card__sum">{{ lineNet(line) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                    </div>
+                  </header>
+                  <div class="line-card__actions">
                   <button
                     type="button"
                     class="line-card__price pos-focus-ring"
@@ -427,6 +438,7 @@ type ModalState =
                       <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7h12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
                     </svg>
                   </button>
+                  </div>
                 </div>
               </article>
             } @empty {
@@ -461,8 +473,24 @@ type ModalState =
               <span>Total</span>
               <span>{{ total() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
             </div>
-            <button type="button" class="btn-pay pos-focus-ring" [class.btn-pay--locked]="lineCount() === 0 || !desk.cajaOpen()" (click)="openCobro()">
-              {{ desk.cajaOpen() ? 'Cobrar' : 'Abrir caja para cobrar' }}
+            <button
+              type="button"
+              class="btn-pay pos-focus-ring"
+              [class.btn-pay--locked]="lineCount() === 0 || !desk.cajaOpen()"
+              (click)="openCobro()">
+              <span class="btn-pay__content">
+                <span class="btn-pay__label">{{ desk.cajaOpen() ? 'Cobrar' : 'Abrir caja' }}</span>
+                @if (desk.cajaOpen()) {
+                  <span class="btn-pay__amount">{{ total() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                } @else {
+                  <span class="btn-pay__hint">para cobrar</span>
+                }
+              </span>
+              <span class="btn-pay__arrow" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
             </button>
             <p class="hint">
               @if (posApiConfigured()) {
@@ -1352,27 +1380,34 @@ type ModalState =
       flex: 1;
       min-height: 0;
       display: grid;
-      grid-template-columns: minmax(0, 3fr) minmax(18rem, 2fr);
+      grid-template-columns: minmax(18rem, 2fr) minmax(0, 3fr);
       grid-template-rows: minmax(0, 1fr);
       gap: 0.75rem;
       align-items: stretch;
     }
-    .venta__grid--left {
-      grid-template-columns: minmax(18rem, 2fr) minmax(0, 3fr);
-    }
-    .venta__grid--left .panel--wide {
-      order: 2;
-    }
-    .venta__grid--left .panel--cart {
+    .panel--cart {
       order: 1;
     }
+    .panel--wide {
+      order: 2;
+    }
+    .venta__grid--catalog-left {
+      grid-template-columns: minmax(0, 3fr) minmax(18rem, 2fr);
+    }
+    .venta__grid--catalog-left .panel--wide {
+      order: 1;
+    }
+    .venta__grid--catalog-left .panel--cart {
+      order: 2;
+    }
     @media (max-width: 900px) {
-      .venta__grid {
+      .venta__grid,
+      .venta__grid--catalog-left {
         grid-template-columns: 1fr;
         grid-template-rows: minmax(12rem, 55vh) minmax(14rem, 1fr);
       }
-      .venta__grid--left .panel--wide,
-      .venta__grid--left .panel--cart {
+      .panel--wide,
+      .panel--cart {
         order: initial;
       }
     }
@@ -1522,10 +1557,30 @@ type ModalState =
     }
     .products {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(9.25rem, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 0.58rem;
       padding: 0.62rem 0.68rem 0.72rem;
       align-content: start;
+    }
+    @media (max-width: 1500px) {
+      .products {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 1280px) {
+      .products {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 1024px) {
+      .products {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 900px) {
+      .products {
+        grid-template-columns: repeat(auto-fill, minmax(9.25rem, 1fr));
+      }
     }
     .card {
       display: flex;
@@ -1675,6 +1730,20 @@ type ModalState =
       color: var(--pos-accent-hover);
       background: var(--pos-accent-muted);
     }
+    .mini--stock {
+      color: #0d9488;
+      background: color-mix(in srgb, #0d9488 10%, var(--pos-surface-2));
+    }
+    .mini--promo {
+      color: var(--lux-magenta);
+      background: color-mix(in srgb, var(--lux-magenta) 10%, var(--pos-surface-2));
+    }
+    html[data-theme='dark'] .mini--stock {
+      color: #5eead4;
+    }
+    html[data-theme='dark'] .mini--promo {
+      color: #e879f9;
+    }
     .badge {
       font-size: 0.63rem;
       font-weight: 700;
@@ -1696,12 +1765,34 @@ type ModalState =
     }
     .line-card {
       position: relative;
+      display: flex;
+      gap: 0.55rem;
+      align-items: flex-start;
       border: 1px solid var(--pos-border);
-      border-radius: var(--pos-radius-sm);
+      border-radius: var(--pos-radius);
       background: var(--pos-elevated);
-      padding: 0.58rem 0.62rem 0.52rem;
+      padding: 0.55rem 0.58rem 0.5rem 0.5rem;
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
       overflow: hidden;
+    }
+    .line-card__thumb {
+      width: 2.65rem;
+      height: 2.65rem;
+      flex-shrink: 0;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--pos-border);
+      background: color-mix(in srgb, var(--pos-surface-2) 88%, var(--pos-border));
+    }
+    .line-card__thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .line-card__body {
+      flex: 1;
+      min-width: 0;
     }
     .line-card::before {
       content: '';
@@ -2009,32 +2100,75 @@ type ModalState =
     }
     .btn-pay {
       width: 100%;
+      min-height: var(--lux-ds-pay-h, 4rem);
       margin-top: 0.65rem;
-      padding: 0.78rem 0.95rem;
+      padding: 0.65rem 1rem 0.65rem 1.15rem;
       border: none;
-      border-radius: var(--pos-radius-sm);
+      border-radius: var(--pos-radius);
       font-size: 0.9rem;
       font-weight: 700;
-      letter-spacing: -0.02em;
-      text-transform: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       cursor: pointer;
       color: #fff;
-      background: linear-gradient(135deg, var(--pos-accent) 0%, color-mix(in srgb, var(--pos-accent-hover) 88%, #0f172a) 100%);
-      box-shadow: 0 10px 28px -8px var(--pos-accent-glow);
-      transition:
-        filter 0.16s ease,
-        transform 0.14s ease,
-        box-shadow 0.16s ease;
-    }
-    html[data-theme='dark'] .btn-pay {
-      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
       background: var(--lux-gradient-diagonal);
-      box-shadow: 0 12px 32px -10px rgba(var(--lux-primary-rgb), 0.42);
+      border: 1px solid color-mix(in srgb, var(--lux-magenta) 24%, var(--lux-indigo));
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.18) inset,
+        0 14px 36px -12px rgba(var(--lux-primary-rgb), 0.48);
+      transition:
+        filter var(--lux-ds-transition, 0.2s ease),
+        transform 0.15s ease,
+        box-shadow var(--lux-ds-transition, 0.2s ease);
+    }
+    .btn-pay__content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.08rem;
+      min-width: 0;
+      text-transform: none;
+      letter-spacing: -0.02em;
+    }
+    .btn-pay__label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.92;
+    }
+    .btn-pay__amount {
+      font-size: 1.22rem;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .btn-pay__hint {
+      font-size: 0.78rem;
+      font-weight: 600;
+      opacity: 0.88;
+      text-transform: none;
+    }
+    .btn-pay__arrow {
+      display: grid;
+      place-items: center;
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.14);
+      flex-shrink: 0;
     }
     .btn-pay:hover:not(:disabled) {
-      filter: brightness(1.04);
+      filter: brightness(1.05) saturate(1.04);
       transform: translateY(-1px);
-      box-shadow: 0 14px 34px -10px var(--pos-accent-glow);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.2) inset,
+        0 18px 42px -14px rgba(var(--lux-magenta-rgb), 0.38);
     }
     .btn-pay--locked:hover {
       filter: none;

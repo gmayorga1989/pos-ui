@@ -59,6 +59,10 @@ type CashPanelMode = 'open' | 'close' | 'history';
         <header class="topbar">
           <span class="topbar__brand-line" aria-hidden="true"></span>
           <div class="topbar__left">
+            <a class="topbar__brand pos-focus-ring" routerLink="/venta" aria-label="Luxora POS — inicio">
+              <span class="topbar__logo-mark" aria-hidden="true">LUXORA</span>
+              <span class="topbar__logo-module">POS</span>
+            </a>
             <button type="button" class="caja-chip pos-focus-ring" (click)="openCajaPanel()">
               <span class="caja-chip__line1">Caja · {{ desk.cajaDisplayId() }}</span>
               <span class="caja-chip__line2">
@@ -107,6 +111,16 @@ type CashPanelMode = 'open' | 'close' | 'history';
                 </span>
               }
             </div>
+            <button type="button" class="topbar-icon-btn pos-focus-ring" aria-label="Notificaciones" title="Notificaciones">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M15 17H9a3 3 0 010-6 5 5 0 0110 0 3 3 0 010 6zM12 21a2 2 0 01-2-2h4a2 2 0 01-2 2z"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </button>
             <button
               type="button"
               class="theme-btn pos-focus-ring"
@@ -132,6 +146,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
                 </svg>
               }
             </button>
+            <span class="topbar__avatar" [attr.title]="cashierSubline()" aria-hidden="true">{{ userInitials() }}</span>
             <div class="clock" aria-live="polite">
               <span class="clock__time">{{ time() }}</span>
               <span class="clock__date">{{ date() }}</span>
@@ -438,6 +453,15 @@ type CashPanelMode = 'open' | 'close' | 'history';
       background: var(--pos-rail-active-bg);
       color: var(--pos-rail-active-fg);
       border-color: transparent;
+      box-shadow: 0 0 18px -6px var(--pos-accent-glow);
+    }
+    html[data-theme='light'] .rail__btn--active {
+      background: var(--lux-gradient-diagonal);
+      color: #fff;
+      border-radius: var(--pos-radius-sm);
+      box-shadow:
+        0 4px 16px -6px rgba(var(--lux-primary-rgb), 0.45),
+        0 0 0 1px color-mix(in srgb, var(--lux-cyan) 22%, transparent);
     }
     .rail__btn--active::before {
       content: '';
@@ -451,9 +475,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
       box-shadow: 0 0 14px var(--pos-accent-glow);
     }
     html[data-theme='light'] .rail__btn--active::before {
-      width: 3px;
-      background: var(--lux-gradient-vertical);
-      box-shadow: 0 0 16px var(--lux-glow-cyan);
+      display: none;
     }
     .rail__ico {
       display: flex;
@@ -520,6 +542,13 @@ type CashPanelMode = 'open' | 'close' | 'history';
       line-height: 1;
       box-shadow: 0 0 0 2px var(--pos-rail-bg);
     }
+    html[data-theme='light'] .rail {
+      box-shadow: 1px 0 0 var(--pos-rail-border);
+    }
+    html[data-theme='light'] .rail__logout {
+      border-color: var(--pos-rail-border);
+      background: var(--pos-rail-well);
+    }
     .rail__logout {
       margin-top: auto;
       width: calc(var(--pos-nav-rail-w) - 0.45rem);
@@ -582,10 +611,69 @@ type CashPanelMode = 'open' | 'close' | 'history';
     .topbar__left {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.65rem;
       flex-shrink: 1;
       min-width: 0;
-      max-width: min(42vw, 15.5rem);
+      max-width: min(48vw, 20rem);
+    }
+    .topbar__brand {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+      text-decoration: none;
+      flex-shrink: 0;
+      padding: 0.2rem 0;
+    }
+    .topbar__logo-mark {
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      background: var(--lux-gradient-diagonal);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .topbar__logo-module {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--pos-muted);
+      text-transform: uppercase;
+    }
+    .topbar-icon-btn {
+      width: 2.28rem;
+      height: 2.28rem;
+      border-radius: var(--pos-radius-sm);
+      border: 1px solid var(--pos-border);
+      background: color-mix(in srgb, var(--pos-surface-2) 88%, transparent);
+      color: var(--pos-muted);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+      transition:
+        border-color var(--pos-transition),
+        color var(--pos-transition),
+        background var(--pos-transition);
+    }
+    .topbar-icon-btn:hover {
+      color: var(--pos-text);
+      border-color: var(--pos-border-strong);
+    }
+    .topbar__avatar {
+      width: 2.1rem;
+      height: 2.1rem;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #fff;
+      background: var(--lux-gradient-diagonal);
+      border: 1px solid color-mix(in srgb, var(--lux-cyan) 35%, transparent);
+      box-shadow: 0 0 14px -4px var(--lux-glow-cyan);
+      flex-shrink: 0;
     }
     .caja-chip {
       display: flex;
@@ -1373,6 +1461,23 @@ export class PosShellComponent implements OnInit {
       return `Empresa · ${s.companyId}`;
     }
     return 'Suite POS';
+  });
+
+  readonly userInitials = computed(() => {
+    const context = this.auth.sessionContext();
+    const name = context.cashierName || this.sessionUi().cashierName || '';
+    if (name.trim()) {
+      const parts = name.trim().split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) {
+        return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+      }
+      return (parts[0]?.slice(0, 2) ?? 'LX').toUpperCase();
+    }
+    const email = context.cashierEmail || this.sessionUi().cashierEmail || '';
+    if (email) {
+      return email.slice(0, 2).toUpperCase();
+    }
+    return 'LX';
   });
 
   readonly cashierSubline = computed(() => {

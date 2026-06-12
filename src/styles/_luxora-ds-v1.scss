@@ -1,0 +1,112 @@
+/**
+ * LUXORA DESIGN SYSTEM v1.0 — primitivos compartidos (POS y suite).
+ */
+
+/* Inputs DS — altura 44px, radio 12px, focus cyan */
+.lux-input,
+.shell-input,
+.customer-panel__input,
+.catalog-search,
+.catalog-filter__select {
+  min-height: var(--lux-ds-input-h, 2.75rem);
+  border-radius: var(--lux-ds-radius-input, 12px);
+  transition:
+    border-color var(--lux-ds-transition, 0.2s ease),
+    box-shadow var(--lux-ds-transition, 0.2s ease),
+    background var(--lux-ds-transition, 0.2s ease);
+}
+
+.catalog-search {
+  min-height: var(--lux-ds-input-h, 2.75rem);
+  border-radius: var(--lux-ds-radius-input, 12px);
+}
+
+.customer-panel__input:focus,
+.catalog-search:focus-within,
+.catalog-filter__select:focus,
+.shell-input:focus {
+  outline: none;
+}
+
+html[data-theme='light'] .customer-panel__input:focus,
+html[data-theme='light'] .catalog-search:focus-within,
+html[data-theme='light'] .catalog-filter__select:focus,
+html[data-theme='light'] .shell-input:focus {
+  border-color: color-mix(in srgb, var(--lux-cyan) 55%, var(--lux-indigo));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--lux-cyan) 28%, transparent),
+    0 8px 22px -10px rgba(var(--lux-cyan-rgb), 0.28);
+}
+
+html[data-theme='dark'] .customer-panel__input:focus,
+html[data-theme='dark'] .catalog-search:focus-within,
+html[data-theme='dark'] .catalog-filter__select:focus,
+html[data-theme='dark'] .shell-input:focus {
+  border-color: color-mix(in srgb, var(--lux-cyan) 42%, var(--pos-border-strong));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--lux-cyan) 22%, transparent),
+    0 0 20px -6px var(--lux-glow-cyan);
+}
+
+/* Cards DS — radio 16px */
+.panel,
+.card,
+.line-card,
+.shell-modal {
+  border-radius: var(--lux-ds-radius-card, 16px);
+}
+
+/* Botón primario DS */
+.lux-btn-primary,
+.shell-btn--primary {
+  min-height: var(--lux-ds-btn-h, 2.75rem);
+  border-radius: var(--lux-ds-radius-input, 12px);
+  background: var(--lux-gradient-diagonal);
+  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--lux-magenta) 24%, var(--lux-indigo));
+  font-weight: 700;
+  transition:
+    filter var(--lux-ds-transition, 0.2s ease),
+    box-shadow var(--lux-ds-transition, 0.2s ease),
+    transform 0.15s ease;
+}
+
+.lux-btn-primary:hover:not(:disabled),
+.shell-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05) saturate(1.04);
+  transform: translateY(-1px);
+}
+
+/* Badges tipo pill enterprise */
+.lux-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid var(--pos-border);
+}
+
+.lux-badge--stock {
+  border-color: color-mix(in srgb, #0d9488 35%, transparent);
+  background: color-mix(in srgb, #0d9488 12%, transparent);
+  color: #0d9488;
+}
+
+html[data-theme='dark'] .lux-badge--stock {
+  color: #5eead4;
+}
+
+.lux-badge--promo {
+  border-color: color-mix(in srgb, var(--lux-magenta) 35%, transparent);
+  background: color-mix(in srgb, var(--lux-magenta) 12%, transparent);
+  color: var(--lux-magenta);
+}
+
+html[data-theme='dark'] .lux-badge--promo {
+  color: #e879f9;
+}
