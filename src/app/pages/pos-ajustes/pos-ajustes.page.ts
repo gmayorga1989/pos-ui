@@ -115,16 +115,55 @@ declare global {
       </aside>
 
       <section class="settings-panel">
-        <div class="settings-hero">
-          <div>
-            <span class="eyebrow">Panel de control</span>
-            <h1>{{ activeTabMeta().label }}</h1>
-            <p>{{ activeTabMeta().longDesc }}</p>
+        @if (activeTab() === 'station') {
+          <div class="station-hero">
+            <div class="station-hero__copy">
+              <span class="eyebrow">Panel de control</span>
+              <h1>Caja y preferencias locales</h1>
+              <p>Configuración específica para este navegador/equipo.</p>
+              <div class="station-hero__status">
+                <span class="station-pill" [class.station-pill--ok]="stationIsConfigured()" [class.station-pill--warn]="!stationIsConfigured()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    @if (stationIsConfigured()) {
+                      <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" />
+                    } @else {
+                      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                    }
+                  </svg>
+                  Estado: {{ stationStatusLabel() }}
+                </span>
+                <span class="station-pill station-pill--muted">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M8 3v4M16 3v4M4 10h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                  Última actualización: {{ stationLastUpdateLabel() }}
+                </span>
+              </div>
+            </div>
+            <div class="station-hero__art">
+              <img
+                class="station-hero__img"
+                src="assets/iconos/configuracion02.png"
+                alt=""
+                loading="lazy"
+                decoding="async" />
+            </div>
           </div>
-          <div class="settings-hero__badge">
-            <span>{{ activeTabMeta().badge }}</span>
+        } @else {
+          <div class="settings-hero">
+            <div>
+              <span class="eyebrow">Panel de control</span>
+              <h1>{{ activeTabMeta().label }}</h1>
+              <p>{{ activeTabMeta().longDesc }}</p>
+            </div>
+            <div class="settings-hero__badge">
+              <span>{{ activeTabMeta().badge }}</span>
+            </div>
           </div>
-        </div>
+        }
 
         @switch (activeTab()) {
           @case ('business') {
@@ -317,107 +356,221 @@ declare global {
           }
 
           @case ('station') {
-            <div class="section-head">
-              <span class="eyebrow">Estación</span>
-              <h1>Caja y preferencias locales</h1>
-              <p>Configuración por navegador/equipo: útil cuando cada caja tiene hardware o hábitos distintos.</p>
-            </div>
+            <div class="station-board">
+              <article class="station-card station-card--ident">
+                <header class="station-card__head">
+                  <span class="station-card__icon station-card__icon--purple" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="5" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M8 19h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <span class="station-card__titles">
+                    <strong>Identificación de estación</strong>
+                    <small>Datos únicos para esta caja</small>
+                  </span>
+                </header>
+                <div class="station-card__body">
+                  <label class="station-field">
+                    <span class="station-field__label">Identificador de caja</span>
+                    <input
+                      type="text"
+                      class="station-field__input pos-focus-ring"
+                      placeholder="CAJA-01"
+                      [ngModel]="prefs.cajaId()"
+                      (ngModelChange)="onCaja($event)" />
+                  </label>
+                  @if (puntosError()) {
+                    <p class="station-note station-note--warn">{{ puntosError() }}</p>
+                  }
+                  @if (puntos().length > 0) {
+                    <label class="station-field">
+                      <span class="station-field__label">Punto de emisión (eFactura)</span>
+                      <select
+                        class="station-field__input pos-focus-ring"
+                        [ngModel]="prefs.puntoEmisionId()"
+                        (ngModelChange)="onPuntoEmision($event)">
+                        <option value="">Seleccione</option>
+                        @for (pe of puntos(); track pe.id) {
+                          <option [value]="pe.id">{{ pe.establecimientoCodigo }}-{{ pe.codigo }} · {{ pe.nombre }}</option>
+                        }
+                      </select>
+                    </label>
+                  } @else {
+                    <div class="station-field-row">
+                      <label class="station-field">
+                        <span class="station-field__label">Sucursal local</span>
+                        <input
+                          type="text"
+                          class="station-field__input pos-focus-ring"
+                          maxlength="3"
+                          placeholder="001"
+                          [ngModel]="prefs.localBranchCode()"
+                          (ngModelChange)="onLocalBranch($event)" />
+                      </label>
+                      <label class="station-field">
+                        <span class="station-field__label">Emisión local</span>
+                        <input
+                          type="text"
+                          class="station-field__input pos-focus-ring"
+                          maxlength="3"
+                          placeholder="001"
+                          [ngModel]="prefs.localEmissionCode()"
+                          (ngModelChange)="onLocalEmission($event)" />
+                      </label>
+                    </div>
+                  }
+                </div>
+              </article>
 
-            <div class="card-grid">
-              <label class="field">
-                <span>Identificador de caja</span>
-                <input
-                  type="text"
-                  class="input pos-focus-ring"
-                  placeholder="Ej. CAJA-01"
-                  [ngModel]="prefs.cajaId()"
-                  (ngModelChange)="onCaja($event)" />
-              </label>
+              <article class="station-card station-card--efactura">
+                <header class="station-card__head">
+                  <span class="station-card__icon station-card__icon--amber" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                    </svg>
+                  </span>
+                  <span class="station-card__titles station-card__titles--inline">
+                    <strong>Integración eFactura</strong>
+                    <span class="station-card__badge" [class.station-card__badge--ok]="efacturaIntegrationReady()">
+                      {{ efacturaIntegrationReady() ? 'Lista' : 'Pendiente' }}
+                    </span>
+                  </span>
+                </header>
+                <div class="station-card__body station-card__body--center">
+                  @if (efacturaIntegrationReady()) {
+                    <p class="station-card__copy">Punto de emisión disponible para operación fiscal en esta estación.</p>
+                  } @else {
+                    <p class="station-card__copy">
+                      No hay puntos de emisión cargados. Configure sucursal y emisión local o conecte eFactura.
+                    </p>
+                    <button type="button" class="station-card__cta pos-focus-ring" (click)="openBusinessTab()">
+                      Configurar ahora
+                    </button>
+                  }
+                </div>
+              </article>
 
-              @if (puntosError()) {
-                <p class="warn">{{ puntosError() }}</p>
-              }
-              @if (puntos().length > 0) {
-                <label class="field field--wide">
-                  <span>Punto de emisión (eFactura)</span>
-                  <select
-                    class="input pos-focus-ring"
-                    [ngModel]="prefs.puntoEmisionId()"
-                    (ngModelChange)="onPuntoEmision($event)">
-                    <option value="">Seleccione</option>
-                    @for (pe of puntos(); track pe.id) {
-                      <option [value]="pe.id">{{ pe.establecimientoCodigo }}-{{ pe.codigo }} · {{ pe.nombre }}</option>
-                    }
-                  </select>
-                </label>
-              } @else {
-                <p class="hint field--wide">No hay puntos de eFactura cargados. Configure una sucursal/emision local para permitir operacion POS.</p>
-                <label class="field">
-                  <span>Sucursal local</span>
-                  <input type="text" class="input pos-focus-ring" maxlength="3" placeholder="001" [ngModel]="prefs.localBranchCode()" (ngModelChange)="onLocalBranch($event)" />
-                </label>
-                <label class="field">
-                  <span>Emision local</span>
-                  <input type="text" class="input pos-focus-ring" maxlength="3" placeholder="001" [ngModel]="prefs.localEmissionCode()" (ngModelChange)="onLocalEmission($event)" />
-                </label>
-              }
+              <article class="station-card station-card--experience">
+                <header class="station-card__head">
+                  <span class="station-card__icon station-card__icon--purple" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                  <span class="station-card__titles">
+                    <strong>Experiencia de venta</strong>
+                    <small>Comportamiento del flujo de cobro</small>
+                  </span>
+                </header>
+                <div class="station-card__body">
+                  <div class="station-toggle-row">
+                    <span class="station-toggle-row__copy">
+                      <strong>Sonido al agregar productos</strong>
+                      <small>Feedback auditivo al escanear o añadir ítems.</small>
+                    </span>
+                    <label class="station-switch">
+                      <input
+                        type="checkbox"
+                        [checked]="prefs.soundOn()"
+                        (change)="onStationSoundToggle()" />
+                      <span class="station-switch__ui" aria-hidden="true"></span>
+                    </label>
+                  </div>
+                  <div class="station-toggle-row">
+                    <span class="station-toggle-row__copy">
+                      <strong>Escaneo automático</strong>
+                      <small>Agrega el producto al leer un código exacto.</small>
+                    </span>
+                    <label class="station-switch">
+                      <input
+                        type="checkbox"
+                        [checked]="prefs.scanAutoAdd()"
+                        (change)="onStationScanToggle()" />
+                      <span class="station-switch__ui" aria-hidden="true"></span>
+                    </label>
+                  </div>
+                  <div class="station-toggle-row">
+                    <span class="station-toggle-row__copy">
+                      <strong>Separar productos repetidos</strong>
+                      <small>Crea una línea nueva en lugar de sumar cantidad.</small>
+                    </span>
+                    <label class="station-switch">
+                      <input
+                        type="checkbox"
+                        [checked]="prefs.separateSameProductLines()"
+                        (change)="onStationSeparateLinesToggle()" />
+                      <span class="station-switch__ui" aria-hidden="true"></span>
+                    </label>
+                  </div>
+                </div>
+              </article>
 
-              <label class="toggle">
-                <span>
-                  <strong>Sonido al añadir/quitar ítems</strong>
-                  <small>Feedback rápido para operación táctil.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  [checked]="prefs.soundOn()"
-                  (change)="prefs.setSound(!prefs.soundOn())" />
-              </label>
+              <article class="station-card station-card--upsell">
+                <header class="station-card__head station-card__head--split">
+                  <span class="station-card__head-main">
+                    <span class="station-card__icon station-card__icon--purple" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M12 4v2M12 18v2M4 12h2M18 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    <span class="station-card__titles">
+                      <strong>Ventas inteligentes</strong>
+                    </span>
+                  </span>
+                  <label class="station-switch">
+                    <input
+                      type="checkbox"
+                      [checked]="prefs.upsellOn()"
+                      (change)="onStationUpsellToggle()" />
+                    <span class="station-switch__ui" aria-hidden="true"></span>
+                  </label>
+                </header>
+                <div class="station-card__body">
+                  <p class="station-card__copy">Sugerencias de productos relacionados durante la venta.</p>
+                  @if (prefs.upsellOn()) {
+                    <span class="station-chip">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 3l1.4 4.3H18l-3.6 2.6 1.4 4.3L12 11.6 8.2 14.2l1.4-4.3L6 7.3h4.6L12 3z" fill="currentColor" />
+                      </svg>
+                      Sugerencias de upsell activas
+                    </span>
+                  }
+                </div>
+              </article>
 
-              <label class="toggle">
-                <span>
-                  <strong>Separar productos repetidos en nuevas lineas</strong>
-                  <small>Si esta desactivado, el mismo producto aumenta la cantidad de la linea existente.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  [checked]="prefs.separateSameProductLines()"
-                  (change)="prefs.setSeparateSameProductLines(!prefs.separateSameProductLines())" />
-              </label>
-
-              <label class="toggle">
-                <span>
-                  <strong>Agregar al escanear código exacto</strong>
-                  <small>Evita presionar Enter cuando el lector envía el código.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  [checked]="prefs.scanAutoAdd()"
-                  (change)="prefs.setScanAutoAdd(!prefs.scanAutoAdd())" />
-              </label>
-
-              <label class="toggle">
-                <span>
-                  <strong>Sugerencias de upsell</strong>
-                  <small>Reservado para combos o productos relacionados.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  [checked]="prefs.upsellOn()"
-                  (change)="prefs.setUpsell(!prefs.upsellOn())" />
-              </label>
-
-              <label class="toggle">
-                <span>
-                  <strong>Cambio manual de lista de precio</strong>
-                  <small>
-                    Si está desactivado, en venta se usa la lista asignada al cliente y el cajero no puede cambiarla.
-                  </small>
-                </span>
-                <input
-                  type="checkbox"
-                  [checked]="prefs.allowManualPriceListSelection()"
-                  (change)="prefs.setAllowManualPriceListSelection(!prefs.allowManualPriceListSelection())" />
-              </label>
+              <article class="station-card station-card--pricing">
+                <header class="station-card__head">
+                  <span class="station-card__icon station-card__icon--green" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 3v18M8.5 7.5C8.5 5.8 10 4.5 12 4.5s3.5 1.3 3.5 3c0 2.2-3.5 2.5-3.5 5M12 17.5h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <span class="station-card__titles">
+                    <strong>Política de precios</strong>
+                    <small>Control de listas en venta</small>
+                  </span>
+                </header>
+                <div class="station-card__body">
+                  <p class="station-card__copy">Define si el cajero puede cambiar la lista de precios durante la venta.</p>
+                  <div class="station-toggle-row">
+                    <span class="station-toggle-row__copy">
+                      <strong>Permitir cambiar lista de precios</strong>
+                      <small>Si está desactivado, se usa la lista asignada al cliente.</small>
+                    </span>
+                    <label class="station-switch">
+                      <input
+                        type="checkbox"
+                        [checked]="prefs.allowManualPriceListSelection()"
+                        (change)="onStationPriceListToggle()" />
+                      <span class="station-switch__ui" aria-hidden="true"></span>
+                    </label>
+                  </div>
+                </div>
+              </article>
             </div>
           }
 
@@ -1324,7 +1477,7 @@ declare global {
           }
         }
 
-        <footer class="settings-footer">
+        <footer class="settings-footer" [class.settings-footer--station]="activeTab() === 'station'">
           @if (settingsSaveMsg()) {
             <p class="settings-footer__msg" role="status">{{ settingsSaveMsg() }}</p>
           }
@@ -1333,14 +1486,39 @@ declare global {
               <path d="M4 12a8 8 0 0113.8-5.6M20 4v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
               <path d="M20 12a8 8 0 01-13.8 5.6M4 20v-5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            Restablecer configuración
+            <span>
+              <strong>Restablecer configuración</strong>
+              @if (activeTab() === 'station') {
+                <small>Volver a valores por defecto</small>
+              }
+            </span>
           </button>
-          <button type="button" class="settings-footer__save pos-focus-ring" (click)="guardarCambios()">
+          @if (activeTab() === 'station' && stationDirty()) {
+            <p class="settings-footer__pending" role="status">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 12a8 8 0 0113.8-5.6M20 4v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M20 12a8 8 0 01-13.8 5.6M4 20v-5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Tienes cambios sin guardar
+            </p>
+          }
+          <button
+            type="button"
+            class="settings-footer__save pos-focus-ring"
+            [class.settings-footer__save--rich]="activeTab() === 'station'"
+            (click)="guardarCambios()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M5 20h14a1 1 0 001-1V8l-4-4H5a1 1 0 00-1 1v14a1 1 0 001 1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
               <path d="M9 4v5h6V4M9 14h6v6H9v-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
             </svg>
-            Guardar cambios
+            @if (activeTab() === 'station') {
+              <span class="settings-footer__save-copy">
+                <strong>Guardar cambios</strong>
+                <small>Aplicar configuración actual</small>
+              </span>
+            } @else {
+              Guardar cambios
+            }
           </button>
         </footer>
       </section>
@@ -1512,6 +1690,334 @@ declare global {
       font-size: 0.66rem;
       font-weight: 850;
       white-space: nowrap;
+    }
+    .station-hero {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.9rem;
+      padding: 1rem 1.1rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: linear-gradient(135deg, var(--pos-elevated), var(--pos-surface-2));
+      box-shadow: var(--pos-shadow-soft);
+    }
+    .station-hero__copy {
+      flex: 1;
+      min-width: 0;
+    }
+    .station-hero h1 {
+      margin: 0;
+      font-size: 1.24rem;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+    .station-hero p {
+      margin: 0.35rem 0 0;
+      max-width: 36rem;
+      color: var(--pos-muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    .station-hero__status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.7rem;
+    }
+    .station-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.28rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--pos-border);
+      background: var(--pos-elevated);
+      color: var(--pos-muted);
+      font-size: 0.68rem;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+    .station-pill--ok {
+      border-color: color-mix(in srgb, #22c55e 35%, var(--pos-border));
+      background: color-mix(in srgb, #22c55e 10%, var(--pos-elevated));
+      color: #15803d;
+    }
+    .station-pill--warn {
+      border-color: color-mix(in srgb, #f59e0b 35%, var(--pos-border));
+      background: color-mix(in srgb, #f59e0b 10%, var(--pos-elevated));
+      color: #b45309;
+    }
+    .station-pill--muted {
+      color: var(--pos-muted);
+    }
+    .station-hero__art {
+      flex: 0 0 min(42%, 15.5rem);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .station-hero__img {
+      display: block;
+      width: 100%;
+      max-width: 15.5rem;
+      height: auto;
+      object-fit: contain;
+    }
+    .station-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      gap: 0.75rem;
+      align-items: stretch;
+    }
+    .station-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      padding: 0.85rem 0.9rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 8px 22px -20px rgba(17, 24, 39, 0.22);
+    }
+    .station-card--ident {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .station-card--efactura {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .station-card--experience {
+      grid-column: 3;
+      grid-row: 1 / span 2;
+    }
+    .station-card--upsell {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    .station-card--pricing {
+      grid-column: 2;
+      grid-row: 2;
+    }
+    .station-card__head {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .station-card__head--split {
+      justify-content: space-between;
+    }
+    .station-card__head-main {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      min-width: 0;
+    }
+    .station-card__icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 2.35rem;
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 5px;
+    }
+    .station-card__icon--purple {
+      color: var(--pos-accent-hover);
+      background: color-mix(in srgb, var(--pos-accent) 11%, var(--pos-surface));
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 16%, var(--pos-border));
+    }
+    .station-card__icon--amber {
+      color: #d97706;
+      background: color-mix(in srgb, #f59e0b 12%, var(--pos-surface));
+      border: 1px solid color-mix(in srgb, #f59e0b 24%, var(--pos-border));
+    }
+    .station-card__icon--green {
+      color: #15803d;
+      background: color-mix(in srgb, #22c55e 11%, var(--pos-surface));
+      border: 1px solid color-mix(in srgb, #22c55e 20%, var(--pos-border));
+    }
+    .station-card__titles {
+      display: grid;
+      gap: 0.1rem;
+      min-width: 0;
+    }
+    .station-card__titles--inline {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .station-card__titles strong {
+      font-size: 0.84rem;
+      font-weight: 850;
+      color: var(--pos-text);
+      line-height: 1.2;
+    }
+    .station-card__titles small {
+      color: var(--pos-muted);
+      font-size: 0.68rem;
+      line-height: 1.3;
+    }
+    .station-card__badge {
+      justify-self: start;
+      margin-top: 0.12rem;
+      padding: 0.14rem 0.42rem;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, #f59e0b 30%, var(--pos-border));
+      background: color-mix(in srgb, #f59e0b 12%, var(--pos-elevated));
+      color: #b45309;
+      font-size: 0.62rem;
+      font-weight: 850;
+    }
+    .station-card__badge--ok {
+      border-color: color-mix(in srgb, #22c55e 30%, var(--pos-border));
+      background: color-mix(in srgb, #22c55e 12%, var(--pos-elevated));
+      color: #15803d;
+    }
+    .station-card__body {
+      display: grid;
+      gap: 0.55rem;
+      flex: 1;
+    }
+    .station-card__body--center {
+      place-content: center;
+      text-align: center;
+      min-height: 6.5rem;
+    }
+    .station-card__copy {
+      margin: 0;
+      color: var(--pos-muted);
+      font-size: 0.74rem;
+      line-height: 1.45;
+    }
+    .station-card__cta {
+      justify-self: center;
+      margin-top: 0.15rem;
+      padding: 0.42rem 0.85rem;
+      border: 1px solid color-mix(in srgb, #f59e0b 40%, var(--pos-border));
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      color: #b45309;
+      font-size: 0.74rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .station-field {
+      display: grid;
+      gap: 0.28rem;
+    }
+    .station-field-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+    .station-field__label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: color-mix(in srgb, var(--pos-accent-hover) 70%, var(--pos-text));
+    }
+    .station-field__input {
+      width: 100%;
+      min-height: 2.15rem;
+      padding: 0.42rem 0.55rem;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 12%, var(--pos-border));
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-accent) 5%, var(--pos-bg));
+      color: var(--pos-text);
+      font-size: 0.8rem;
+    }
+    .station-note {
+      margin: 0;
+      font-size: 0.72rem;
+      line-height: 1.35;
+    }
+    .station-note--warn {
+      color: #b45309;
+    }
+    .station-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      padding: 0.55rem 0;
+      border-top: 1px solid color-mix(in srgb, var(--pos-border) 80%, transparent);
+    }
+    .station-card__body > .station-toggle-row:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+    .station-toggle-row__copy {
+      display: grid;
+      gap: 0.12rem;
+      min-width: 0;
+    }
+    .station-toggle-row__copy strong {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--pos-text);
+    }
+    .station-toggle-row__copy small {
+      color: var(--pos-muted);
+      font-size: 0.68rem;
+      line-height: 1.35;
+    }
+    .station-switch {
+      position: relative;
+      display: inline-flex;
+      flex-shrink: 0;
+      width: 2.45rem;
+      height: 1.35rem;
+    }
+    .station-switch input {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .station-switch__ui {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--pos-muted) 28%, var(--pos-border));
+      transition: background 0.15s ease;
+    }
+    .station-switch__ui::after {
+      content: '';
+      position: absolute;
+      top: 0.16rem;
+      left: 0.16rem;
+      width: 1.02rem;
+      height: 1.02rem;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+      transition: transform 0.15s ease;
+    }
+    .station-switch input:checked + .station-switch__ui {
+      background: var(--pos-accent);
+    }
+    .station-switch input:checked + .station-switch__ui::after {
+      transform: translateX(1.1rem);
+    }
+    .station-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      width: fit-content;
+      padding: 0.3rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 24%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent) 9%, var(--pos-elevated));
+      color: var(--pos-accent-hover);
+      font-size: 0.68rem;
+      font-weight: 800;
     }
     .section-head {
       margin-bottom: 0.75rem;
@@ -2416,6 +2922,41 @@ declare global {
       color: #fff;
       margin-left: auto;
     }
+    .settings-footer--station {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 0.75rem 1rem;
+    }
+    .settings-footer--station .settings-footer__msg {
+      grid-column: 1 / -1;
+    }
+    .settings-footer__reset span,
+    .settings-footer__save-copy {
+      display: grid;
+      gap: 0.05rem;
+      text-align: left;
+    }
+    .settings-footer__reset small,
+    .settings-footer__save-copy small {
+      font-size: 0.66rem;
+      font-weight: 650;
+      opacity: 0.82;
+    }
+    .settings-footer__pending {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      margin: 0;
+      color: var(--pos-muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    .settings-footer__save--rich {
+      min-height: 2.85rem;
+      padding: 0.45rem 1rem;
+    }
     @media (max-width: 840px) {
       .settings {
         grid-template-columns: 1fr;
@@ -2434,8 +2975,36 @@ declare global {
       .settings-nav__item {
         min-width: 12rem;
       }
-      .settings-hero {
+      .settings-hero,
+      .station-hero {
         flex-direction: column;
+      }
+      .station-hero__art {
+        flex-basis: auto;
+        width: 100%;
+      }
+      .station-board {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+      }
+      .station-card--ident,
+      .station-card--efactura,
+      .station-card--experience,
+      .station-card--upsell,
+      .station-card--pricing {
+        grid-column: auto;
+        grid-row: auto;
+      }
+      .settings-footer--station {
+        grid-template-columns: 1fr;
+      }
+      .settings-footer--station .settings-footer__pending {
+        order: 2;
+      }
+      .settings-footer--station .settings-footer__save {
+        order: 3;
+        width: 100%;
+        justify-content: center;
       }
       .integration-catalog {
         grid-template-columns: 1fr;
@@ -2511,6 +3080,8 @@ export class PosAjustesPage implements OnInit {
   readonly appVersion = '1.0.0';
   readonly efacturaUiOrigin = environment.efacturaUiOrigin;
   readonly settingsSaveMsg = signal('');
+  readonly stationDirty = signal(false);
+  readonly stationLastSavedAt = signal<number | null>(null);
   private readonly sessionStartedAt = Date.now();
   readonly stripeLoading = signal(false);
   readonly stripeSaving = signal(false);
@@ -2742,7 +3313,75 @@ export class PosAjustesPage implements OnInit {
 
   guardarCambios(): void {
     this.prefs.bumpDocumentDensity();
+    this.stationDirty.set(false);
+    this.stationLastSavedAt.set(Date.now());
     this.settingsSaveMsg.set('Cambios guardados correctamente en esta estación.');
+  }
+
+  stationIsConfigured(): boolean {
+    const caja = this.prefs.cajaId().trim();
+    if (!caja) return false;
+    if (this.puntos().length > 0) {
+      return !!this.prefs.puntoEmisionId().trim();
+    }
+    return !!this.prefs.localBranchCode().trim() && !!this.prefs.localEmissionCode().trim();
+  }
+
+  stationStatusLabel(): string {
+    return this.stationIsConfigured() ? 'Configurada' : 'Pendiente';
+  }
+
+  stationLastUpdateLabel(): string {
+    const savedAt = this.stationLastSavedAt();
+    if (!savedAt) return 'sin guardar aún';
+    const minutes = Math.floor((Date.now() - savedAt) / 60_000);
+    if (minutes < 1) return 'hace unos momentos';
+    if (minutes < 60) return `hace ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `hace ${hours} h`;
+    const days = Math.floor(hours / 24);
+    return `hace ${days} día${days === 1 ? '' : 's'}`;
+  }
+
+  efacturaIntegrationReady(): boolean {
+    if (this.puntos().length > 0) {
+      return !!this.prefs.puntoEmisionId().trim();
+    }
+    return !!this.prefs.localBranchCode().trim() && !!this.prefs.localEmissionCode().trim();
+  }
+
+  openBusinessTab(): void {
+    this.activeTab.set('business');
+  }
+
+  private markStationDirty(): void {
+    this.stationDirty.set(true);
+    this.settingsSaveMsg.set('');
+  }
+
+  onStationSoundToggle(): void {
+    this.prefs.setSound(!this.prefs.soundOn());
+    this.markStationDirty();
+  }
+
+  onStationScanToggle(): void {
+    this.prefs.setScanAutoAdd(!this.prefs.scanAutoAdd());
+    this.markStationDirty();
+  }
+
+  onStationSeparateLinesToggle(): void {
+    this.prefs.setSeparateSameProductLines(!this.prefs.separateSameProductLines());
+    this.markStationDirty();
+  }
+
+  onStationUpsellToggle(): void {
+    this.prefs.setUpsell(!this.prefs.upsellOn());
+    this.markStationDirty();
+  }
+
+  onStationPriceListToggle(): void {
+    this.prefs.setAllowManualPriceListSelection(!this.prefs.allowManualPriceListSelection());
+    this.markStationDirty();
   }
 
   restablecerConfiguracion(): void {
@@ -2753,6 +3392,8 @@ export class PosAjustesPage implements OnInit {
     this.prefs.hydrateFromStorage();
     this.prefs.applyDocumentAttributes();
     this.prefs.bumpDocumentDensity();
+    this.stationDirty.set(false);
+    this.stationLastSavedAt.set(null);
     this.settingsSaveMsg.set('Configuración restablecida a valores por defecto.');
   }
 
@@ -3165,18 +3806,22 @@ export class PosAjustesPage implements OnInit {
 
   onCaja(v: string): void {
     this.prefs.setCajaId(v);
+    this.markStationDirty();
   }
 
   onPuntoEmision(v: string): void {
     this.prefs.setPuntoEmisionId(v);
+    this.markStationDirty();
   }
 
   onLocalBranch(v: string): void {
     this.prefs.setLocalBranchCode(this.cleanThreeDigitCode(v));
+    this.markStationDirty();
   }
 
   onLocalEmission(v: string): void {
     this.prefs.setLocalEmissionCode(this.cleanThreeDigitCode(v));
+    this.markStationDirty();
   }
 
   private cleanThreeDigitCode(value: string): string {
