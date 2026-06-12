@@ -419,6 +419,8 @@ type CashPanelMode = 'open' | 'close' | 'history';
       background: transparent;
     }
     .rail {
+      position: relative;
+      isolation: isolate;
       width: 100%;
       flex: 1;
       display: flex;
@@ -427,23 +429,38 @@ type CashPanelMode = 'open' | 'close' | 'history';
       padding: 0.45rem 0.35rem 0.4rem;
       border-radius: 14px;
       background: var(--pos-rail-bg);
-      border: 2px solid transparent;
+      border: none;
       box-shadow: 0 4px 18px -10px rgba(99, 102, 241, 0.16);
     }
+    .rail::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      padding: 1.5px;
+      background: linear-gradient(180deg, #00e5ff 0%, #6366f1 50%, #c026d3 100%);
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 0;
+    }
     html[data-theme='light'] .rail {
-      background-image:
-        linear-gradient(#ffffff, #ffffff),
-        linear-gradient(180deg, #00e5ff 0%, #6366f1 52%, #c026d3 100%);
-      background-origin: border-box;
-      background-clip: padding-box, border-box;
+      background: #ffffff;
     }
     html[data-theme='dark'] .rail {
-      background-image:
-        linear-gradient(var(--pos-night-card), var(--pos-night-card)),
-        linear-gradient(180deg, #00e5ff 0%, #6366f1 52%, #c026d3 100%);
-      background-origin: border-box;
-      background-clip: padding-box, border-box;
+      background: var(--pos-night-card);
       box-shadow: 0 4px 22px -10px rgba(0, 229, 255, 0.12);
+    }
+    .rail__nav,
+    .rail__logout {
+      position: relative;
+      z-index: 1;
     }
     .rail__nav {
       flex: 1;
@@ -475,38 +492,20 @@ type CashPanelMode = 'open' | 'close' | 'history';
       background: var(--pos-rail-well);
       color: var(--pos-rail-fg-hover);
     }
-    .rail__btn--active {
-      background: var(--pos-rail-active-bg);
-      color: var(--pos-rail-active-fg);
-      border-color: transparent;
-      box-shadow: 0 0 18px -6px var(--pos-accent-glow);
-    }
     html[data-theme='light'] .rail__btn {
       color: #334155;
     }
-    html[data-theme='light'] .rail__btn--active {
+    .rail__btn--active {
       background: linear-gradient(135deg, #00e5ff 0%, #6366f1 55%, #c026d3 100%);
       color: #fff;
+      border-color: transparent;
       border-radius: 10px;
       box-shadow: 0 4px 14px -4px rgba(99, 102, 241, 0.42);
     }
     html[data-theme='dark'] .rail__btn--active {
-      background: linear-gradient(135deg, #00e5ff 0%, #6366f1 55%, #c026d3 100%);
-      color: #fff;
       box-shadow: 0 0 16px -4px rgba(0, 229, 255, 0.35);
     }
     .rail__btn--active::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 18%;
-      bottom: 18%;
-      width: 3px;
-      border-radius: 0 3px 3px 0;
-      background: var(--pos-accent);
-      box-shadow: 0 0 14px var(--pos-accent-glow);
-    }
-    html[data-theme='light'] .rail__btn--active::before {
       display: none;
     }
     .rail__ico {

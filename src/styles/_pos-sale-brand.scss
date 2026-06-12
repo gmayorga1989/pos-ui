@@ -90,25 +90,16 @@ html[data-theme='light'] {
     background: #f1f5f9;
   }
 
-  .card__actions {
-    border-top: none;
-    background: transparent;
+  .card__foot {
+    border-top-color: #e2e8f0;
   }
 
-  .mini {
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
-  }
-
-  .mini--stock {
+  .card__badge--stock {
     color: #0d9488;
-    background: transparent;
   }
 
-  .mini--promo {
+  .card__badge--promo {
     color: #94a3b8;
-    background: transparent;
   }
 
   .line-card {
@@ -158,7 +149,13 @@ html[data-theme='light'] {
     background: #ffffff;
   }
 
-  .customer-panel__btn,
+  .customer-panel__btn {
+    border-color: #e2e8f0;
+    background: #ffffff;
+    color: var(--lux-indigo);
+    font-weight: 700;
+  }
+
   .customer-panel__chip {
     border-color: #e2e8f0;
     background: #ffffff;
@@ -168,7 +165,8 @@ html[data-theme='light'] {
   .customer-panel__chip--active {
     border-color: #e2e8f0;
     background: #f8fafc;
-    color: #0f172a;
+    color: var(--lux-indigo);
+    font-weight: 700;
   }
 
   .customer-panel__input {

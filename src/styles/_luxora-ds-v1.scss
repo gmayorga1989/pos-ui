@@ -4,10 +4,7 @@
 
 /* Inputs DS — altura 44px, radio 12px, focus cyan */
 .lux-input,
-.shell-input,
-.customer-panel__input,
-.catalog-search,
-.catalog-filter__select {
+.shell-input {
   min-height: var(--lux-ds-input-h, 2.75rem);
   border-radius: var(--lux-ds-radius-input, 12px);
   transition:
@@ -16,21 +13,10 @@
     background var(--lux-ds-transition, 0.2s ease);
 }
 
-.catalog-search {
-  min-height: var(--lux-ds-input-h, 2.75rem);
-  border-radius: var(--lux-ds-radius-input, 12px);
-}
-
-.customer-panel__input:focus,
-.catalog-search:focus-within,
-.catalog-filter__select:focus,
 .shell-input:focus {
   outline: none;
 }
 
-html[data-theme='light'] .customer-panel__input:focus,
-html[data-theme='light'] .catalog-search:focus-within,
-html[data-theme='light'] .catalog-filter__select:focus,
 html[data-theme='light'] .shell-input:focus {
   border-color: color-mix(in srgb, var(--lux-cyan) 55%, var(--lux-indigo));
   box-shadow:
@@ -38,9 +24,6 @@ html[data-theme='light'] .shell-input:focus {
     0 8px 22px -10px rgba(var(--lux-cyan-rgb), 0.28);
 }
 
-html[data-theme='dark'] .customer-panel__input:focus,
-html[data-theme='dark'] .catalog-search:focus-within,
-html[data-theme='dark'] .catalog-filter__select:focus,
 html[data-theme='dark'] .shell-input:focus {
   border-color: color-mix(in srgb, var(--lux-cyan) 42%, var(--pos-border-strong));
   box-shadow:

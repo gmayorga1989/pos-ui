@@ -261,20 +261,20 @@ type ModalState =
                       <span class="card__price">{{ catalogDisplayPrice(p) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
                     </div>
                   </button>
-                  <div class="card__actions">
+                  <div class="card__foot">
                     <button
                       type="button"
-                      class="mini mini--stock pos-focus-ring"
+                      class="card__badge card__badge--stock pos-focus-ring"
                       title="Stock en otras bodegas"
-                      [class.mini--locked]="!desk.cajaOpen()"
+                      [class.card__badge--locked]="!desk.cajaOpen()"
                       (click)="openModal('stock', p)">
                       Stock
                     </button>
                     <button
                       type="button"
-                      class="mini mini--promo pos-focus-ring"
+                      class="card__badge card__badge--promo pos-focus-ring"
                       title="Promociones"
-                      [class.mini--locked]="!desk.cajaOpen()"
+                      [class.card__badge--locked]="!desk.cajaOpen()"
                       (click)="openModal('promo', p)">
                       Promo
                     </button>
@@ -1097,7 +1097,7 @@ type ModalState =
       border: 0;
     }
     .venta {
-      --venta-tool-h: 2.25rem;
+      --venta-tool-h: 2.125rem;
       flex: 1;
       min-height: 0;
       display: flex;
@@ -1106,6 +1106,7 @@ type ModalState =
       max-width: none;
       margin: 0;
       gap: 0.55rem;
+      overflow: hidden;
     }
     .venta__head {
       display: flex;
@@ -1153,7 +1154,7 @@ type ModalState =
       padding: 0.5rem 0.65rem;
       border-bottom: 1px solid var(--pos-border);
       background: #ffffff;
-      flex-shrink: 0;
+      flex: 0 0 auto;
     }
     html[data-theme='dark'] .cart-head {
       background: var(--pos-elevated);
@@ -1283,7 +1284,7 @@ type ModalState =
       padding: 0.45rem 0.6rem 0.5rem;
       border-bottom: 1px solid var(--pos-border);
       background: #ffffff;
-      flex-shrink: 0;
+      flex: 0 0 auto;
       display: grid;
       gap: 0.38rem;
     }
@@ -1387,10 +1388,18 @@ type ModalState =
       gap: 0.32rem;
       align-items: center;
     }
+    .customer-panel__input,
+    .customer-panel__btn,
+    .customer-panel__chip {
+      height: var(--venta-tool-h);
+      min-height: var(--venta-tool-h);
+      max-height: var(--venta-tool-h);
+      box-sizing: border-box;
+      line-height: 1;
+    }
     .customer-panel__input {
       flex: 1;
       min-width: 0;
-      height: var(--venta-tool-h);
       border-radius: 10px;
       border: 1px solid #e2e8f0;
       background: #f8fafc;
@@ -1399,7 +1408,6 @@ type ModalState =
       font-size: 0.76rem;
     }
     .customer-panel__btn {
-      height: var(--venta-tool-h);
       border-radius: 10px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
@@ -1410,13 +1418,15 @@ type ModalState =
       cursor: pointer;
       flex-shrink: 0;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .customer-panel__btn:disabled {
       opacity: 0.6;
       cursor: wait;
     }
     .customer-panel__chip {
-      height: var(--venta-tool-h);
       border-radius: 10px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
@@ -1427,6 +1437,9 @@ type ModalState =
       cursor: pointer;
       flex-shrink: 0;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .customer-panel__chip--active {
       border-color: #e2e8f0;
@@ -1478,6 +1491,7 @@ type ModalState =
     .venta__grid {
       flex: 1;
       min-height: 0;
+      overflow: hidden;
       display: grid;
       grid-template-columns: minmax(18rem, 2fr) minmax(0, 3fr);
       grid-template-rows: minmax(0, 1fr);
@@ -1526,6 +1540,8 @@ type ModalState =
       display: flex;
       flex-direction: column;
       min-height: 0;
+      max-height: 100%;
+      overflow: hidden;
     }
     .catalog-toolbar {
       flex-shrink: 0;
@@ -1541,6 +1557,9 @@ type ModalState =
       align-items: center;
       gap: 0.45rem;
       height: var(--venta-tool-h);
+      min-height: var(--venta-tool-h);
+      max-height: var(--venta-tool-h);
+      box-sizing: border-box;
       padding: 0 0.65rem 0 0.55rem;
       border-radius: 10px;
       border: 1px solid #e2e8f0;
@@ -1597,9 +1616,17 @@ type ModalState =
       flex: 0 1 11.5rem;
       min-width: 8.5rem;
     }
+    .catalog-filter__select,
+    .cat,
+    .catalog-view__btn {
+      height: var(--venta-tool-h);
+      min-height: var(--venta-tool-h);
+      max-height: var(--venta-tool-h);
+      box-sizing: border-box;
+      line-height: 1;
+    }
     .catalog-filter__select {
       width: 100%;
-      height: var(--venta-tool-h);
       padding: 0 0.55rem;
       border-radius: 10px;
       border: 1px solid #e2e8f0;
@@ -1617,7 +1644,6 @@ type ModalState =
     }
     .catalog-view__btn {
       width: var(--venta-tool-h);
-      height: var(--venta-tool-h);
       display: grid;
       place-items: center;
       border-radius: 10px;
@@ -1739,11 +1765,13 @@ type ModalState =
       color: var(--pos-muted);
       font-size: 0.72rem;
       font-weight: 600;
-      height: var(--venta-tool-h);
       padding: 0 0.72rem;
       border-radius: 10px;
       cursor: pointer;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       transition: border-color var(--pos-transition), color var(--pos-transition), background var(--pos-transition);
     }
     .cat--on {
@@ -1787,11 +1815,10 @@ type ModalState =
       flex: 1;
       padding: 0.55rem 0.65rem;
     }
-    .products--list .card__actions {
-      flex-direction: column;
-      justify-content: center;
-      padding: 0 0.55rem 0 0;
-      gap: 0.25rem;
+    .products--list .card__foot {
+      border-top: none;
+      padding-top: 0;
+      margin-top: 0.15rem;
     }
     @media (max-width: 1500px) {
       .products {
@@ -1872,7 +1899,7 @@ type ModalState =
       display: block;
     }
     .card__main--locked,
-    .mini--locked,
+    .card__badge--locked,
     .line-card__dcto--locked,
     .line-card__qty-btn--locked,
     .line-chip--locked,
@@ -1929,42 +1956,45 @@ type ModalState =
       font-weight: 850;
       color: var(--pos-text);
     }
-    .card__actions {
+    .card__foot {
       display: flex;
       align-items: center;
-      gap: 0.45rem;
-      padding: 0 0.55rem 0.42rem;
-      border-top: none;
-      background: transparent;
+      gap: 0.55rem;
+      margin-top: 0;
+      padding: 0.38rem 0.55rem 0.45rem;
+      border-top: 1px solid #e2e8f0;
       flex-shrink: 0;
     }
-    .mini {
+    .card__badge {
       border: none;
       background: transparent;
-      color: var(--pos-muted);
+      padding: 0;
+      margin: 0;
       font-size: 0.58rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0;
+      letter-spacing: 0.06em;
       cursor: pointer;
-      border-radius: 0;
+      line-height: 1.2;
     }
-    .mini:hover {
-      color: var(--pos-accent-hover);
-      background: var(--pos-accent-muted);
-    }
-    .mini--stock {
+    .card__badge--stock {
       color: #0d9488;
     }
-    .mini--promo {
+    .card__badge--promo {
       color: #94a3b8;
     }
-    html[data-theme='dark'] .mini--stock {
+    .card__badge:hover:not(.card__badge--locked) {
+      filter: brightness(0.92);
+    }
+    .card__badge--locked {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    html[data-theme='dark'] .card__badge--stock {
       color: #5eead4;
     }
-    html[data-theme='dark'] .mini--promo {
-      color: #94a3b8;
+    html[data-theme='dark'] .card__foot {
+      border-top-color: var(--pos-border);
     }
     .badge {
       font-size: 0.63rem;
@@ -1977,12 +2007,15 @@ type ModalState =
       font-variant-numeric: tabular-nums;
     }
     .lines {
-      flex: 1;
+      flex: 1 1 0;
       min-height: 0;
       overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
       padding: 0.45rem 0.55rem 0.4rem;
       display: flex;
       flex-direction: column;
+      align-items: stretch;
       gap: 0.42rem;
     }
     .line-card {
@@ -1990,6 +2023,8 @@ type ModalState =
       display: flex;
       gap: 0.62rem;
       align-items: center;
+      flex: 0 0 auto;
+      flex-shrink: 0;
       border: 1px solid #e2e8f0;
       border-radius: 12px;
       background: #ffffff;
@@ -2312,8 +2347,8 @@ type ModalState =
       background: var(--pos-accent-muted);
     }
     .totals {
-      flex-shrink: 0;
-      margin-top: auto;
+      flex: 0 0 auto;
+      margin-top: 0;
       padding: 0.8rem 0.85rem 0.9rem;
       border-top: 1px solid var(--pos-border);
       background: var(--pos-elevated);
