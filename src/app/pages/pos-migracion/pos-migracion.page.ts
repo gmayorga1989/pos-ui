@@ -26,6 +26,12 @@ interface ListaPrecioFaltante {
   column: string;
 }
 
+interface MapeoFilaArchivo {
+  archivo: string;
+  vistaPrevia: string;
+  objetivo: string;
+}
+
 interface MigracionTipoConfig {
   kind: PosImportKind;
   titulo: string;
@@ -97,7 +103,7 @@ const COL_LABELS: Record<string, string> = {
   selector: 'pos-migracion-page',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, PosPageLayoutComponent, PosTabulatorLocalGridComponent],
-  host: { class: 'pos-page-host' },
+  host: { class: 'pos-page-host pos-page-host--migracion' },
   template: `
     <pos-page-layout
       eyebrow="Maestros"
@@ -152,33 +158,55 @@ const COL_LABELS: Record<string, string> = {
       <div class="pos-mig-flow">
       @switch (paso()) {
         @case (1) {
-          <section class="pos-mig-panel">
+          <section class="pos-mig-panel pos-mig-panel--card">
             <header class="pos-mig-panel__head">
-              <h2 class="pos-mig-panel__title">¿Qué desea migrar?</h2>
+              <h2 class="pos-mig-panel__title">
+                <span class="pos-mig-panel__step">1</span>
+                ¿Qué desea migrar?
+              </h2>
               <p class="pos-mig-panel__hint">Elija el tipo de datos. En el siguiente paso indicará de dónde provienen.</p>
             </header>
-            <div class="pos-mig-tipo-grid pos-mig-tipo-grid--pick">
-              <a routerLink="/migracion/imagenes" class="pos-mig-tipo-card pos-mig-tipo-card--link pos-focus-ring">
-                <span class="pos-mig-tipo-card__icon" aria-hidden="true">🖼</span>
+            <div class="pos-mig-tipo-grid pos-mig-tipo-grid--pick" role="listbox" aria-label="Tipo de migración">
+              <button
+                type="button"
+                class="pos-mig-tipo-card pos-mig-tipo-card--pick pos-focus-ring"
+                role="option"
+                (click)="irImagenes()">
+                <span class="pos-mig-tipo-card__icon" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6" />
+                    <circle cx="8.5" cy="10.5" r="1.5" fill="currentColor" />
+                    <path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
                 <strong>Imágenes de productos</strong>
-                <span>ZIP con fotos nombradas por SKU (PROD-001.jpg)</span>
-              </a>
+                <span>ZIP con fotos nombradas por SKU (ej. PROD-001.jpg)</span>
+              </button>
               @for (t of tipos; track t.kind) {
                 <button
                   type="button"
-                  class="pos-mig-tipo-card pos-focus-ring"
+                  class="pos-mig-tipo-card pos-mig-tipo-card--pick pos-focus-ring"
+                  role="option"
+                  [attr.aria-selected]="kind() === t.kind"
                   [class.pos-mig-tipo-card--on]="kind() === t.kind"
                   (click)="seleccionarTipo(t.kind)">
+                  @if (kind() === t.kind) {
+                    <span class="pos-mig-tipo-card__check" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                  }
                   <span class="pos-mig-tipo-card__icon" aria-hidden="true">
                     @if (t.kind === 'products') {
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                         <rect x="4" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
                         <rect x="14" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
                         <rect x="4" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
                         <rect x="14" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
                       </svg>
                     } @else {
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                         <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
                         <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" />
                         <circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5" />
@@ -192,151 +220,252 @@ const COL_LABELS: Record<string, string> = {
               }
             </div>
             <footer class="pos-mig-panel__footer">
-              <button type="button" class="pos-btn pos-btn--soft" [disabled]="!puedeAvanzar()" (click)="avanzar()">Siguiente</button>
+              <button
+                type="button"
+                class="pos-btn pos-btn--primary pos-mig-btn-next"
+                [disabled]="!puedeAvanzar()"
+                (click)="avanzar()">
+                Siguiente
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
             </footer>
           </section>
         }
         @case (2) {
-          <section class="pos-mig-panel">
+          <section class="pos-mig-panel pos-mig-panel--card">
             <header class="pos-mig-panel__head">
-              <h2 class="pos-mig-panel__title">Origen de los datos</h2>
-              <p class="pos-mig-panel__hint">Seleccione el sistema del que exportó. Luxora ofrece plantilla lista; otros orígenes usan mapeo automático.</p>
+              <h2 class="pos-mig-panel__title">
+                <span class="pos-mig-panel__step">2</span>
+                Origen de los datos
+              </h2>
+              <p class="pos-mig-panel__hint">
+                Seleccione el sistema del que exportó. Luxora ofrece plantilla lista; otros orígenes usan mapeo automático.
+              </p>
             </header>
 
-            <div class="pos-mig-preset-grid">
+            <div class="pos-mig-origen-grid" role="listbox" aria-label="Origen de los datos">
               @for (p of presetsFiltrados(); track p.id) {
                 <button
                   type="button"
-                  class="pos-mig-preset-card pos-focus-ring"
-                  [class.pos-mig-preset-card--on]="presetId() === p.id"
+                  class="pos-mig-tipo-card pos-mig-tipo-card--pick pos-mig-tipo-card--origen pos-focus-ring"
+                  role="option"
+                  [attr.aria-selected]="presetId() === p.id"
+                  [class.pos-mig-tipo-card--on]="presetId() === p.id"
                   (click)="seleccionarPreset(p)">
-                  <span class="pos-mig-preset-card__radio" aria-hidden="true"></span>
-                  <span class="pos-mig-preset-card__body">
-                    <strong>{{ p.nombre }}</strong>
-                    <span>{{ p.descripcion }}</span>
+                  @if (presetId() === p.id) {
+                    <span class="pos-mig-tipo-card__check" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                  }
+                  <span class="pos-mig-tipo-card__icon" aria-hidden="true">
+                    @switch (p.id) {
+                      @case ('luxora') {
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                          <path d="M5 7v12a1 1 0 001 1h1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      }
+                      @case ('excel_generico') {
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <path d="M6 4h11l3 3v13a1 1 0 01-1 1H6a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                          <path d="M17 4v3h3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      }
+                      @case ('efactura_productos') {
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <path d="M6 4h11l3 3v13a1 1 0 01-1 1H6a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                          <path d="M17 4v3h3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                          <path d="M8 13h8M8 16h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      }
+                      @default {
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <ellipse cx="12" cy="6" rx="7" ry="3" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" stroke="currentColor" stroke-width="1.6" />
+                        </svg>
+                      }
+                    }
                   </span>
+                  <strong>{{ presetTituloCorto(p) }}</strong>
+                  <span>{{ presetDescripcionCorta(p) }}</span>
                 </button>
               }
             </div>
 
-            <div class="pos-mig-guide">
-              <div class="pos-mig-guide__toolbar">
-                <div class="pos-mig-guide__selected">
-                  <span class="pos-mig-guide__kicker">Origen activo</span>
-                  <strong>{{ presetNombre() }}</strong>
-                </div>
-                @if (esPlantillaLuxora()) {
-                  <button type="button" class="pos-btn pos-btn--primary" [disabled]="downloading()" (click)="descargarPlantilla()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M12 4v10M12 14l-4-4M12 14l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                      <path d="M5 18h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                    </svg>
-                    {{ downloading() ? 'Descargando…' : 'Descargar plantilla' }}
-                  </button>
-                } @else {
-                  <p class="pos-mig-guide__hint">Al cargar el archivo podrá revisar y ajustar el mapeo de columnas.</p>
-                }
+            @if (esPlantillaLuxora()) {
+              <div class="pos-mig-origen-extra">
+                <p class="pos-mig-origen-extra__text">
+                  Use la plantilla oficial con las columnas ya nombradas para {{ kind() === 'products' ? 'productos' : 'clientes' }}.
+                </p>
+                <button type="button" class="pos-btn pos-btn--outline pos-btn--sm" [disabled]="downloading()" (click)="descargarPlantilla()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 4v10M12 14l-4-4M12 14l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    <path d="M5 18h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                  </svg>
+                  {{ downloading() ? 'Descargando…' : 'Descargar plantilla' }}
+                </button>
               </div>
+            } @else {
+              <p class="pos-mig-origen-hint">Al cargar el archivo podrá revisar y ajustar el mapeo de columnas en el paso de revisión.</p>
+            }
 
-              <div class="pos-mig-guide__cols">
-                <div class="pos-mig-guide__group">
-                  <h3>Columnas obligatorias</h3>
-                  <div class="pos-mig-chips">
-                    @for (c of config().obligatorias; track c) {
-                      <span class="pos-mig-chip pos-mig-chip--req" [title]="colLabel(c)">
-                        <code>{{ c }}</code>
-                        <em>{{ colLabel(c) }}</em>
-                      </span>
-                    }
+            <details class="pos-mig-origen-details">
+              <summary>Ver columnas y consejos de la plantilla</summary>
+              <div class="pos-mig-guide pos-mig-guide--nested">
+                <div class="pos-mig-guide__cols">
+                  <div class="pos-mig-guide__group">
+                    <h3>Columnas obligatorias</h3>
+                    <div class="pos-mig-chips">
+                      @for (c of config().obligatorias; track c) {
+                        <span class="pos-mig-chip pos-mig-chip--req" [title]="colLabel(c)">
+                          <code>{{ c }}</code>
+                          <em>{{ colLabel(c) }}</em>
+                        </span>
+                      }
+                    </div>
+                  </div>
+                  <div class="pos-mig-guide__group">
+                    <h3>Columnas opcionales</h3>
+                    <div class="pos-mig-chips pos-mig-chips--soft">
+                      @for (c of config().opcionales; track c) {
+                        <span class="pos-mig-chip" [title]="colLabel(c)">
+                          <code>{{ c }}</code>
+                        </span>
+                      }
+                    </div>
                   </div>
                 </div>
-                <div class="pos-mig-guide__group">
-                  <h3>Columnas opcionales</h3>
-                  <div class="pos-mig-chips pos-mig-chips--soft">
-                    @for (c of config().opcionales; track c) {
-                      <span class="pos-mig-chip" [title]="colLabel(c)">
-                        <code>{{ c }}</code>
-                      </span>
-                    }
-                  </div>
-                </div>
+                <p class="pos-mig-guide__upsert">{{ config().claveUpsert }}</p>
+                <ul class="pos-mig-tips pos-mig-tips--compact">
+                  @for (tip of config().tips; track tip) {
+                    <li>{{ tip }}</li>
+                  }
+                </ul>
               </div>
-
-              <p class="pos-mig-guide__upsert">{{ config().claveUpsert }}</p>
-              <ul class="pos-mig-tips pos-mig-tips--compact">
-                @for (tip of config().tips; track tip) {
-                  <li>{{ tip }}</li>
-                }
-              </ul>
-            </div>
+            </details>
 
             <footer class="pos-mig-panel__footer">
               <button type="button" class="pos-btn pos-btn--outline" (click)="retroceder()">Atrás</button>
-              <button type="button" class="pos-btn pos-btn--soft" (click)="avanzar()">Siguiente</button>
+              <button type="button" class="pos-btn pos-btn--primary pos-mig-btn-next" (click)="avanzar()">
+                Siguiente
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
             </footer>
           </section>
         }
         @case (3) {
-          <section class="pos-mig-panel">
+          <section class="pos-mig-panel pos-mig-panel--card">
             <header class="pos-mig-panel__head">
-              <h2 class="pos-mig-panel__title">Subir archivo</h2>
+              <h2 class="pos-mig-panel__title">
+                <span class="pos-mig-panel__step">3</span>
+                Subir archivo
+              </h2>
               <p class="pos-mig-panel__hint">
-                CSV o Excel (.xlsx) · origen <strong>{{ presetNombre() }}</strong> · máx. 2.000 filas
+                Origen <strong>{{ presetTituloCorto(presetActivo()) }}</strong> · CSV o Excel (.xlsx) · máx. 2.000 filas
               </p>
             </header>
-            <div
-              class="pos-mig-dropzone pos-focus-ring"
-              [class.pos-mig-dropzone--over]="dragOver()"
-              [class.pos-mig-dropzone--has]="!!file()"
-              (dragover)="onDragOver($event)"
-              (dragleave)="dragOver.set(false)"
-              (drop)="onDrop($event)"
-              (click)="fileInput.click()"
-              role="button"
-              tabindex="0"
-              (keydown.enter)="fileInput.click()"
-              (keydown.space)="onDropzoneKey($event)">
-              <input
-                #fileInput
-                type="file"
-                class="pos-mig-dropzone__input"
-                accept=".csv,.txt,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                (change)="onFileSelected($event)" />
-              @if (file()) {
-                <strong>{{ file()!.name }}</strong>
-                <span>{{ formatBytes(file()!.size) }}</span>
-                <button type="button" class="pos-btn pos-btn--outline pos-mig-dropzone__clear" (click)="clearFile($event)">
-                  Quitar
-                </button>
-              } @else {
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                  <path d="M4 18v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                </svg>
-                <strong>Suelte el archivo aquí</strong>
-                <span>CSV o Excel (.xlsx) · máx. 2.000 filas</span>
+
+            <div class="pos-mig-upload">
+              <div
+                class="pos-mig-dropzone pos-mig-dropzone--upload pos-focus-ring"
+                [class.pos-mig-dropzone--over]="dragOver()"
+                (dragover)="onDragOver($event)"
+                (dragleave)="dragOver.set(false)"
+                (drop)="onDrop($event)"
+                (click)="fileInput.click()"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="fileInput.click()"
+                (keydown.space)="onDropzoneKey($event)">
+                <input
+                  #fileInput
+                  type="file"
+                  class="pos-mig-dropzone__input"
+                  accept=".csv,.txt,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  (change)="onFileSelected($event)" />
+                <span class="pos-mig-dropzone__icon" aria-hidden="true">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 15V5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    <path d="M8 9l4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M5 19h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    <path d="M7 19v-2a2 2 0 012-2h6a2 2 0 012 2v2" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                <strong class="pos-mig-dropzone__title">Arrastre su archivo aquí o haga clic para seleccionar</strong>
+                <span class="pos-mig-dropzone__hint">CSV o Excel (.xlsx) · máx. 2.000 filas</span>
+              </div>
+
+              @if (file(); as f) {
+                <div class="pos-mig-file-row">
+                  <span class="pos-mig-file-row__icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <div class="pos-mig-file-row__meta">
+                    <strong>{{ f.name }}</strong>
+                    <span>{{ formatBytes(f.size) }}</span>
+                  </div>
+                  <span class="pos-mig-file-row__status">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    Archivo listo
+                  </span>
+                  <button
+                    type="button"
+                    class="pos-mig-file-row__remove pos-focus-ring"
+                    aria-label="Quitar archivo"
+                    (click)="clearFile($event)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M5 7h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                      <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                      <path d="M8 7l.6-2h6.8l.6 2" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                      <path d="M9 7v12a1 1 0 001 1h4a1 1 0 001-1V7" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                    </svg>
+                  </button>
+                </div>
               }
             </div>
+
             <footer class="pos-mig-panel__footer">
               <button type="button" class="pos-btn pos-btn--outline" (click)="retroceder()">Atrás</button>
               <button
                 type="button"
-                class="pos-btn pos-btn--soft"
+                class="pos-btn pos-btn--primary pos-mig-btn-next"
                 [disabled]="!file() || previewing()"
                 (click)="avanzar()">
-                {{ previewing() ? 'Analizando…' : 'Analizar archivo' }}
+                {{ previewing() ? 'Analizando…' : 'Siguiente' }}
+                @if (!previewing()) {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                }
               </button>
             </footer>
           </section>
         }
         @case (4) {
-          <section class="pos-mig-panel">
+          <section class="pos-mig-panel pos-mig-panel--card">
             <header class="pos-mig-panel__head">
-              <h2 class="pos-mig-panel__title">Vista previa y mapeo</h2>
+              <h2 class="pos-mig-panel__title">
+                <span class="pos-mig-panel__step">4</span>
+                Vista previa y mapeo
+              </h2>
               <p class="pos-mig-panel__hint">Revise el resumen, ajuste columnas si hace falta y confirme la importación.</p>
             </header>
             @if (preview(); as pv) {
-              <div class="pos-mig-summary">
+              <div class="pos-mig-summary pos-mig-summary--review">
                 <div class="pos-mig-summary__metric">
                   <span>Filas</span>
                   <strong>{{ pv.totalFilas }}</strong>
@@ -413,36 +542,35 @@ const COL_LABELS: Record<string, string> = {
                 </div>
               }
 
-              <nav class="pos-mig-tabs" role="tablist" aria-label="Revisión de importación">
+              <div class="pos-mig-review-toolbar">
+                <nav class="pos-mig-tabs pos-mig-tabs--review" role="tablist" aria-label="Revisión de importación">
+                  <button
+                    type="button"
+                    class="pos-mig-tabs__tab"
+                    role="tab"
+                    [class.pos-mig-tabs__tab--active]="revisarTab() === 'config'"
+                    [attr.aria-selected]="revisarTab() === 'config'"
+                    (click)="revisarTab.set('config')">
+                    Configuración
+                  </button>
+                  <button
+                    type="button"
+                    class="pos-mig-tabs__tab"
+                    role="tab"
+                    [class.pos-mig-tabs__tab--active]="revisarTab() === 'errores'"
+                    [attr.aria-selected]="revisarTab() === 'errores'"
+                    (click)="revisarTab.set('errores')">
+                    Errores@if (conteoErroresPreview() > 0) { ({{ conteoErroresPreview() }})}
+                  </button>
+                </nav>
                 <button
                   type="button"
-                  class="pos-mig-tabs__tab"
-                  role="tab"
-                  [class.pos-mig-tabs__tab--active]="revisarTab() === 'config'"
-                  [attr.aria-selected]="revisarTab() === 'config'"
-                  (click)="revisarTab.set('config')">
-                  Configuración
-                </button>
-                <button
-                  type="button"
-                  class="pos-mig-tabs__tab"
-                  role="tab"
-                  [class.pos-mig-tabs__tab--active]="revisarTab() === 'errores'"
-                  [attr.aria-selected]="revisarTab() === 'errores'"
-                  (click)="revisarTab.set('errores')">
-                  Errores
-                  @if (conteoErroresPreview() > 0) {
-                    <span class="pos-mig-tabs__badge">{{ conteoErroresPreview() }}</span>
-                  }
-                </button>
-                <button
-                  type="button"
-                  class="pos-btn pos-btn--soft pos-mig-tabs__refresh"
+                  class="pos-btn pos-btn--ghost pos-btn--sm pos-mig-review-toolbar__refresh"
                   [disabled]="previewing()"
                   (click)="refrescarPreview()">
                   {{ previewing() ? 'Analizando…' : 'Actualizar vista previa' }}
                 </button>
-              </nav>
+              </div>
 
               <div class="pos-mig-tabs__panel" role="tabpanel">
                 @if (revisarTab() === 'config') {
@@ -452,40 +580,45 @@ const COL_LABELS: Record<string, string> = {
                     </div>
                   }
 
-                  <div class="pos-mig-mapping pos-mig-mapping--tab">
-                    <p class="pos-mig-panel__hint">
-                      Columnas detectadas en su archivo:
-                      <code>{{ pv.columnasDetectadas.join(' · ') }}</code>
-                    </p>
-                    <div class="pos-mig-mapping__grid">
-                      @for (col of columnasMapeo(); track col) {
-                        <label class="pos-mig-mapping__row" [class.pos-mig-mapping__row--req]="esObligatoria(col)">
-                          <span>
-                            {{ colLabel(col) }}
-                            @if (esObligatoria(col)) {
-                              <em>*</em>
-                            }
-                            <small><code>{{ col }}</code></small>
-                          </span>
-                          <select [(ngModel)]="mappingDraft[col]" [name]="'map_' + col" (ngModelChange)="onMappingChange()">
-                            <option value="">— Sin asignar —</option>
-                            @for (h of pv.columnasDetectadas; track h) {
-                              <option [value]="h">{{ h }}</option>
-                            }
-                          </select>
-                        </label>
-                      }
-                    </div>
+                  <div class="pos-mig-map-table-wrap">
+                    <table class="pos-mig-map-table">
+                      <thead>
+                        <tr>
+                          <th>Columna del archivo</th>
+                          <th>Vista previa</th>
+                          <th>Mapear con</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of filasMapeoDesdeArchivo(pv); track row.archivo) {
+                          <tr>
+                            <td data-label="Columna del archivo">
+                              <code class="pos-mig-map-table__code">{{ row.archivo }}</code>
+                            </td>
+                            <td data-label="Vista previa" class="pos-mig-map-table__preview">{{ row.vistaPrevia }}</td>
+                            <td data-label="Mapear con">
+                              <select
+                                class="pos-mig-map-table__select"
+                                [ngModel]="row.objetivo"
+                                [name]="'map_archivo_' + row.archivo"
+                                (ngModelChange)="onMapeoArchivoChange(row.archivo, $event)">
+                                <option value="">— Sin asignar —</option>
+                                @for (col of columnasMapeo(); track col) {
+                                  <option [value]="col">{{ colLabel(col) }}</option>
+                                }
+                              </select>
+                            </td>
+                            <td data-label="Estado">
+                              @if (estadoMapeoFila(row.objetivo); as estado) {
+                                <span class="pos-mig-map-estado pos-mig-map-estado--{{ estado.kind }}">{{ estado.label }}</span>
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
                   </div>
-
-                  @if (pv.muestra.length) {
-                    <h3 class="pos-mig-subtitle">Muestra (primeras filas)</h3>
-                    <pos-tabulator-local-grid
-                      [data]="asGridData(pv.muestra)"
-                      [columns]="muestraColumns()"
-                      height="200px"
-                      emptyDescription="Sin muestra." />
-                  }
                 } @else {
                   @if (conteoErroresPreview() === 0) {
                     <div class="pos-mig-inline-alert pos-mig-inline-alert--ok">
@@ -502,12 +635,13 @@ const COL_LABELS: Record<string, string> = {
                       </div>
                     }
 
-                    <h3 class="pos-mig-subtitle">Detalle por fila</h3>
-                    <pos-tabulator-local-grid
-                      [data]="asGridData(detallesErroresPreview())"
-                      [columns]="previewColumns"
-                      height="min(280px, calc(100vh - 24rem))"
-                      emptyDescription="Sin errores." />
+                    <div class="pos-maestro-grid-wrap pos-maestro-tabulator-wrap">
+                      <pos-tabulator-local-grid
+                        [data]="asGridData(detallesErroresPreview())"
+                        [columns]="previewColumns"
+                        height="min(280px, calc(100vh - 24rem))"
+                        emptyDescription="Sin errores." />
+                    </div>
                   }
                 }
               </div>
@@ -516,33 +650,76 @@ const COL_LABELS: Record<string, string> = {
                 <button type="button" class="pos-btn pos-btn--outline" (click)="retroceder()">Atrás</button>
                 <button
                   type="button"
-                  class="pos-btn pos-btn--primary"
+                  class="pos-btn pos-btn--primary pos-mig-btn-next"
                   [disabled]="importing() || !pv.mapeoCompleto || pv.filasValidas === 0"
                   (click)="ejecutarImportacion()">
-                  {{ importing() ? 'Importando…' : 'Confirmar importación' }}
+                  {{ importing() ? 'Importando…' : 'Siguiente' }}
+                  @if (!importing()) {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  }
                 </button>
               </footer>
             }
           </section>
         }
         @case (5) {
-          <section class="pos-mig-panel">
+          <section class="pos-mig-panel pos-mig-panel--card">
             <header class="pos-mig-panel__head">
-              <h2 class="pos-mig-panel__title">Resultado</h2>
-              <p class="pos-mig-panel__hint">Resumen de la importación. Puede iniciar otra carga o ir al maestro.</p>
+              <h2 class="pos-mig-panel__title">
+                <span class="pos-mig-panel__step">5</span>
+                Importación completada
+              </h2>
+              <p class="pos-mig-panel__hint">Resumen final de la importación y acciones disponibles.</p>
             </header>
             @if (result(); as res) {
-              <div class="pos-mig-summary" [class.pos-mig-summary--warn]="res.errores > 0">
+              @if (res.errores === 0) {
+                <div class="pos-mig-result-banner pos-mig-result-banner--ok" role="status">
+                  <span class="pos-mig-result-banner__icon" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                  <div class="pos-mig-result-banner__body">
+                    <strong>¡Todo listo!</strong>
+                    <p>Sus datos han sido importados correctamente.</p>
+                  </div>
+                </div>
+              } @else {
+                <div class="pos-mig-result-banner pos-mig-result-banner--warn" role="status">
+                  <span class="pos-mig-result-banner__icon" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <div class="pos-mig-result-banner__body">
+                    <strong>Importación con observaciones</strong>
+                    <p>
+                      Las filas válidas ya fueron guardadas.
+                      @if (resumenErrores(res.detalles); as resumen) {
+                        {{ resumen }}
+                      } @else {
+                        Revise el detalle por fila abajo.
+                      }
+                    </p>
+                  </div>
+                </div>
+              }
+
+              <div class="pos-mig-summary pos-mig-summary--result">
                 <div class="pos-mig-summary__metric">
                   <span>Filas procesadas</span>
                   <strong>{{ res.totalFilas }}</strong>
                 </div>
                 <div class="pos-mig-summary__metric pos-mig-summary__metric--ok">
-                  <span>Creados</span>
+                  <span>Creadas</span>
                   <strong>{{ res.creados }}</strong>
                 </div>
                 <div class="pos-mig-summary__metric pos-mig-summary__metric--ok">
-                  <span>Actualizados</span>
+                  <span>Actualizadas</span>
                   <strong>{{ res.actualizados }}</strong>
                 </div>
                 <div class="pos-mig-summary__metric" [class.pos-mig-summary__metric--err]="res.errores > 0">
@@ -550,32 +727,76 @@ const COL_LABELS: Record<string, string> = {
                   <strong>{{ res.errores }}</strong>
                 </div>
               </div>
-              @if (res.errores === 0) {
-                <p class="pos-mig-success">Importación completada sin errores.</p>
-              } @else {
-                <p class="pos-mig-warn">
-                  Las filas válidas ya fueron guardadas.
-                  @if (resumenErrores(res.detalles); as resumen) {
-                    {{ resumen }}
+
+              @if (res.detalles.length && res.errores > 0) {
+                <div class="pos-maestro-grid-wrap pos-maestro-tabulator-wrap">
+                  <pos-tabulator-local-grid
+                    [data]="asGridData(res.detalles)"
+                    [columns]="resultColumns"
+                    height="min(320px, calc(100vh - 26rem))"
+                    emptyDescription="Sin detalle de filas." />
+                </div>
+              }
+
+              <section class="pos-mig-result-actions" aria-labelledby="mig-result-actions-title">
+                <h3 id="mig-result-actions-title" class="pos-mig-result-actions__title">¿Qué desea hacer ahora?</h3>
+                <div class="pos-mig-result-actions__grid">
+                  @if (kind() === 'products') {
+                    <a routerLink="/catalogo" class="pos-mig-result-action pos-focus-ring">
+                      <span class="pos-mig-result-action__icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <rect x="4" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                          <rect x="14" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                          <rect x="4" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                          <rect x="14" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                      </span>
+                      <span>Ver catálogo</span>
+                    </a>
+                    <a routerLink="/catalogo" class="pos-mig-result-action pos-focus-ring">
+                      <span class="pos-mig-result-action__icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M4 7h16M4 12h10M4 17h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                      </span>
+                      <span>Ir a productos</span>
+                    </a>
                   } @else {
-                    Revise el detalle por fila abajo.
+                    <a routerLink="/clientes" class="pos-mig-result-action pos-focus-ring">
+                      <span class="pos-mig-result-action__icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
+                          <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                      </span>
+                      <span>Ver clientes</span>
+                    </a>
+                    <a routerLink="/clientes" class="pos-mig-result-action pos-focus-ring">
+                      <span class="pos-mig-result-action__icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M4 7h16M4 12h10M4 17h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                      </span>
+                      <span>Ir a clientes</span>
+                    </a>
                   }
-                </p>
-              }
-              @if (res.detalles.length) {
-                <pos-tabulator-local-grid
-                  [data]="asGridData(res.detalles)"
-                  [columns]="resultColumns"
-                  height="min(420px, calc(100vh - 22rem))"
-                  emptyDescription="Sin detalle de filas." />
-              }
+                  <button type="button" class="pos-mig-result-action pos-focus-ring" (click)="reiniciar()">
+                    <span class="pos-mig-result-action__icon" aria-hidden="true">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 15V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M8 9l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M5 19h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    <span>Nueva migración</span>
+                  </button>
+                </div>
+              </section>
+
               <footer class="pos-mig-panel__footer">
-                <button type="button" class="pos-btn pos-btn--outline" (click)="reiniciar()">Nueva importación</button>
-                @if (kind() === 'products') {
-                  <a routerLink="/catalogo" class="pos-btn pos-btn--soft">Ir al catálogo</a>
-                } @else {
-                  <a routerLink="/clientes" class="pos-btn pos-btn--soft">Ir a clientes</a>
-                }
+                <button type="button" class="pos-btn pos-btn--primary pos-mig-btn-next" (click)="finalizarMigracion()">
+                  Finalizar
+                </button>
               </footer>
             }
           </section>
@@ -647,6 +868,19 @@ export class PosMigracionPage implements OnInit {
   readonly presetNombre = computed(() => {
     const p = this.presets().find((x) => x.id === this.presetId());
     return p?.nombre ?? 'Plantilla POS Luxora';
+  });
+
+  readonly presetActivo = computed((): PosImportPreset => {
+    const p = this.presets().find((x) => x.id === this.presetId());
+    return (
+      p ?? {
+        id: 'luxora',
+        kind: 'both',
+        nombre: 'Plantilla POS Luxora',
+        descripcion: 'Use la plantilla oficial con columnas ya nombradas.',
+        mapeo: {},
+      }
+    );
   });
 
   readonly esPlantillaLuxora = computed(() => this.presetId() === 'luxora');
@@ -820,6 +1054,29 @@ export class PosMigracionPage implements OnInit {
     return `<span class="pos-mig-estado ${cls}">${escapeHtml(estado)}</span>`;
   }
 
+  presetTituloCorto(p: PosImportPreset): string {
+    return p.nombre.replace(/\s*\([^)]*\)\s*$/, '').trim();
+  }
+
+  presetDescripcionCorta(p: PosImportPreset): string {
+    const text = p.descripcion.trim();
+    if (p.id === 'luxora') {
+      return 'Use la plantilla oficial con columnas ya nombradas.';
+    }
+    if (p.id === 'excel_generico') {
+      return 'Suba su exportación y el sistema sugerirá el mapeo.';
+    }
+    if (p.id === 'efactura_productos') {
+      return 'Para listas exportadas con códigos y descripciones de eFactura u otro ERP del grupo.';
+    }
+    if (p.id.startsWith('erp_')) {
+      return this.kind() === 'products'
+        ? 'Mapeo típico: Código → SKU, Descripción → nombre, PVP → precio.'
+        : 'Mapeo típico: Tipo + documento + nombre del cliente.';
+    }
+    return text;
+  }
+
   colLabel(col: string): string {
     if (col.startsWith('precio_')) {
       return `Precio ${col.replace('precio_', '')}`;
@@ -829,6 +1086,10 @@ export class PosMigracionPage implements OnInit {
 
   esObligatoria(col: string): boolean {
     return this.config().obligatorias.includes(col);
+  }
+
+  irImagenes(): void {
+    void this.router.navigate(['/migracion/imagenes']);
   }
 
   seleccionarTipo(kind: PosImportKind): void {
@@ -876,6 +1137,11 @@ export class PosMigracionPage implements OnInit {
     this.paso.set(1);
     this.result.set(null);
     void this.router.navigate([], { relativeTo: this.route, queryParams: { tipo: null }, queryParamsHandling: 'merge' });
+  }
+
+  finalizarMigracion(): void {
+    const path = this.kind() === 'products' ? '/catalogo' : '/clientes';
+    void this.router.navigate([path]);
   }
 
   descargarPlantilla(): void {
@@ -928,6 +1194,43 @@ export class PosMigracionPage implements OnInit {
 
   onMappingChange(): void {
     // usuario ajusta selects; refresca con botón
+  }
+
+  filasMapeoDesdeArchivo(pv: PosImportPreviewResult): MapeoFilaArchivo[] {
+    const muestra0 = pv.muestra[0] ?? {};
+    return pv.columnasDetectadas.map((archivo) => {
+      const objetivo = this.objetivoParaColumnaArchivo(archivo);
+      const raw = objetivo ? muestra0[objetivo] : undefined;
+      const vistaPrevia = raw != null && String(raw).trim() ? String(raw) : '—';
+      return { archivo, vistaPrevia, objetivo };
+    });
+  }
+
+  objetivoParaColumnaArchivo(archivo: string): string {
+    for (const col of this.columnasMapeo()) {
+      if (this.mappingDraft[col] === archivo) {
+        return col;
+      }
+    }
+    return '';
+  }
+
+  onMapeoArchivoChange(archivo: string, objetivo: string): void {
+    for (const col of this.columnasMapeo()) {
+      if (this.mappingDraft[col] === archivo) {
+        this.mappingDraft[col] = '';
+      }
+    }
+    if (objetivo) {
+      this.mappingDraft[objetivo] = archivo;
+    }
+  }
+
+  estadoMapeoFila(objetivo: string): { label: string; kind: 'ok' | 'muted' } {
+    if (!objetivo) {
+      return { label: 'Sin asignar', kind: 'muted' };
+    }
+    return { label: 'Válido', kind: 'ok' };
   }
 
   refrescarPreview(): void {

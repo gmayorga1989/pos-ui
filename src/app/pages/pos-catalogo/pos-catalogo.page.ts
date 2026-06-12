@@ -127,7 +127,7 @@ interface PriceDraftRow {
         </div>
       </div>
 
-      <div class="pos-maestro-grid-wrap pos-catalog-grid-wrap">
+      <div class="pos-maestro-grid-wrap pos-maestro-tabulator-wrap">
         <pos-tabulator-local-grid
           [data]="gridRows()"
           [columns]="columns"

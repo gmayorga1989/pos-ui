@@ -91,15 +91,18 @@ const TIPO_ID_LABEL: Record<string, string> = {
         </div>
       </div>
 
-      <pos-tabulator-local-grid
-        [data]="gridRows()"
-        [columns]="columns"
-        [reloadNonce]="gridNonce()"
-        [pagination]="true"
-        [paginationSize]="15"
-        emptyContext="customers"
-        (rowAction)="onRowAction($event)"
-        (emptyAction)="onEmptyAction($event)" />
+      <div class="pos-maestro-grid-wrap pos-maestro-tabulator-wrap">
+        <pos-tabulator-local-grid
+          [data]="gridRows()"
+          [columns]="columns"
+          [reloadNonce]="gridNonce()"
+          [pagination]="true"
+          [paginationSize]="15"
+          height="min(620px, calc(100vh - 15.5rem))"
+          emptyContext="customers"
+          (rowAction)="onRowAction($event)"
+          (emptyAction)="onEmptyAction($event)" />
+      </div>
     </pos-page-layout>
 
     @if (formOpen()) {
@@ -298,7 +301,7 @@ export class PosClientesPage implements OnInit {
     {
       title: '',
       field: 'id',
-      width: 82,
+      width: 52,
       headerSort: false,
       hozAlign: 'center',
       formatter: (cell) => this.customerActionsMenu(cell),
