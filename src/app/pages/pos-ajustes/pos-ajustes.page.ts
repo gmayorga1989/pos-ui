@@ -233,12 +233,7 @@ declare global {
                   </label>
 
                   <label class="rule-field-card">
-                    <span class="rule-field-card__icon" aria-hidden="true">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
-                        <path d="M9.5 9.5L14.5 14.5M14.5 9.5L9.5 14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                      </svg>
-                    </span>
+                    <span class="rule-field-card__icon rule-field-card__icon--glyph" aria-hidden="true">%</span>
                     <span class="rule-field-card__body">
                       <span class="rule-field-card__label">Límite máximo de descuento (%)</span>
                       <input
@@ -272,7 +267,7 @@ declare global {
                     </span>
                   </label>
 
-                  <label class="rule-field-card rule-field-card--wide">
+                  <label class="rule-field-card">
                     <span class="rule-field-card__icon" aria-hidden="true">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                         <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
@@ -1996,9 +1991,9 @@ declare global {
     }
     .settings-body--split {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(13.5rem, 16rem);
-      gap: 1rem;
-      align-items: start;
+      grid-template-columns: minmax(0, 1fr) minmax(15.5rem, 19.5rem);
+      gap: 1.15rem;
+      align-items: stretch;
     }
     .settings-body__main {
       min-width: 0;
@@ -2040,53 +2035,73 @@ declare global {
     .rules-field-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.75rem;
+      gap: 0.65rem;
+      align-content: start;
     }
     .rule-field-card {
-      display: grid;
-      grid-template-columns: 2.65rem minmax(0, 1fr);
-      gap: 0.7rem;
-      align-items: start;
-      padding: 0.85rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin: 0;
+      padding: 0.72rem 0.78rem;
       border: 1px solid var(--pos-border);
       border-radius: 5px;
       background: var(--pos-elevated);
-      box-shadow: 0 10px 28px -26px rgba(17, 24, 39, 0.28);
+      box-shadow: 0 8px 22px -20px rgba(17, 24, 39, 0.22);
       cursor: default;
-    }
-    .rule-field-card--wide {
-      grid-column: 1 / -1;
     }
     .rule-field-card__icon {
       display: grid;
       place-items: center;
-      width: 2.65rem;
-      height: 2.65rem;
+      flex: 0 0 2.35rem;
+      width: 2.35rem;
+      height: 2.35rem;
       border-radius: 5px;
       color: var(--pos-accent-hover);
-      background: color-mix(in srgb, var(--pos-accent) 10%, var(--pos-surface));
-      border: 1px solid color-mix(in srgb, var(--pos-accent) 18%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent) 11%, var(--pos-surface));
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 16%, var(--pos-border));
+    }
+    .rule-field-card__icon--glyph {
+      font-size: 0.95rem;
+      font-weight: 850;
+      line-height: 1;
     }
     .rule-field-card__body {
-      display: grid;
-      gap: 0.38rem;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 0.28rem;
       min-width: 0;
     }
     .rule-field-card__label {
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       font-weight: 800;
-      line-height: 1.25;
-      color: color-mix(in srgb, var(--pos-accent-hover) 88%, var(--pos-text));
+      line-height: 1.2;
+      color: color-mix(in srgb, var(--pos-accent-hover) 72%, var(--pos-text));
     }
     .rule-field-card__input {
       width: 100%;
-      min-height: 2.4rem;
-      padding: 0.48rem 0.65rem;
-      border: 1px solid color-mix(in srgb, var(--pos-accent) 14%, var(--pos-border));
+      min-height: 2.15rem;
+      padding: 0.42rem 0.55rem;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 12%, var(--pos-border));
       border-radius: 5px;
-      background: color-mix(in srgb, var(--pos-accent) 5%, var(--pos-bg));
+      background: color-mix(in srgb, var(--pos-accent) 6%, var(--pos-bg));
       color: var(--pos-text);
-      font-size: 0.82rem;
+      font-size: 0.8rem;
+      line-height: 1.2;
+    }
+    select.rule-field-card__input {
+      appearance: none;
+      padding-right: 1.65rem;
+      background-color: color-mix(in srgb, var(--pos-accent) 6%, var(--pos-bg));
+      background-image:
+        linear-gradient(45deg, transparent 50%, color-mix(in srgb, var(--pos-accent-hover) 70%, var(--pos-muted)) 50%),
+        linear-gradient(135deg, color-mix(in srgb, var(--pos-accent-hover) 70%, var(--pos-muted)) 50%, transparent 50%);
+      background-position:
+        calc(100% - 0.95rem) calc(50% - 0.12rem),
+        calc(100% - 0.7rem) calc(50% - 0.12rem);
+      background-size: 0.32rem 0.32rem, 0.32rem 0.32rem;
+      background-repeat: no-repeat;
     }
     .rule-field-card__input:disabled {
       opacity: 0.58;
@@ -2094,21 +2109,22 @@ declare global {
     }
     .rule-field-card__input:focus {
       outline: none;
-      border-color: color-mix(in srgb, var(--pos-accent) 42%, var(--pos-border));
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--pos-accent) 14%, transparent);
+      border-color: color-mix(in srgb, var(--pos-accent) 38%, var(--pos-border));
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--pos-accent) 12%, transparent);
     }
     .settings-promo {
       position: relative;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-height: 100%;
       padding: 0;
       border: 1px solid var(--pos-border);
       border-radius: 5px;
       background: linear-gradient(
         180deg,
-        color-mix(in srgb, var(--pos-accent) 9%, var(--pos-elevated)) 0%,
-        color-mix(in srgb, var(--pos-accent) 4%, var(--pos-surface)) 58%,
+        color-mix(in srgb, var(--pos-accent) 11%, var(--pos-elevated)) 0%,
+        color-mix(in srgb, var(--pos-accent) 5%, var(--pos-surface)) 62%,
         var(--pos-elevated) 100%
       );
       box-shadow: var(--pos-shadow-soft);
@@ -2128,22 +2144,24 @@ declare global {
     }
     .settings-promo__art {
       display: flex;
+      flex: 1;
       align-items: center;
       justify-content: center;
-      padding: 1.35rem 0.85rem 0.65rem;
-      min-height: 10rem;
+      padding: 1.1rem 0.55rem 0.35rem;
+      min-height: 11.5rem;
     }
     .settings-promo__img {
       display: block;
       width: 100%;
-      max-width: 11.5rem;
+      max-width: 100%;
       height: auto;
       object-fit: contain;
     }
     .settings-promo__footer {
-      margin-top: auto;
-      padding: 0.9rem 1rem 1rem;
-      border-top: 1px solid var(--pos-border);
+      margin: 0 0.7rem 0.7rem;
+      padding: 0.82rem 0.85rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
       background: var(--pos-elevated);
       text-align: left;
     }
@@ -2438,17 +2456,16 @@ declare global {
       .stripe-grid,
       .kushki-plan,
       .kushki-hosted-grid,
-      .settings-body--split,
       .system-details__grid,
       .learned-panel {
         flex-direction: column;
         align-items: stretch;
       }
-      .rules-field-grid {
+      .settings-body--split {
         grid-template-columns: 1fr;
       }
-      .rule-field-card--wide {
-        grid-column: auto;
+      .rules-field-grid {
+        grid-template-columns: 1fr;
       }
       .learned-panel__art {
         width: 100%;
