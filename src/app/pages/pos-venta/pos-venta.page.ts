@@ -4123,7 +4123,7 @@ export class PosVentaPage {
     this.custPickerQuery.set((ev.target as HTMLInputElement).value);
   }
 
-  private focusCatalogSearch(): void {
+  focusCatalogSearch(): void {
     queueMicrotask(() => {
       const el = this.catalogSearchRef()?.nativeElement;
       if (el) {
@@ -4140,10 +4140,6 @@ export class PosVentaPage {
         el.select();
       }
     });
-  }
-
-  focusCatalogSearch(): void {
-    this.focusCatalogScan();
   }
 
   focusCatalogPanel(): void {
