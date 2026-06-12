@@ -1265,13 +1265,15 @@ declare global {
                   <li>Densidad táctil/compacta según operación y perfil.</li>
                 </ul>
               </div>
-              <div class="learned__art" aria-hidden="true">
-                <svg width="140" height="110" viewBox="0 0 140 110" fill="none">
-                  <rect x="28" y="20" width="84" height="56" rx="8" fill="color-mix(in srgb, var(--pos-accent) 10%, white)" stroke="color-mix(in srgb, var(--pos-accent) 22%, transparent)" stroke-width="1.5" />
-                  <rect x="38" y="30" width="64" height="36" rx="4" fill="white" />
-                  <path d="M92 68l18 16" stroke="color-mix(in srgb, var(--pos-accent) 40%, transparent)" stroke-width="2" stroke-linecap="round" />
-                  <path d="M104 78l10 10 8-14" stroke="var(--pos-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
+              <div class="learned__art">
+                <img
+                  class="learned__img"
+                  src="assets/iconos/configuracion01.png"
+                  alt=""
+                  width="160"
+                  height="128"
+                  loading="lazy"
+                  decoding="async" />
               </div>
             </div>
           }
@@ -2183,6 +2185,13 @@ declare global {
     .learned__art {
       display: grid;
       place-items: center;
+      flex-shrink: 0;
+    }
+    .learned__img {
+      display: block;
+      width: min(10rem, 100%);
+      height: auto;
+      object-fit: contain;
     }
     .settings-footer {
       display: flex;
