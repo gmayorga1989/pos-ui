@@ -465,11 +465,11 @@ declare global {
                     <strong>Experiencia de venta</strong>
                   </span>
                 </header>
-                <div class="station-card__body station-card__body--compact">
+                <div class="station-card__body station-card__body--experience">
                   <div class="station-toggle-row">
                     <span class="station-toggle-row__copy">
                       <strong>Sonido al agregar productos</strong>
-                      <small>Feedback auditivo al escanear o añadir ítems.</small>
+                      <small>Feedback al añadir/quitar ítems.</small>
                     </span>
                     <label class="station-switch">
                       <input
@@ -482,7 +482,7 @@ declare global {
                   <div class="station-toggle-row">
                     <span class="station-toggle-row__copy">
                       <strong>Escaneo automático</strong>
-                      <small>Agrega el producto al leer un código exacto.</small>
+                      <small>Agregar al escanear código exacto.</small>
                     </span>
                     <label class="station-switch">
                       <input
@@ -495,7 +495,7 @@ declare global {
                   <div class="station-toggle-row">
                     <span class="station-toggle-row__copy">
                       <strong>Separar productos repetidos</strong>
-                      <small>Crea una línea nueva en lugar de sumar cantidad.</small>
+                      <small>En nuevas líneas durante la venta.</small>
                     </span>
                     <label class="station-switch">
                       <input
@@ -1815,6 +1815,42 @@ declare global {
     .station-card--experience {
       grid-column: 3;
       grid-row: 1 / span 2;
+      gap: 0;
+      padding: 0.72rem 0.82rem 0.62rem;
+    }
+    .station-card--experience .station-card__head {
+      padding-bottom: 0.42rem;
+      margin-bottom: 0.1rem;
+      border-bottom: 1px solid color-mix(in srgb, var(--pos-border) 72%, transparent);
+    }
+    .station-card__body--experience {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      flex: 1;
+    }
+    .station-card--experience .station-toggle-row {
+      padding: 0.28rem 0;
+      border-top: none;
+      border-bottom: 1px solid color-mix(in srgb, var(--pos-border) 72%, transparent);
+    }
+    .station-card--experience .station-toggle-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .station-card--experience .station-toggle-row:first-child {
+      padding-top: 0.18rem;
+    }
+    .station-card--experience .station-toggle-row__copy {
+      gap: 0.02rem;
+    }
+    .station-card--experience .station-toggle-row__copy strong {
+      font-size: 0.76rem;
+      line-height: 1.2;
+    }
+    .station-card--experience .station-toggle-row__copy small {
+      font-size: 0.65rem;
+      line-height: 1.22;
     }
     .station-card--upsell {
       grid-column: 1;
@@ -1914,19 +1950,6 @@ declare global {
       place-content: center;
       text-align: center;
       min-height: 6.5rem;
-    }
-    .station-card__body--compact {
-      gap: 0.15rem;
-    }
-    .station-card--experience .station-toggle-row {
-      padding: 0.3rem 0;
-    }
-    .station-card--experience .station-toggle-row__copy {
-      gap: 0.06rem;
-    }
-    .station-card--experience .station-toggle-row__copy small {
-      font-size: 0.66rem;
-      line-height: 1.28;
     }
     .station-card__copy {
       margin: 0;
