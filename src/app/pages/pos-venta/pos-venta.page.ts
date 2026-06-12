@@ -1344,7 +1344,7 @@ type ModalState =
     }
     .customer-panel__cf-badge {
       border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      border-radius: 5px;
       background: #ffffff;
       color: #334155;
       font-size: 0.64rem;
@@ -1595,7 +1595,7 @@ type ModalState =
       width: 1.85rem;
       height: 1.85rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 5px;
       background: transparent;
       color: var(--lux-indigo);
       cursor: pointer;
@@ -1725,7 +1725,7 @@ type ModalState =
       height: 1.65rem;
       padding: 0 0.35rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 5px;
       background: transparent;
       color: var(--pos-muted);
       font-size: 0.72rem;
@@ -2063,7 +2063,7 @@ type ModalState =
       width: 3.35rem;
       height: 3.35rem;
       flex-shrink: 0;
-      border-radius: 8px;
+      border-radius: 5px;
       overflow: hidden;
       border: none;
       background: #f8fafc;
@@ -2178,7 +2178,7 @@ type ModalState =
       max-width: 9rem;
       height: 1.85rem;
       padding: 0 0.5rem;
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
       color: var(--pos-text);
@@ -2221,7 +2221,7 @@ type ModalState =
       margin-left: auto;
     }
     .line-card__dcto {
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
       color: #334155;
@@ -2277,7 +2277,7 @@ type ModalState =
       font-weight: 700;
       font-family: var(--pos-mono);
       font-size: 0.78rem;
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid var(--pos-border-strong);
       background: var(--pos-elevated);
       color: var(--pos-text);
@@ -2291,7 +2291,7 @@ type ModalState =
     .line-card__remove {
       width: 1.85rem;
       height: 1.85rem;
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid rgba(185, 28, 28, 0.22);
       background: rgba(248, 113, 113, 0.08);
       color: #b91c1c;
@@ -2359,7 +2359,7 @@ type ModalState =
     .line-chip {
       min-width: 1.8rem;
       height: var(--pos-qty-size);
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid var(--pos-border);
       background: var(--pos-surface-2);
       color: var(--pos-muted);
@@ -2609,7 +2609,7 @@ type ModalState =
       justify-content: space-between;
       gap: 0.45rem;
       padding: 0.45rem 0.55rem;
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid var(--pos-border);
       background: var(--pos-elevated);
       font-size: 0.72rem;
@@ -2677,7 +2677,7 @@ type ModalState =
     .pos-pay-remove {
       width: 1.75rem;
       height: 1.75rem;
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid var(--pos-border);
       background: var(--pos-elevated);
       color: #b91c1c;
@@ -2841,7 +2841,7 @@ type ModalState =
     .payment-method-chip {
       min-height: 2rem;
       border: 1px solid transparent;
-      border-radius: 8px;
+      border-radius: 5px;
       background: transparent;
       color: var(--pos-muted);
       display: flex;
@@ -3221,7 +3221,7 @@ type ModalState =
       color: var(--pos-muted);
     }
     .modal-input {
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid var(--pos-border-strong);
       background: var(--pos-bg);
       color: var(--pos-text);
