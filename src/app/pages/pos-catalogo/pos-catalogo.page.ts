@@ -14,7 +14,7 @@ import type {
 } from '../../core/api/pos-backend.types';
 import { PosAuthService } from '../../core/auth/pos-auth.service';
 import { PosConfigService } from '../../core/config/pos-config.service';
-import { gridCatalogIconActions } from '../../shared/grid/grid-actions.util';
+import { gridActionsMenu } from '../../shared/grid/grid-actions.util';
 import { PosTabulatorLocalGridComponent } from '../../shared/grid/pos-tabulator-local-grid.component';
 import { escapeHtml, tabulatorCellValue, tabulatorTextareaCell } from '../../shared/grid/tabulator-formatters.util';
 import {
@@ -84,8 +84,8 @@ interface PriceDraftRow {
           }
           <button type="button" class="pos-catalog-toolbar__refresh" aria-label="Refrescar catálogo" title="Refrescar" (click)="reload()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M4 4v5h5M20 20v-5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M5.5 18.5A8 8 0 0118.5 5.5M18.5 5.5V10M18.5 5.5H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M20 12a8 8 0 10-16 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              <path d="M4 4v5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
         </div>
@@ -134,7 +134,7 @@ interface PriceDraftRow {
           [reloadNonce]="gridNonce()"
           [pagination]="true"
           [paginationSize]="15"
-          [rowSelection]="true"
+          height="min(620px, calc(100vh - 15.5rem))"
           emptyContext="masters"
           (rowAction)="onRowAction($event)"
           (emptyAction)="onEmptyAction($event)" />
@@ -425,6 +425,18 @@ export class PosCatalogoPage implements OnInit {
 
   readonly columns: ColumnDefinition[] = [
     {
+      title: '',
+      field: 'id',
+      width: 52,
+      headerSort: false,
+      hozAlign: 'center',
+      formatter: () =>
+        gridActionsMenu([
+          { action: 'edit', label: 'Editar', icon: 'edit' },
+          { action: 'delete', label: 'Inactivar', icon: 'inactivate', danger: true },
+        ]),
+    },
+    {
       title: 'SKU',
       field: 'sku',
       minWidth: 150,
@@ -483,15 +495,6 @@ export class PosCatalogoPage implements OnInit {
       width: 100,
       hozAlign: 'center',
       formatter: (cell) => this.estadoBadge(tabulatorCellValue(cell) === true),
-    },
-    {
-      title: 'Acciones',
-      field: 'id',
-      width: 118,
-      headerSort: false,
-      hozAlign: 'right',
-      formatter: () =>
-        gridCatalogIconActions([{ action: 'delete', label: 'Inactivar', icon: 'inactivate', danger: true }]),
     },
   ];
 
@@ -577,7 +580,7 @@ export class PosCatalogoPage implements OnInit {
   onRowAction(event: { action: string; row: Record<string, unknown> }): void {
     const id = String(event.row['id'] ?? '');
     if (!id) return;
-    if (event.action === 'edit' || event.action === 'view') {
+    if (event.action === 'edit') {
       const p = this.products().find((x) => x.id === id);
       if (p) this.openEdit(p);
       return;
