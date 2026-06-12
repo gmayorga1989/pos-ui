@@ -54,6 +54,7 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
   @Input() emptyCtaLabel = '';
   @Input() emptyCtaAction = 'create';
   @Input() emptyImagePath = '';
+  @Input() rowSelection = false;
 
   @Output() rowAction = new EventEmitter<{ action: string; row: Record<string, unknown> }>();
   @Output() emptyAction = new EventEmitter<string>();
@@ -94,7 +95,11 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
     if (changes['columns'] && !changes['columns'].firstChange) {
       this.table.setColumns(this.normalizedColumns());
     }
-    if (changes['pagination'] || changes['paginationSize']) {
+    if (changes['rowSelection'] && !changes['rowSelection'].firstChange) {
+      this.table.setColumns(this.normalizedColumns());
+      this.table.options.selectable = this.rowSelection;
+    }
+    if (changes['pagination'] || changes['paginationSize'] || changes['rowSelection']) {
       this.applyPaginationOptions();
     }
     if (
@@ -124,6 +129,7 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
       height: this.height,
       locale: POS_TABULATOR_LOCALE,
       langs: posTabulatorLangs(),
+      selectable: this.rowSelection,
       pagination: this.pagination,
       paginationSize: this.paginationSize,
       paginationSizeSelector: this.pagination ? [10, 15, 20, 50] : undefined,
@@ -217,15 +223,30 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
     this.table.options.paginationSize = this.paginationSize;
     this.table.options.paginationSizeSelector = this.pagination ? [10, 15, 20, 50] : undefined;
     this.table.options.paginationCounter = this.pagination ? posTabulatorPaginationCounter : undefined;
+    this.table.options.selectable = this.rowSelection;
     void this.table.redraw(true);
   }
 
   private normalizedColumns(): ColumnDefinition[] {
-    return this.columns.map((col) => ({
+    const cols = this.columns.map((col) => ({
       ...col,
       headerSort: col.headerSort === true,
       headerWordWrap: true,
     }));
+    if (!this.rowSelection) {
+      return cols;
+    }
+    return [
+      {
+        formatter: 'rowSelection',
+        titleFormatter: 'rowSelection',
+        hozAlign: 'center',
+        headerSort: false,
+        width: 42,
+        frozen: true,
+      },
+      ...cols,
+    ];
   }
 
   private closeActionMenus(): void {

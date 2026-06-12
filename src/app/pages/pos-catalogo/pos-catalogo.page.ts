@@ -14,7 +14,7 @@ import type {
 } from '../../core/api/pos-backend.types';
 import { PosAuthService } from '../../core/auth/pos-auth.service';
 import { PosConfigService } from '../../core/config/pos-config.service';
-import { gridActionsMenu } from '../../shared/grid/grid-actions.util';
+import { gridCatalogIconActions } from '../../shared/grid/grid-actions.util';
 import { PosTabulatorLocalGridComponent } from '../../shared/grid/pos-tabulator-local-grid.component';
 import { escapeHtml, tabulatorCellValue, tabulatorTextareaCell } from '../../shared/grid/tabulator-formatters.util';
 import {
@@ -41,47 +41,62 @@ interface PriceDraftRow {
   selector: 'pos-catalogo-page',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, PosPageLayoutComponent, PosTabulatorLocalGridComponent],
-  host: { class: 'pos-page-host' },
+  host: { class: 'pos-page-host pos-page-host--catalog' },
   template: `
     <pos-page-layout
       eyebrow="Catálogo"
       title="Productos"
-      subtitle="Productos del tenant. Sincronice con eFactura si el modo de despliegue lo permite."
+      subtitle="Administra tus productos, precios, impuestos y más."
       icon="catalogo">
-      <div page-actions class="pos-page-actions-group">
-        <button type="button" class="pos-btn pos-btn--primary" (click)="openCreate()">Agregar</button>
-        <button type="button" class="pos-btn pos-btn--outline" (click)="mostrarFiltros.set(!mostrarFiltros())">
-          {{ mostrarFiltros() ? 'Ocultar filtros' : 'Ver filtros' }}
-        </button>
-        <button type="button" class="pos-btn pos-btn--soft" (click)="aplicarFiltros()">Buscar</button>
-        @if (mostrarFiltros()) {
-          <button type="button" class="pos-btn pos-btn--outline" (click)="limpiarFiltros()">Limpiar</button>
-        }
-        @if (canSyncEfactura()) {
-          <button type="button" class="pos-btn pos-btn--soft" [disabled]="syncing()" (click)="syncEfactura()">
-            {{ syncing() ? 'Sincronizando…' : 'Sync eFactura' }}
-          </button>
-        }
-        <a routerLink="/categorias" class="pos-btn pos-btn--soft">Categorías</a>
-        <a routerLink="/listas-precio" class="pos-btn pos-btn--soft">Listas precio</a>
-        <a routerLink="/migracion" [queryParams]="{ tipo: 'productos' }" class="pos-btn pos-btn--soft">Importar</a>
-        <button type="button" class="pos-btn pos-btn--soft" (click)="reload()">Refrescar</button>
-      </div>
-
       @if (message()) {
         <p class="pos-maestro-msg" [class.pos-maestro-msg--err]="messageIsError()">{{ message() }}</p>
       }
 
+      <div class="pos-catalog-toolbar">
+        <label class="pos-catalog-search">
+          <svg class="pos-catalog-search__ico" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.6" />
+            <path d="M16 16l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+          <span class="sr-only">Buscar productos</span>
+          <input
+            class="pos-catalog-search__input"
+            [(ngModel)]="filterQ"
+            name="catalogSearchQ"
+            placeholder="Buscar por nombre, SKU o código de barras…"
+            (input)="onSearchInput()"
+            (keyup.enter)="aplicarFiltros()" />
+        </label>
+        <div class="pos-catalog-toolbar__actions">
+          <button type="button" class="pos-btn pos-btn--primary pos-catalog-toolbar__add" (click)="openCreate()">
+            + Agregar
+          </button>
+          <button type="button" class="pos-btn pos-btn--outline" (click)="mostrarFiltros.set(!mostrarFiltros())">
+            {{ mostrarFiltros() ? 'Ocultar filtros' : 'Ver filtros' }}
+          </button>
+          <a routerLink="/categorias" class="pos-btn pos-btn--outline">Categorías</a>
+          <a routerLink="/listas-precio" class="pos-btn pos-btn--outline">Listas precio</a>
+          <a routerLink="/migracion" [queryParams]="{ tipo: 'productos' }" class="pos-btn pos-btn--outline">Importar</a>
+          @if (canSyncEfactura()) {
+            <button type="button" class="pos-btn pos-btn--outline" [disabled]="syncing()" (click)="syncEfactura()">
+              {{ syncing() ? 'Sincronizando…' : 'Sync eFactura' }}
+            </button>
+          }
+          <button type="button" class="pos-catalog-toolbar__refresh" aria-label="Refrescar catálogo" title="Refrescar" (click)="reload()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 4v5h5M20 20v-5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M5.5 18.5A8 8 0 0118.5 5.5M18.5 5.5V10M18.5 5.5H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
       <div class="pos-maestro-filters-panel" [class.is-open]="mostrarFiltros()">
         <div class="pos-maestro-filters-panel__inner">
           <div class="pos-maestro-filters">
-            <label class="pos-maestro-filter pos-maestro-filter--grow">
-              <span>Buscar</span>
-              <input [(ngModel)]="filterQ" name="filterQ" placeholder="Nombre, SKU o código de barras" (keyup.enter)="aplicarFiltros()" />
-            </label>
             <label class="pos-maestro-filter">
               <span>Categoría</span>
-              <select [(ngModel)]="filterCategoryId" name="filterCategoryId">
+              <select [(ngModel)]="filterCategoryId" name="filterCategoryId" (change)="aplicarFiltros()">
                 <option value="">Todas</option>
                 @for (c of categoryOptions(); track c.id) {
                   <option [value]="c.id">{{ categorySelectLabel(c) }}</option>
@@ -90,7 +105,7 @@ interface PriceDraftRow {
             </label>
             <label class="pos-maestro-filter">
               <span>Etiqueta</span>
-              <select [(ngModel)]="filterTag" name="filterTag">
+              <select [(ngModel)]="filterTag" name="filterTag" (change)="aplicarFiltros()">
                 <option value="">Todas</option>
                 <option>Retail</option>
                 <option>Servicios</option>
@@ -99,25 +114,31 @@ interface PriceDraftRow {
             </label>
             <label class="pos-maestro-filter">
               <span>Estado</span>
-              <select [(ngModel)]="filterEstado" name="filterEstado">
+              <select [(ngModel)]="filterEstado" name="filterEstado" (change)="aplicarFiltros()">
                 <option value="">Todos</option>
                 <option value="ACTIVO">Activo</option>
                 <option value="INACTIVO">Inactivo</option>
               </select>
             </label>
+            @if (mostrarFiltros()) {
+              <button type="button" class="pos-btn pos-btn--outline pos-btn--sm" (click)="limpiarFiltros()">Limpiar</button>
+            }
           </div>
         </div>
       </div>
 
-      <pos-tabulator-local-grid
-        [data]="gridRows()"
-        [columns]="columns"
-        [reloadNonce]="gridNonce()"
-        [pagination]="true"
-        [paginationSize]="15"
-        emptyContext="masters"
-        (rowAction)="onRowAction($event)"
-        (emptyAction)="onEmptyAction($event)" />
+      <div class="pos-maestro-grid-wrap pos-catalog-grid-wrap">
+        <pos-tabulator-local-grid
+          [data]="gridRows()"
+          [columns]="columns"
+          [reloadNonce]="gridNonce()"
+          [pagination]="true"
+          [paginationSize]="15"
+          [rowSelection]="true"
+          emptyContext="masters"
+          (rowAction)="onRowAction($event)"
+          (emptyAction)="onEmptyAction($event)" />
+      </div>
     </pos-page-layout>
 
     @if (formOpen()) {
@@ -404,37 +425,23 @@ export class PosCatalogoPage implements OnInit {
 
   readonly columns: ColumnDefinition[] = [
     {
-      title: '',
-      field: 'id',
-      width: 82,
-      headerSort: false,
-      hozAlign: 'center',
-      formatter: () =>
-        gridActionsMenu([
-          { action: 'edit', label: 'Editar', icon: 'edit' },
-          { action: 'delete', label: 'Inactivar', icon: 'inactivate', danger: true },
-        ]),
+      title: 'SKU',
+      field: 'sku',
+      minWidth: 150,
+      formatter: (cell) => this.formatCatalogSkuCell(cell),
     },
     {
-      title: '',
-      field: 'imageDisplayUrl',
-      width: 52,
-      headerSort: false,
-      hozAlign: 'center',
-      formatter: (cell) => {
-        const url = String(tabulatorCellValue(cell) ?? '').trim();
-        if (!url) return '—';
-        return `<img src="${escapeHtml(url)}" alt="" class="pos-catalog-thumb" loading="lazy" />`;
-      },
-    },
-    { title: 'SKU', field: 'sku', minWidth: 110, formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)) },
-    {
-      title: 'Cód. barras',
+      title: 'Código de barras',
       field: 'barcode',
-      minWidth: 120,
+      minWidth: 130,
       formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell) ?? '—'),
     },
-    { title: 'Producto', field: 'name', minWidth: 200, formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)) },
+    {
+      title: 'Producto',
+      field: 'name',
+      minWidth: 200,
+      formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)),
+    },
     {
       title: 'Categoría',
       field: 'categoryName',
@@ -445,26 +452,46 @@ export class PosCatalogoPage implements OnInit {
       title: 'Precio',
       field: 'price',
       hozAlign: 'right',
-      width: 110,
+      width: 100,
       formatter: (cell) => {
         const v = Number(tabulatorCellValue(cell));
-        return Number.isFinite(v) ? v.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+        if (!Number.isFinite(v)) return '';
+        return `<span class="pos-catalog-price">${escapeHtml(v.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</span>`;
       },
     },
     {
-      title: 'Ref. ext.',
-      field: 'externalRef',
-      minWidth: 100,
-      formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell) ?? '—'),
+      title: 'Stock',
+      field: 'stockQty',
+      hozAlign: 'right',
+      width: 88,
+      formatter: (cell) => {
+        const v = tabulatorCellValue(cell);
+        const n = v == null || v === '' ? null : Number(v);
+        const label = n != null && Number.isFinite(n) ? String(n) : '—';
+        return `<span class="pos-catalog-stock">${escapeHtml(label)}</span>`;
+      },
     },
-    { title: 'Origen', field: 'catalogSourceLabel', width: 100 },
-    { title: 'Etiqueta', field: 'tag', width: 110 },
-    { title: 'Impuesto', field: 'ivaLabel', minWidth: 150, formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)) },
+    {
+      title: 'Impuesto',
+      field: 'ivaLabel',
+      minWidth: 140,
+      formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)),
+    },
     {
       title: 'Estado',
       field: 'active',
-      width: 105,
+      width: 100,
+      hozAlign: 'center',
       formatter: (cell) => this.estadoBadge(tabulatorCellValue(cell) === true),
+    },
+    {
+      title: 'Acciones',
+      field: 'id',
+      width: 118,
+      headerSort: false,
+      hozAlign: 'right',
+      formatter: () =>
+        gridCatalogIconActions([{ action: 'delete', label: 'Inactivar', icon: 'inactivate', danger: true }]),
     },
   ];
 
@@ -550,7 +577,7 @@ export class PosCatalogoPage implements OnInit {
   onRowAction(event: { action: string; row: Record<string, unknown> }): void {
     const id = String(event.row['id'] ?? '');
     if (!id) return;
-    if (event.action === 'edit') {
+    if (event.action === 'edit' || event.action === 'view') {
       const p = this.products().find((x) => x.id === id);
       if (p) this.openEdit(p);
       return;
@@ -558,6 +585,20 @@ export class PosCatalogoPage implements OnInit {
     if (event.action === 'delete') {
       this.askDeactivate(id);
     }
+  }
+
+  onSearchInput(): void {
+    this.aplicarFiltros();
+  }
+
+  private formatCatalogSkuCell(cell: unknown): string {
+    const row = (cell as { getRow: () => { getData: () => Record<string, unknown> } }).getRow().getData();
+    const sku = String(row['sku'] ?? '');
+    const url = String(row['imageDisplayUrl'] ?? '').trim();
+    const thumb = url
+      ? `<img src="${escapeHtml(url)}" alt="" class="pos-catalog-thumb" loading="lazy" decoding="async" />`
+      : `<span class="pos-catalog-thumb pos-catalog-thumb--empty" aria-hidden="true"></span>`;
+    return `<div class="pos-catalog-sku">${thumb}<span class="ts-cell-textarea pos-catalog-sku__code">${escapeHtml(sku)}</span></div>`;
   }
 
   onIvaCodeChange(code: string): void {

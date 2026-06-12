@@ -25,6 +25,27 @@ export function escapeGridHtml(value: unknown): string {
     .replace(/"/g, '&quot;');
 }
 
+/** Acciones inline estilo catálogo: ver, editar y menú adicional. */
+export function gridCatalogIconActions(extraActions: GridActionItem[] = []): string {
+  const menu =
+    extraActions.length > 0
+      ? gridActionsMenu(extraActions, 'Más acciones').replace(
+          'class="ts-grid-actions dropdown"',
+          'class="ts-grid-actions dropdown pos-catalog-row-actions__menu"',
+        )
+      : '';
+  return `
+    <div class="pos-catalog-row-actions">
+      <button type="button" class="pos-catalog-row-actions__btn" data-ts-action="view" aria-label="Ver producto" title="Ver">
+        ${gridActionIcon('view')}
+      </button>
+      <button type="button" class="pos-catalog-row-actions__btn" data-ts-action="edit" aria-label="Editar producto" title="Editar">
+        ${gridActionIcon('edit')}
+      </button>
+      ${menu}
+    </div>`;
+}
+
 export function gridActionsMenu(actions: GridActionItem[], ariaLabel = 'Acciones'): string {
   const items = actions
     .map(
