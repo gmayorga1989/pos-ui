@@ -412,7 +412,8 @@ type CashPanelMode = 'open' | 'close' | 'history';
     }
     .rail-shell {
       position: relative;
-      z-index: 160;
+      /* Por encima del contenido normal, por debajo de modales (≥80) */
+      z-index: 20;
       flex-shrink: 0;
       width: var(--pos-nav-rail-w);
       display: flex;
@@ -495,7 +496,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
     }
     .rail__btn:hover,
     .rail__btn:focus-visible {
-      z-index: 220;
+      z-index: 3;
       background: var(--pos-rail-well);
       color: var(--pos-rail-fg-hover);
     }
@@ -539,7 +540,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
         opacity 0.14s ease,
         transform 0.14s ease,
         visibility 0.14s;
-      z-index: 300;
+      z-index: 5;
     }
     .rail__btn:hover .rail__pop,
     .rail__btn:focus-visible .rail__pop {
@@ -609,7 +610,6 @@ type CashPanelMode = 'open' | 'close' | 'history';
     }
     .main {
       position: relative;
-      z-index: 1;
       flex: 1;
       min-width: 0;
       min-height: 0;

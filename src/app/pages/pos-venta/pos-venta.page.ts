@@ -426,9 +426,9 @@ type ModalState =
             </div>
           </div>
 
-          <div class="lines">
+          <div class="lines" #cartLines>
             @for (line of cart(); track line.lineId) {
-              <article class="line-card">
+              <article class="line-card" [attr.data-line-id]="line.lineId">
                 @if (prefs.showProductImages()) {
                   <div class="line-card__thumb">
                     <img
@@ -3327,6 +3327,7 @@ export class PosVentaPage {
   readonly catalogView = signal<'grid' | 'list'>('grid');
 
   private readonly catalogSearchRef = viewChild<ElementRef<HTMLInputElement>>('catalogSearch');
+  private readonly cartLinesRef = viewChild<ElementRef<HTMLElement>>('cartLines');
 
   private tabSeq = 1;
   readonly saleCustomerTipoLabel = saleCustomerTipoLabel;
@@ -3907,6 +3908,30 @@ export class PosVentaPage {
         el.focus({ preventScroll: true });
         el.select();
       }
+    });
+  }
+
+  private scrollCartToLine(lineId: string): void {
+    queueMicrotask(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const container = this.cartLinesRef()?.nativeElement;
+          if (!container) {
+            return;
+          }
+          const lineEl = container.querySelector<HTMLElement>(`[data-line-id="${lineId}"]`);
+          if (!lineEl) {
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            return;
+          }
+          const cards = container.querySelectorAll<HTMLElement>('.line-card');
+          const isLast = cards.length > 0 && cards[cards.length - 1] === lineEl;
+          lineEl.scrollIntoView({
+            behavior: 'smooth',
+            block: isLast ? 'end' : 'nearest',
+          });
+        });
+      });
     });
   }
 
@@ -5129,6 +5154,7 @@ export class PosVentaPage {
     }
     const listId = this.defaultPriceListId();
     const priced: DemoProduct = { ...p, price: this.resolvePrice(p, listId) };
+    let scrollLineId: string | null = null;
     this.playUiSound('add');
     this.patchActiveTab((t) => {
       const rows = t.cart;
@@ -5136,6 +5162,7 @@ export class PosVentaPage {
       if (i >= 0 && !this.prefs.separateSameProductLines()) {
         const next = [...rows];
         const row = next[i];
+        scrollLineId = row.lineId;
         const qty = row.qty + 1;
         const unit = row.product.price;
         const gross = qty * unit;
@@ -5143,14 +5170,19 @@ export class PosVentaPage {
         next[i] = { ...row, qty, discountAmount: disc };
         return { ...t, cart: next };
       }
+      const lineId = this.newLineId();
+      scrollLineId = lineId;
       return {
         ...t,
         cart: [
           ...rows,
-          { lineId: this.newLineId(), product: priced, priceListId: listId, qty: 1, discountAmount: 0 },
+          { lineId, product: priced, priceListId: listId, qty: 1, discountAmount: 0 },
         ],
       };
     });
+    if (scrollLineId) {
+      this.scrollCartToLine(scrollLineId);
+    }
     this.focusCatalogSearch();
   }
 
