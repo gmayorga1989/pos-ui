@@ -171,6 +171,18 @@ type ModalState =
                 [value]="catalogQuery()"
                 (input)="onCatalogQuery($event)"
                 (keydown.enter)="onCatalogEnter($event)" />
+              @if (catalogQuery().trim()) {
+                <button
+                  type="button"
+                  class="catalog-search__clear pos-focus-ring"
+                  aria-label="Limpiar búsqueda"
+                  title="Limpiar búsqueda"
+                  (click)="clearCatalogSearch()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </button>
+              }
               <button
                 type="button"
                 class="catalog-search__scan pos-focus-ring"
@@ -186,6 +198,7 @@ type ModalState =
               <label class="catalog-filter">
                 <span class="sr-only">Categoría</span>
                 <select
+                  #catalogCategory
                   class="catalog-filter__select pos-focus-ring"
                   [value]="activeCategoryId()"
                   (change)="onCategoryFilter($event)">
@@ -201,7 +214,7 @@ type ModalState =
                     type="button"
                     class="cat pos-focus-ring"
                     [class.cat--on]="c === activeTag()"
-                    (click)="activeTag.set(c)">
+                    (click)="setCatalogTag(c)">
                     {{ c }}
                   </button>
                 }
@@ -238,51 +251,111 @@ type ModalState =
             </div>
           </div>
           <div class="products-scroll">
-            <div class="products" [class.products--list]="catalogView() === 'list'">
-              @for (p of pagedProducts(); track p.id) {
-                <article class="card">
-                  <button type="button" class="card__main pos-focus-ring" [class.card__main--locked]="!desk.cajaOpen()" (click)="addLine(p)">
-                    @if (prefs.showProductImages()) {
-                      <div class="card__thumb">
-                        <img
-                          [src]="productImageUrl(p)"
-                          [alt]="p.name"
-                          loading="lazy"
-                          decoding="async"
-                          (error)="onProductImageError($event)" />
-                      </div>
-                    }
-                    <div class="card__body">
-                      @if (p.categoryName) {
-                        <span class="card__cat">{{ p.categoryName }}</span>
-                      }
-                      <span class="card__tag">{{ p.tag }}</span>
-                      <span class="card__name">{{ p.name }}</span>
-                      <span class="card__sku">{{ p.sku }}</span>
-                      <span class="card__price">{{ catalogDisplayPrice(p) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
-                    </div>
-                  </button>
-                  <div class="card__foot">
-                    <button
-                      type="button"
-                      class="card__badge card__badge--stock pos-focus-ring"
-                      title="Stock en otras bodegas"
-                      [class.card__badge--locked]="!desk.cajaOpen()"
-                      (click)="openModal('stock', p)">
-                      Stock
-                    </button>
-                    <button
-                      type="button"
-                      class="card__badge card__badge--promo pos-focus-ring"
-                      title="Promociones"
-                      [class.card__badge--locked]="!desk.cajaOpen()"
-                      (click)="openModal('promo', p)">
-                      Promo
-                    </button>
+            @if (filteredCatalog().length === 0) {
+              <div class="catalog-empty" role="status" aria-live="polite">
+                <div class="catalog-empty__hero">
+                  <div class="catalog-empty__icon-wrap" aria-hidden="true">
+                    <span class="catalog-empty__spark catalog-empty__spark--1">✦</span>
+                    <span class="catalog-empty__spark catalog-empty__spark--2">·</span>
+                    <span class="catalog-empty__spark catalog-empty__spark--3">✦</span>
+                    <svg class="catalog-empty__icon" width="38" height="38" viewBox="0 0 24 24" fill="none">
+                      <defs>
+                        <linearGradient id="catalog-empty-grad" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#00e5ff" />
+                          <stop offset="0.5" stop-color="#6366f1" />
+                          <stop offset="1" stop-color="#c026d3" />
+                        </linearGradient>
+                      </defs>
+                      <circle cx="11" cy="11" r="6.5" stroke="url(#catalog-empty-grad)" stroke-width="1.8" />
+                      <path d="M16 16l4.5 4.5" stroke="url(#catalog-empty-grad)" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
                   </div>
-                </article>
-              }
-            </div>
+                  <h3 class="catalog-empty__title">No se encontraron productos</h3>
+                  <p class="catalog-empty__desc">
+                    @if (catalogQuery().trim(); as q) {
+                      No hay resultados para <strong class="catalog-empty__term">'{{ q }}'</strong>. Intenta con otro término o revisa la ortografía.
+                    } @else if (catalogHasActiveFilters()) {
+                      No hay productos que coincidan con los filtros seleccionados. Ajusta la categoría o la etiqueta.
+                    } @else {
+                      El catálogo no tiene productos disponibles en este momento.
+                    }
+                  </p>
+                </div>
+                <div class="catalog-empty__suggestions" aria-hidden="true">
+                  <span>Sugerencias</span>
+                </div>
+                <div class="catalog-empty__actions">
+                  <button type="button" class="catalog-empty__action pos-focus-ring" (click)="clearCatalogFilters()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="4" y="4" width="6" height="6" stroke="currentColor" stroke-width="1.6" />
+                      <rect x="14" y="4" width="6" height="6" stroke="currentColor" stroke-width="1.6" />
+                      <rect x="4" y="14" width="6" height="6" stroke="currentColor" stroke-width="1.6" />
+                      <rect x="14" y="14" width="6" height="6" stroke="currentColor" stroke-width="1.6" />
+                    </svg>
+                    Ver todos los productos
+                  </button>
+                  <button type="button" class="catalog-empty__action pos-focus-ring" (click)="focusCatalogCategories()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 6h16M4 12h10M4 18h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                    Explorar categorías
+                  </button>
+                  <button type="button" class="catalog-empty__action pos-focus-ring" (click)="clearCatalogSearch()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 4v5h5M20 20v-5h-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M5.5 18.5A8 8 0 0118.5 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                    Limpiar búsqueda
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="products" [class.products--list]="catalogView() === 'list'">
+                @for (p of pagedProducts(); track p.id) {
+                  <article class="card">
+                    <button type="button" class="card__main pos-focus-ring" [class.card__main--locked]="!desk.cajaOpen()" (click)="addLine(p)">
+                      @if (prefs.showProductImages()) {
+                        <div class="card__thumb">
+                          <img
+                            [src]="productImageUrl(p)"
+                            [alt]="p.name"
+                            loading="lazy"
+                            decoding="async"
+                            (error)="onProductImageError($event)" />
+                        </div>
+                      }
+                      <div class="card__body">
+                        @if (p.categoryName) {
+                          <span class="card__cat">{{ p.categoryName }}</span>
+                        }
+                        <span class="card__tag">{{ p.tag }}</span>
+                        <span class="card__name">{{ p.name }}</span>
+                        <span class="card__sku">{{ p.sku }}</span>
+                        <span class="card__price">{{ catalogDisplayPrice(p) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                      </div>
+                    </button>
+                    <div class="card__foot">
+                      <button
+                        type="button"
+                        class="card__badge card__badge--stock pos-focus-ring"
+                        title="Stock en otras bodegas"
+                        [class.card__badge--locked]="!desk.cajaOpen()"
+                        (click)="openModal('stock', p)">
+                        Stock
+                      </button>
+                      <button
+                        type="button"
+                        class="card__badge card__badge--promo pos-focus-ring"
+                        title="Promociones"
+                        [class.card__badge--locked]="!desk.cajaOpen()"
+                        (click)="openModal('promo', p)">
+                        Promo
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            }
           </div>
           <div class="catalog-pager" role="navigation" aria-label="Paginación del catálogo">
             <button
@@ -1659,6 +1732,7 @@ type ModalState =
     .catalog-search__input::placeholder {
       color: var(--pos-faint);
     }
+    .catalog-search__clear,
     .catalog-search__scan {
       display: grid;
       place-items: center;
@@ -1667,14 +1741,167 @@ type ModalState =
       border: none;
       border-radius: 5px;
       background: transparent;
-      color: var(--lux-indigo);
       cursor: pointer;
       flex-shrink: 0;
       padding: 0;
       transition: background var(--pos-transition);
     }
+    .catalog-search__clear {
+      color: var(--pos-muted);
+    }
+    .catalog-search__clear:hover {
+      background: color-mix(in srgb, var(--pos-muted) 10%, #ffffff);
+      color: var(--pos-text);
+    }
+    .catalog-search__scan {
+      color: var(--lux-indigo);
+    }
     .catalog-search__scan:hover {
       background: color-mix(in srgb, var(--lux-indigo) 8%, #ffffff);
+    }
+    .catalog-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.1rem;
+      min-height: min(28rem, 100%);
+      padding: 2rem 1.25rem 2.5rem;
+      text-align: center;
+    }
+    .catalog-empty__hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.65rem;
+      max-width: 22rem;
+    }
+    .catalog-empty__icon-wrap {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 5.75rem;
+      height: 5.75rem;
+      margin-bottom: 0.35rem;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--lux-indigo) 8%, #ffffff);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--lux-indigo) 12%, #e2e8f0);
+    }
+    html[data-theme='dark'] .catalog-empty__icon-wrap {
+      background: color-mix(in srgb, var(--lux-indigo) 12%, var(--pos-elevated));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--lux-indigo) 20%, var(--pos-border));
+    }
+    .catalog-empty__spark {
+      position: absolute;
+      font-size: 0.72rem;
+      line-height: 1;
+      color: color-mix(in srgb, var(--lux-indigo) 50%, #94a3b8);
+      pointer-events: none;
+    }
+    .catalog-empty__spark--1 {
+      top: 0.65rem;
+      right: 0.75rem;
+    }
+    .catalog-empty__spark--2 {
+      top: 1.35rem;
+      left: 0.55rem;
+      font-size: 1rem;
+    }
+    .catalog-empty__spark--3 {
+      bottom: 0.85rem;
+      right: 0.55rem;
+    }
+    .catalog-empty__icon {
+      display: block;
+    }
+    .catalog-empty__title {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--pos-text);
+    }
+    .catalog-empty__desc {
+      margin: 0;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: var(--pos-muted);
+    }
+    .catalog-empty__term {
+      color: var(--pos-text);
+      font-weight: 700;
+    }
+    .catalog-empty__suggestions {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      width: min(100%, 28rem);
+      color: var(--pos-faint);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .catalog-empty__suggestions::before,
+    .catalog-empty__suggestions::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--pos-border);
+    }
+    .catalog-empty__actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      width: min(100%, 36rem);
+    }
+    .catalog-empty__action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-height: 2.15rem;
+      padding: 0.42rem 0.72rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      background: #ffffff;
+      color: var(--pos-text);
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition:
+        border-color var(--pos-transition),
+        background var(--pos-transition),
+        color var(--pos-transition),
+        box-shadow var(--pos-transition);
+    }
+    html[data-theme='dark'] .catalog-empty__action {
+      background: var(--pos-elevated);
+      border-color: var(--pos-border);
+    }
+    .catalog-empty__action:hover {
+      border-color: color-mix(in srgb, var(--lux-indigo) 32%, #e2e8f0);
+      background: color-mix(in srgb, var(--lux-indigo) 6%, #ffffff);
+      color: var(--lux-primary-deep);
+      box-shadow: 0 6px 18px -14px color-mix(in srgb, var(--lux-indigo) 35%, transparent);
+    }
+    .catalog-empty__action svg {
+      flex-shrink: 0;
+      color: var(--pos-muted);
+    }
+    .catalog-empty__action:hover svg {
+      color: var(--lux-primary-strong);
+    }
+    @media (max-width: 720px) {
+      .catalog-empty__actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .catalog-empty__action {
+        justify-content: center;
+      }
     }
     .catalog-toolbar__row {
       display: flex;
@@ -3542,6 +3769,7 @@ export class PosVentaPage {
   readonly catalogView = signal<'grid' | 'list'>('grid');
 
   private readonly catalogSearchRef = viewChild<ElementRef<HTMLInputElement>>('catalogSearch');
+  private readonly catalogCategoryRef = viewChild<ElementRef<HTMLSelectElement>>('catalogCategory');
   private readonly catalogPanelRef = viewChild<ElementRef<HTMLElement>>('catalogPanel');
   private readonly cartLinesRef = viewChild<ElementRef<HTMLElement>>('cartLines');
 
@@ -3722,6 +3950,10 @@ export class PosVentaPage {
     const start = (page - 1) * this.catalogPageSize;
     return list.slice(start, start + this.catalogPageSize);
   });
+
+  readonly catalogHasActiveFilters = computed(
+    () => !!this.activeCategoryId() || this.activeTag() !== 'Todos',
+  );
 
   readonly lineCount = computed(() => this.cart().reduce((n, l) => n + l.qty, 0));
 
@@ -3906,6 +4138,12 @@ export class PosVentaPage {
 
   onCategoryFilter(ev: Event): void {
     this.activeCategoryId.set((ev.target as HTMLSelectElement).value);
+    this.catalogPage.set(1);
+  }
+
+  setCatalogTag(tag: string): void {
+    this.activeTag.set(tag);
+    this.catalogPage.set(1);
   }
 
   private categoryFilterSet(rootId: string): Set<string> {
@@ -4179,6 +4417,31 @@ export class PosVentaPage {
 
   onCatalogQuery(ev: Event): void {
     this.catalogQuery.set((ev.target as HTMLInputElement).value);
+    this.catalogPage.set(1);
+  }
+
+  clearCatalogSearch(): void {
+    this.catalogQuery.set('');
+    this.catalogPage.set(1);
+    this.focusCatalogSearch();
+  }
+
+  clearCatalogFilters(): void {
+    this.catalogQuery.set('');
+    this.activeCategoryId.set('');
+    this.activeTag.set('Todos');
+    this.catalogPage.set(1);
+    this.focusCatalogSearch();
+  }
+
+  focusCatalogCategories(): void {
+    queueMicrotask(() => {
+      const el = this.catalogCategoryRef()?.nativeElement;
+      if (el) {
+        el.focus({ preventScroll: true });
+        el.click();
+      }
+    });
   }
 
   onCatalogEnter(ev: Event): void {
