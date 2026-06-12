@@ -159,12 +159,22 @@ const COL_LABELS: Record<string, string> = {
       @switch (paso()) {
         @case (1) {
           <section class="pos-mig-panel pos-mig-panel--card">
-            <header class="pos-mig-panel__head">
-              <h2 class="pos-mig-panel__title">
-                <span class="pos-mig-panel__step">1</span>
-                ¿Qué desea migrar?
-              </h2>
-              <p class="pos-mig-panel__hint">Elija el tipo de datos. En el siguiente paso indicará de dónde provienen.</p>
+            <header class="pos-mig-panel__head pos-mig-panel__head--branded">
+              <span class="pos-mig-panel__visual" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="4" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                  <rect x="14" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                  <rect x="4" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                  <rect x="14" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                </svg>
+              </span>
+              <div class="pos-mig-panel__intro">
+                <h2 class="pos-mig-panel__title">
+                  <span class="pos-mig-panel__step">1</span>
+                  ¿Qué desea migrar?
+                </h2>
+                <p class="pos-mig-panel__hint">Elija el tipo de datos. En el siguiente paso indicará de dónde provienen.</p>
+              </div>
             </header>
             <div class="pos-mig-tipo-grid pos-mig-tipo-grid--pick" role="listbox" aria-label="Tipo de migración">
               <button
@@ -235,14 +245,23 @@ const COL_LABELS: Record<string, string> = {
         }
         @case (2) {
           <section class="pos-mig-panel pos-mig-panel--card">
-            <header class="pos-mig-panel__head">
-              <h2 class="pos-mig-panel__title">
-                <span class="pos-mig-panel__step">2</span>
-                Origen de los datos
-              </h2>
-              <p class="pos-mig-panel__hint">
-                Seleccione el sistema del que exportó. Luxora ofrece plantilla lista; otros orígenes usan mapeo automático.
-              </p>
+            <header class="pos-mig-panel__head pos-mig-panel__head--branded">
+              <span class="pos-mig-panel__visual" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <ellipse cx="12" cy="6" rx="7" ry="3" stroke="currentColor" stroke-width="1.6" />
+                  <path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" stroke-width="1.6" />
+                  <path d="M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" stroke="currentColor" stroke-width="1.6" />
+                </svg>
+              </span>
+              <div class="pos-mig-panel__intro">
+                <h2 class="pos-mig-panel__title">
+                  <span class="pos-mig-panel__step">2</span>
+                  Origen de los datos
+                </h2>
+                <p class="pos-mig-panel__hint">
+                  Seleccione el sistema del que exportó. Luxora ofrece plantilla lista; otros orígenes usan mapeo automático.
+                </p>
+              </div>
             </header>
 
             <div class="pos-mig-origen-grid" role="listbox" aria-label="Origen de los datos">
@@ -364,14 +383,23 @@ const COL_LABELS: Record<string, string> = {
         }
         @case (3) {
           <section class="pos-mig-panel pos-mig-panel--card">
-            <header class="pos-mig-panel__head">
-              <h2 class="pos-mig-panel__title">
-                <span class="pos-mig-panel__step">3</span>
-                Subir archivo
-              </h2>
-              <p class="pos-mig-panel__hint">
-                Origen <strong>{{ presetTituloCorto(presetActivo()) }}</strong> · CSV o Excel (.xlsx) · máx. 2.000 filas
-              </p>
+            <header class="pos-mig-panel__head pos-mig-panel__head--branded">
+              <span class="pos-mig-panel__visual" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 16V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                  <path d="M8 11l4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M6 18a6 6 0 0112 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                </svg>
+              </span>
+              <div class="pos-mig-panel__intro">
+                <h2 class="pos-mig-panel__title">
+                  <span class="pos-mig-panel__step">3</span>
+                  Subir archivo
+                </h2>
+                <p class="pos-mig-panel__hint">
+                  Origen <strong>{{ presetTituloCorto(presetActivo()) }}</strong> · CSV o Excel (.xlsx) · máx. 2.000 filas
+                </p>
+              </div>
             </header>
 
             <div class="pos-mig-upload">
@@ -457,12 +485,20 @@ const COL_LABELS: Record<string, string> = {
         }
         @case (4) {
           <section class="pos-mig-panel pos-mig-panel--card">
-            <header class="pos-mig-panel__head">
-              <h2 class="pos-mig-panel__title">
-                <span class="pos-mig-panel__step">4</span>
-                Vista previa y mapeo
-              </h2>
-              <p class="pos-mig-panel__hint">Revise el resumen, ajuste columnas si hace falta y confirme la importación.</p>
+            <header class="pos-mig-panel__head pos-mig-panel__head--branded">
+              <span class="pos-mig-panel__visual" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                  <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <div class="pos-mig-panel__intro">
+                <h2 class="pos-mig-panel__title">
+                  <span class="pos-mig-panel__step">4</span>
+                  Vista previa y mapeo
+                </h2>
+                <p class="pos-mig-panel__hint">Revise el resumen, ajuste columnas si hace falta y confirme la importación.</p>
+              </div>
             </header>
             @if (preview(); as pv) {
               <div class="pos-mig-summary pos-mig-summary--review">
@@ -666,12 +702,23 @@ const COL_LABELS: Record<string, string> = {
         }
         @case (5) {
           <section class="pos-mig-panel pos-mig-panel--card">
-            <header class="pos-mig-panel__head">
-              <h2 class="pos-mig-panel__title">
-                <span class="pos-mig-panel__step">5</span>
-                Importación completada
-              </h2>
-              <p class="pos-mig-panel__hint">Resumen final de la importación y acciones disponibles.</p>
+            <header class="pos-mig-panel__head pos-mig-panel__head--branded">
+              <span class="pos-mig-panel__visual" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 20L12 5l3 15" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                  <path d="M14 8l3-2M16 12l4 1M13 16l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  <circle cx="18.5" cy="6.5" r="1" fill="currentColor" />
+                  <circle cx="20.5" cy="13" r="1" fill="currentColor" />
+                  <circle cx="17" cy="18.5" r="1" fill="currentColor" />
+                </svg>
+              </span>
+              <div class="pos-mig-panel__intro">
+                <h2 class="pos-mig-panel__title">
+                  <span class="pos-mig-panel__step">5</span>
+                  Importación completada
+                </h2>
+                <p class="pos-mig-panel__hint">Resumen final de la importación y acciones disponibles.</p>
+              </div>
             </header>
             @if (result(); as res) {
               @if (res.errores === 0) {

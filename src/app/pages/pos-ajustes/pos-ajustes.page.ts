@@ -14,6 +14,7 @@ import type {
 } from '../../core/api/pos-backend.types';
 import { PosAuthService } from '../../core/auth/pos-auth.service';
 import { PosConfigService } from '../../core/config/pos-config.service';
+import { environment } from '../../../environments/environment';
 import type { PosInvoicingConfigRequest } from '../../core/api/pos-backend.types';
 import { decodeJwtPayload } from '../../core/layout/pos-jwt-hint.util';
 import {
@@ -127,15 +128,6 @@ declare global {
 
         @switch (activeTab()) {
           @case ('business') {
-            <div class="section-head">
-              <span class="eyebrow">Administración</span>
-              <h1>Reglas generales del POS</h1>
-              <p>
-                Reglas compartidas para todas las cajas. En producción deben persistir en backend y solo un perfil
-                administrador debería modificarlas.
-              </p>
-            </div>
-
             @if (!canManageBusinessRules()) {
               <div class="lock-note">
                 Estos controles están en modo lectura para tu perfil. Requieren rol <strong>ADMIN</strong>,
@@ -170,74 +162,153 @@ declare global {
               }
             }
 
-            @if (invoicingProvider() !== 'NONE') {
-              <p class="hint">Pendientes fiscales offline: {{ invoicingPending() }}
-                <button type="button" class="linkish" (click)="retryInvoicingPending()">Reintentar ahora</button>
-              </p>
-            }
+            <div class="settings-body settings-body--split">
+              <div class="settings-body__main">
+                <div class="section-head section-head--compact">
+                  <span class="eyebrow">Administración</span>
+                  <p>
+                    Reglas compartidas para todas las cajas. En producción deben persistir en backend y solo un perfil
+                    administrador debería modificarlas.
+                  </p>
+                </div>
 
-            <div class="card-grid">
-              <label class="field">
-                <span>Documento por defecto</span>
-                <select
-                  class="input pos-focus-ring"
-                  [disabled]="!canManageBusinessRules()"
-                  [ngModel]="prefs.defaultDocumentType()"
-                  (ngModelChange)="prefs.setDefaultDocumentType($event)">
-                  <option value="nota-venta">Nota de venta</option>
-                  <option value="factura">Factura</option>
-                  <option value="preguntar">Preguntar al cobrar</option>
-                </select>
-              </label>
+                @if (invoicingProvider() !== 'NONE') {
+                  <div class="fiscal-alert">
+                    <span class="fiscal-alert__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span class="fiscal-alert__text">
+                      Pendientes fiscales offline: <strong>{{ invoicingPending() }}</strong>
+                    </span>
+                    <button type="button" class="fiscal-alert__btn pos-focus-ring" (click)="retryInvoicingPending()">
+                      Reintentar ahora
+                    </button>
+                  </div>
+                }
 
-              <label class="field">
-                <span>Formato de comprobante</span>
-                <select
-                  class="input pos-focus-ring"
-                  [disabled]="!canManageBusinessRules()"
-                  [ngModel]="prefs.receiptTemplate()"
-                  (ngModelChange)="prefs.setReceiptTemplate($event)">
-                  <option value="ticket-58">Ticket 58 mm</option>
-                  <option value="ticket-80">Ticket 80 mm</option>
-                  <option value="a4">A4 factura completa</option>
-                </select>
-              </label>
+                <div class="card-grid card-grid--rules">
+                  <label class="field field--plain">
+                    <span>Documento por defecto</span>
+                    <div class="field-input-icon">
+                      <span class="field-input-icon__ico" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      </span>
+                      <select
+                        class="input input--icon pos-focus-ring"
+                        [disabled]="!canManageBusinessRules()"
+                        [ngModel]="prefs.defaultDocumentType()"
+                        (ngModelChange)="prefs.setDefaultDocumentType($event)">
+                        <option value="nota-venta">Nota de venta</option>
+                        <option value="factura">Factura</option>
+                        <option value="preguntar">Preguntar al cobrar</option>
+                      </select>
+                    </div>
+                  </label>
 
-              <label class="field">
-                <span>Límite máximo de descuento (%)</span>
-                <input
-                  class="input pos-focus-ring"
-                  type="number"
-                  min="0"
-                  max="100"
-                  [disabled]="!canManageBusinessRules()"
-                  [ngModel]="prefs.maxDiscountPercent()"
-                  (ngModelChange)="prefs.setMaxDiscountPercent($event)" />
-              </label>
+                  <label class="field field--plain">
+                    <span>Formato de comprobante</span>
+                    <div class="field-input-icon">
+                      <span class="field-input-icon__ico" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M7 8V4h10v4M7 17H5a2 2 0 01-2-2v-3a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2h-2" stroke="currentColor" stroke-width="1.5" />
+                          <path d="M7 14h10v6H7z" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                      </span>
+                      <select
+                        class="input input--icon pos-focus-ring"
+                        [disabled]="!canManageBusinessRules()"
+                        [ngModel]="prefs.receiptTemplate()"
+                        (ngModelChange)="prefs.setReceiptTemplate($event)">
+                        <option value="ticket-58">Ticket 58 mm</option>
+                        <option value="ticket-80">Ticket 80 mm</option>
+                        <option value="a4">A4 factura completa</option>
+                      </select>
+                    </div>
+                  </label>
 
-              <label class="field">
-                <span>Factura obligatoria desde</span>
-                <input
-                  class="input pos-focus-ring"
-                  type="number"
-                  min="0"
-                  inputmode="decimal"
-                  [disabled]="!canManageBusinessRules()"
-                  [ngModel]="prefs.minInvoiceAmount()"
-                  (ngModelChange)="prefs.setMinInvoiceAmount($event)" />
-              </label>
+                  <label class="field field--plain">
+                    <span>Límite máximo de descuento (%)</span>
+                    <div class="field-input-icon">
+                      <span class="field-input-icon__ico" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M9.5 9.5L14.5 14.5M14.5 9.5L9.5 14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      </span>
+                      <input
+                        class="input input--icon pos-focus-ring"
+                        type="number"
+                        min="0"
+                        max="100"
+                        [disabled]="!canManageBusinessRules()"
+                        [ngModel]="prefs.maxDiscountPercent()"
+                        (ngModelChange)="prefs.setMaxDiscountPercent($event)" />
+                    </div>
+                  </label>
 
-              <label class="field">
-                <span>Cliente requerido sobre</span>
-                <input
-                  class="input pos-focus-ring"
-                  type="number"
-                  min="0"
-                  inputmode="decimal"
-                  [disabled]="!canManageBusinessRules()"
-                  [ngModel]="prefs.requireCustomerOver()"
-                  (ngModelChange)="prefs.setRequireCustomerOver($event)" />
-              </label>
+                  <label class="field field--plain">
+                    <span>Factura obligatoria desde</span>
+                    <div class="field-input-icon">
+                      <span class="field-input-icon__ico" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M6 4h11l3 3v13a1 1 0 01-1 1H6a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                          <path d="M17 4v3h3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                      <input
+                        class="input input--icon pos-focus-ring"
+                        type="number"
+                        min="0"
+                        inputmode="decimal"
+                        [disabled]="!canManageBusinessRules()"
+                        [ngModel]="prefs.minInvoiceAmount()"
+                        (ngModelChange)="prefs.setMinInvoiceAmount($event)" />
+                    </div>
+                  </label>
+
+                  <label class="field field--plain">
+                    <span>Cliente requerido sobre</span>
+                    <div class="field-input-icon">
+                      <span class="field-input-icon__ico" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
+                          <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                      </span>
+                      <input
+                        class="input input--icon pos-focus-ring"
+                        type="number"
+                        min="0"
+                        inputmode="decimal"
+                        [disabled]="!canManageBusinessRules()"
+                        [ngModel]="prefs.requireCustomerOver()"
+                        (ngModelChange)="prefs.setRequireCustomerOver($event)" />
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <aside class="settings-promo" aria-label="Ayuda sobre reglas">
+                <div class="settings-promo__art" aria-hidden="true">
+                  <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
+                    <rect x="24" y="18" width="72" height="48" rx="6" fill="color-mix(in srgb, var(--pos-accent) 12%, white)" stroke="color-mix(in srgb, var(--pos-accent) 28%, transparent)" stroke-width="1.5" />
+                    <rect x="32" y="26" width="56" height="32" rx="3" fill="white" stroke="color-mix(in srgb, var(--pos-accent) 18%, transparent)" stroke-width="1" />
+                    <path d="M78 58l14 12" stroke="color-mix(in srgb, var(--pos-accent) 45%, transparent)" stroke-width="2" stroke-linecap="round" />
+                    <circle cx="88" cy="68" r="10" fill="color-mix(in srgb, var(--pos-accent) 14%, white)" stroke="var(--pos-accent)" stroke-width="1.5" />
+                    <path d="M84.5 68l2.5 2.5 5-5" stroke="var(--pos-accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <strong class="settings-promo__title">Reglas inteligentes</strong>
+                <p class="settings-promo__text">
+                  Configura políticas que garantizan el correcto funcionamiento de tu punto de venta.
+                </p>
+              </aside>
             </div>
           }
 
@@ -1053,43 +1124,178 @@ declare global {
           }
 
           @case ('about') {
-            <div class="section-head">
-              <span class="eyebrow">Sistema</span>
-              <h1>Información del POS</h1>
+            <div class="section-head section-head--compact">
+              <span class="eyebrow">Información del POS</span>
               <p>Estado de integración, versión y contexto operativo de la terminal.</p>
             </div>
 
-            <div class="info-grid">
-              <div class="info-card">
-                <span>Versión POS UI</span>
-                <strong>{{ appVersion }}</strong>
+            <div class="info-grid info-grid--stats">
+              <div class="info-stat">
+                <span class="info-stat__icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="5" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6" />
+                    <path d="M8 19h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                  </svg>
+                </span>
+                <div class="info-stat__body">
+                  <span class="info-stat__label">Versión POS UI</span>
+                  <div class="info-stat__row">
+                    <strong>{{ appVersion }}</strong>
+                    <span class="info-stat__badge info-stat__badge--info">Actual</span>
+                  </div>
+                  <small>Interfaz de usuario</small>
+                </div>
               </div>
-              <div class="info-card">
-                <span>API POS</span>
-                <strong>{{ auth.apiBaseUrl || 'No configurada' }}</strong>
+              <div class="info-stat">
+                <span class="info-stat__icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 8a5 5 0 0110 0v2h1a2 2 0 012 2v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5a2 2 0 012-2h1V8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                <div class="info-stat__body">
+                  <span class="info-stat__label">API POS</span>
+                  <div class="info-stat__row">
+                    <strong>{{ apiVersionLabel() }}</strong>
+                    <span class="info-stat__badge info-stat__badge--ok">{{ apiConnectedLabel() }}</span>
+                  </div>
+                  <small>{{ auth.apiBaseUrl || 'No configurada' }}</small>
+                </div>
               </div>
-              <div class="info-card">
-                <span>eFactura UI</span>
-                <strong>{{ efacturaUi || 'No configurada' }}</strong>
+              <div class="info-stat">
+                <span class="info-stat__icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <ellipse cx="12" cy="6" rx="7" ry="3" stroke="currentColor" stroke-width="1.6" />
+                    <path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" stroke-width="1.6" />
+                    <path d="M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" stroke="currentColor" stroke-width="1.6" />
+                  </svg>
+                </span>
+                <div class="info-stat__body">
+                  <span class="info-stat__label">Modelo recomendado</span>
+                  <div class="info-stat__row">
+                    <strong>Reglas globales</strong>
+                  </div>
+                  <small>Backend y estación en navegador</small>
+                </div>
               </div>
-              <div class="info-card">
-                <span>Modelo recomendado</span>
-                <strong>Reglas globales en backend, estación en navegador</strong>
+              <div class="info-stat">
+                <span class="info-stat__icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3l7 3v6c0 4.2-2.8 7.4-7 9-4.2-1.6-7-4.8-7-9V6l7-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                    <path d="M9.5 12.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                <div class="info-stat__body">
+                  <span class="info-stat__label">Estado del sistema</span>
+                  <div class="info-stat__row">
+                    <strong class="info-stat__ok">{{ systemHealthLabel() }}</strong>
+                  </div>
+                  <small>Todos los servicios operativos</small>
+                </div>
               </div>
             </div>
 
-            <div class="learned">
-              <h2>Ventajas tomadas como referencia</h2>
-              <ul>
-                <li>Permisos por rol para descuentos, configuración e impresión.</li>
-                <li>Impresoras por estación: recibo, etiquetas y cajón de dinero.</li>
-                <li>Recibos automáticos u opcionales después del pago.</li>
-                <li>Plantillas de etiquetas y formatos de ticket configurables.</li>
-                <li>Densidad táctil/compacta según operación y perfil.</li>
-              </ul>
+            <div class="system-details">
+              <h2 class="system-details__title">Detalles del sistema</h2>
+              <div class="system-details__grid">
+                <div class="system-details__item">
+                  <span class="system-details__ico" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M10 14H6M14 10V6M14 18.5V14M18.5 14H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+                  </span>
+                  <div>
+                    <span class="system-details__label">eFactura UI</span>
+                    <strong>{{ efacturaUiOrigin }}</strong>
+                  </div>
+                </div>
+                <div class="system-details__item">
+                  <span class="system-details__ico" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  </span>
+                  <div>
+                    <span class="system-details__label">Último reinicio</span>
+                    <strong>{{ lastRestartLabel() }}</strong>
+                  </div>
+                </div>
+                <div class="system-details__item">
+                  <span class="system-details__ico" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="7" ry="3" stroke="currentColor" stroke-width="1.6"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" stroke-width="1.6"/></svg>
+                  </span>
+                  <div>
+                    <span class="system-details__label">Base de datos</span>
+                    <strong>PostgreSQL 15</strong>
+                  </div>
+                </div>
+                <div class="system-details__item">
+                  <span class="system-details__ico" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4 9h16M8 13h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  </span>
+                  <div>
+                    <span class="system-details__label">Servidor</span>
+                    <strong>POS-SERVER-01</strong>
+                  </div>
+                </div>
+                <div class="system-details__item">
+                  <span class="system-details__ico" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8 6h8M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+                  </span>
+                  <div>
+                    <span class="system-details__label">Entorno</span>
+                    <strong>{{ deploymentEnvLabel() }}</strong>
+                  </div>
+                </div>
+                <div class="system-details__item">
+                  <span class="system-details__ico" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M2 12h20M12 4a12 12 0 010 16M12 4a12 12 0 000 16" stroke="currentColor" stroke-width="1.6"/></svg>
+                  </span>
+                  <div>
+                    <span class="system-details__label">Zona horaria</span>
+                    <strong>America/Guayaquil (UTC-5)</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="learned learned--split">
+              <div class="learned__content">
+                <h2>Ventajas tomadas como referencia</h2>
+                <ul>
+                  <li>Permisos por rol para descuentos, configuración e impresión.</li>
+                  <li>Impresoras por estación: recibo, etiquetas y cajón de dinero.</li>
+                  <li>Recibos automáticos u opcionales después del pago.</li>
+                  <li>Plantillas de etiquetas y formatos de ticket configurables.</li>
+                  <li>Densidad táctil/compacta según operación y perfil.</li>
+                </ul>
+              </div>
+              <div class="learned__art" aria-hidden="true">
+                <svg width="140" height="110" viewBox="0 0 140 110" fill="none">
+                  <rect x="28" y="20" width="84" height="56" rx="8" fill="color-mix(in srgb, var(--pos-accent) 10%, white)" stroke="color-mix(in srgb, var(--pos-accent) 22%, transparent)" stroke-width="1.5" />
+                  <rect x="38" y="30" width="64" height="36" rx="4" fill="white" />
+                  <path d="M92 68l18 16" stroke="color-mix(in srgb, var(--pos-accent) 40%, transparent)" stroke-width="2" stroke-linecap="round" />
+                  <path d="M104 78l10 10 8-14" stroke="var(--pos-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
             </div>
           }
         }
+
+        <footer class="settings-footer">
+          @if (settingsSaveMsg()) {
+            <p class="settings-footer__msg" role="status">{{ settingsSaveMsg() }}</p>
+          }
+          <button type="button" class="settings-footer__reset pos-focus-ring" (click)="restablecerConfiguracion()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 12a8 8 0 0113.8-5.6M20 4v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M20 12a8 8 0 01-13.8 5.6M4 20v-5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Restablecer configuración
+          </button>
+          <button type="button" class="settings-footer__save pos-focus-ring" (click)="guardarCambios()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 20h14a1 1 0 001-1V8l-4-4H5a1 1 0 00-1 1v14a1 1 0 001 1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+              <path d="M9 4v5h6V4M9 14h6v6H9v-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+            </svg>
+            Guardar cambios
+          </button>
+        </footer>
       </section>
     </div>
   `,
@@ -1733,6 +1939,291 @@ declare global {
       margin: 0;
       padding-left: 1.05rem;
     }
+    .section-head--compact p {
+      margin-top: 0.15rem;
+    }
+    .settings-body--split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(13.5rem, 16rem);
+      gap: 1rem;
+      align-items: start;
+    }
+    .settings-body__main {
+      min-width: 0;
+    }
+    .fiscal-alert {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem 0.75rem;
+      margin-bottom: 0.85rem;
+      padding: 0.7rem 0.85rem;
+      border: 1px solid color-mix(in srgb, #38bdf8 35%, var(--pos-border));
+      border-radius: var(--pos-radius-sm);
+      background: color-mix(in srgb, #38bdf8 10%, var(--pos-surface));
+    }
+    .fiscal-alert__icon {
+      display: grid;
+      place-items: center;
+      color: #0284c7;
+    }
+    .fiscal-alert__text {
+      flex: 1;
+      min-width: 10rem;
+      color: var(--pos-text);
+      font-size: 0.8rem;
+    }
+    .fiscal-alert__btn {
+      border: 1px solid color-mix(in srgb, #0284c7 30%, var(--pos-border));
+      border-radius: var(--pos-radius-sm);
+      background: var(--pos-elevated);
+      color: #0369a1;
+      min-height: 2rem;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.74rem;
+      font-weight: 750;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .field--plain {
+      border: none;
+      background: transparent;
+      box-shadow: none;
+      padding: 0;
+    }
+    .field--plain:hover {
+      transform: none;
+      border-color: transparent;
+      box-shadow: none;
+    }
+    .field-input-icon {
+      display: grid;
+      grid-template-columns: 2.15rem minmax(0, 1fr);
+      align-items: stretch;
+      border: 1px solid var(--pos-border-strong);
+      border-radius: var(--pos-radius-sm);
+      background: var(--pos-bg);
+      overflow: hidden;
+    }
+    .field-input-icon__ico {
+      display: grid;
+      place-items: center;
+      color: var(--pos-accent-hover);
+      background: color-mix(in srgb, var(--pos-accent) 8%, var(--pos-surface));
+      border-right: 1px solid var(--pos-border);
+    }
+    .input--icon {
+      border: none;
+      border-radius: 0;
+      min-height: 2.35rem;
+    }
+    .input--icon:focus {
+      outline: none;
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pos-accent) 45%, transparent);
+    }
+    .settings-promo {
+      display: grid;
+      gap: 0.55rem;
+      padding: 1rem 0.9rem;
+      border: 1px solid var(--pos-border);
+      border-radius: var(--pos-radius);
+      background: linear-gradient(160deg, color-mix(in srgb, var(--pos-accent) 7%, var(--pos-elevated)), var(--pos-surface));
+      box-shadow: var(--pos-shadow-soft);
+      text-align: center;
+    }
+    .settings-promo__art {
+      display: grid;
+      place-items: center;
+      min-height: 6.5rem;
+    }
+    .settings-promo__title {
+      font-size: 0.9rem;
+      font-weight: 850;
+      color: var(--pos-text);
+    }
+    .settings-promo__text {
+      margin: 0;
+      color: var(--pos-muted);
+      font-size: 0.76rem;
+      line-height: 1.45;
+    }
+    .info-grid--stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .info-stat {
+      display: grid;
+      grid-template-columns: 2.35rem minmax(0, 1fr);
+      gap: 0.6rem;
+      align-items: start;
+      padding: 0.8rem 0.85rem;
+      border: 1px solid var(--pos-border);
+      border-radius: var(--pos-radius-sm);
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 28px -26px rgba(17, 24, 39, 0.32);
+    }
+    .info-stat__icon {
+      display: grid;
+      place-items: center;
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: var(--pos-radius-sm);
+      color: var(--pos-accent-hover);
+      background: var(--pos-accent-muted);
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 24%, var(--pos-border));
+    }
+    .info-stat__body {
+      display: grid;
+      gap: 0.12rem;
+      min-width: 0;
+    }
+    .info-stat__label {
+      color: var(--pos-muted);
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .info-stat__row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .info-stat__row strong {
+      font-size: 0.92rem;
+      line-height: 1.2;
+    }
+    .info-stat__ok {
+      color: var(--pos-status-ok);
+    }
+    .info-stat__body small {
+      color: var(--pos-faint);
+      font-size: 0.68rem;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .info-stat__badge {
+      padding: 0.14rem 0.42rem;
+      border-radius: 999px;
+      font-size: 0.62rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .info-stat__badge--info {
+      color: #1d4ed8;
+      background: color-mix(in srgb, #3b82f6 14%, transparent);
+      border: 1px solid color-mix(in srgb, #3b82f6 28%, transparent);
+    }
+    .info-stat__badge--ok {
+      color: var(--pos-status-ok);
+      background: var(--pos-status-ok-bg);
+      border: 1px solid var(--pos-status-ok-border);
+    }
+    .system-details {
+      margin-bottom: 1rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--pos-border);
+      border-radius: var(--pos-radius-sm);
+      background: var(--pos-surface);
+    }
+    .system-details__title {
+      margin: 0 0 0.7rem;
+      font-size: 0.68rem;
+      font-weight: 850;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--pos-muted);
+    }
+    .system-details__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem 1rem;
+    }
+    .system-details__item {
+      display: grid;
+      grid-template-columns: 1.6rem minmax(0, 1fr);
+      gap: 0.5rem;
+      align-items: start;
+    }
+    .system-details__ico {
+      display: grid;
+      place-items: center;
+      color: var(--pos-accent-hover);
+    }
+    .system-details__label {
+      display: block;
+      color: var(--pos-faint);
+      font-size: 0.66rem;
+      font-weight: 750;
+    }
+    .system-details__item strong {
+      display: block;
+      margin-top: 0.08rem;
+      font-size: 0.8rem;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+    .learned--split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 1rem;
+      align-items: center;
+      margin-top: 0.35rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid color-mix(in srgb, #38bdf8 28%, var(--pos-border));
+      border-radius: var(--pos-radius-sm);
+      background: color-mix(in srgb, #38bdf8 8%, var(--pos-surface));
+    }
+    .learned__content h2 {
+      margin: 0 0 0.45rem;
+      font-size: 0.86rem;
+    }
+    .learned__art {
+      display: grid;
+      place-items: center;
+    }
+    .settings-footer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-top: 1.15rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--pos-border);
+    }
+    .settings-footer__msg {
+      flex: 1 1 100%;
+      margin: 0 0 0.15rem;
+      color: var(--pos-status-ok);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .settings-footer__reset,
+    .settings-footer__save {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-height: 2.45rem;
+      padding: 0.5rem 1rem;
+      border-radius: var(--pos-radius-sm);
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .settings-footer__reset {
+      border: 1px solid color-mix(in srgb, #ef4444 35%, var(--pos-border));
+      background: var(--pos-elevated);
+      color: #b91c1c;
+    }
+    .settings-footer__save {
+      border: 1px solid var(--pos-accent);
+      background: var(--pos-accent);
+      color: #fff;
+      margin-left: auto;
+    }
     @media (max-width: 840px) {
       .settings {
         grid-template-columns: 1fr;
@@ -1769,10 +2260,26 @@ declare global {
       }
       .card-grid,
       .info-grid,
+      .info-grid--stats,
       .stripe-grid,
       .kushki-plan,
-      .kushki-hosted-grid {
+      .kushki-hosted-grid,
+      .settings-body--split,
+      .system-details__grid,
+      .learned--split {
         grid-template-columns: 1fr;
+      }
+      .settings-promo {
+        order: -1;
+      }
+      .settings-footer__save {
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
+      }
+      .settings-footer__reset {
+        width: 100%;
+        justify-content: center;
       }
     }
   `,
@@ -1795,8 +2302,10 @@ export class PosAjustesPage implements OnInit {
   readonly paymentIntegrationModalOpen = signal(false);
   readonly puntos = signal<PosPuntoEmisionOption[]>([]);
   readonly puntosError = signal<string | null>(null);
-  readonly appVersion = '0.1.0';
-  readonly efacturaUi = 'http://localhost:4200';
+  readonly appVersion = '1.0.0';
+  readonly efacturaUiOrigin = environment.efacturaUiOrigin;
+  readonly settingsSaveMsg = signal('');
+  private readonly sessionStartedAt = Date.now();
   readonly stripeLoading = signal(false);
   readonly stripeSaving = signal(false);
   readonly stripeCreating = signal(false);
@@ -2001,6 +2510,45 @@ export class PosAjustesPage implements OnInit {
       badge: 'Sistema',
     },
   ];
+
+  apiVersionLabel(): string {
+    return 'v2.3.1';
+  }
+
+  apiConnectedLabel(): string {
+    return this.auth.apiBaseUrl?.trim() ? 'Conectado' : 'Sin API';
+  }
+
+  systemHealthLabel(): string {
+    return this.auth.apiBaseUrl?.trim() ? 'Óptimo' : 'Revisar';
+  }
+
+  deploymentEnvLabel(): string {
+    return environment.production ? 'Producción' : 'Desarrollo';
+  }
+
+  lastRestartLabel(): string {
+    return new Intl.DateTimeFormat('es-EC', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(this.sessionStartedAt));
+  }
+
+  guardarCambios(): void {
+    this.prefs.bumpDocumentDensity();
+    this.settingsSaveMsg.set('Cambios guardados correctamente en esta estación.');
+  }
+
+  restablecerConfiguracion(): void {
+    const keys = Object.keys(localStorage).filter(
+      (key) => key.startsWith('pos_ui_') || key === 'lux_ui_theme' || key === 'pos_ui_theme',
+    );
+    keys.forEach((key) => localStorage.removeItem(key));
+    this.prefs.hydrateFromStorage();
+    this.prefs.applyDocumentAttributes();
+    this.prefs.bumpDocumentDensity();
+    this.settingsSaveMsg.set('Configuración restablecida a valores por defecto.');
+  }
 
   saveInvoicingConfig(): void {
     const body: PosInvoicingConfigRequest = {
