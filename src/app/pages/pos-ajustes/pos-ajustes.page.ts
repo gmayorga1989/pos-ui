@@ -423,19 +423,21 @@ declare global {
                 </div>
               </article>
 
-              <article class="station-card station-card--efactura">
-                <header class="station-card__head">
-                  <span class="station-card__icon station-card__icon--amber" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
-                    </svg>
-                  </span>
-                  <span class="station-card__titles station-card__titles--inline">
-                    <strong>Integración eFactura</strong>
-                    <span class="station-card__badge" [class.station-card__badge--ok]="efacturaIntegrationReady()">
-                      {{ efacturaIntegrationReady() ? 'Lista' : 'Pendiente' }}
+              <article
+                class="station-card station-card--efactura"
+                [class.station-card--efactura-pending]="!efacturaIntegrationReady()">
+                <header class="station-card__head station-card__head--efactura">
+                  <span class="station-card__head-main">
+                    <span class="station-card__icon station-card__icon--amber" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 4.5L19.5 18H4.5L12 4.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                        <path d="M12 9.5v4M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                      </svg>
                     </span>
+                    <strong class="station-card__title-plain">Integración eFactura</strong>
+                  </span>
+                  <span class="station-card__badge" [class.station-card__badge--ok]="efacturaIntegrationReady()">
+                    {{ efacturaIntegrationReady() ? 'Lista' : 'Pendiente' }}
                   </span>
                 </header>
                 <div class="station-card__body station-card__body--center">
@@ -443,7 +445,7 @@ declare global {
                     <p class="station-card__copy">Punto de emisión disponible para operación fiscal en esta estación.</p>
                   } @else {
                     <p class="station-card__copy">
-                      No hay puntos de emisión cargados. Configure sucursal y emisión local o conecte eFactura.
+                      No se encontraron puntos de emisión configurados para esta estación.
                     </p>
                     <button type="button" class="station-card__cta pos-focus-ring" (click)="openBusinessTab()">
                       Configurar ahora
@@ -461,10 +463,9 @@ declare global {
                   </span>
                   <span class="station-card__titles">
                     <strong>Experiencia de venta</strong>
-                    <small>Comportamiento del flujo de cobro</small>
                   </span>
                 </header>
-                <div class="station-card__body">
+                <div class="station-card__body station-card__body--compact">
                   <div class="station-toggle-row">
                     <span class="station-toggle-row__copy">
                       <strong>Sonido al agregar productos</strong>
@@ -513,8 +514,8 @@ declare global {
                     <span class="station-card__icon station-card__icon--purple" aria-hidden="true">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
-                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6" />
-                        <path d="M12 4v2M12 18v2M4 12h2M18 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6" />
+                        <circle cx="12" cy="12" r="1.2" fill="currentColor" />
                       </svg>
                     </span>
                     <span class="station-card__titles">
@@ -546,7 +547,8 @@ declare global {
                 <header class="station-card__head">
                   <span class="station-card__icon station-card__icon--green" aria-hidden="true">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 3v18M8.5 7.5C8.5 5.8 10 4.5 12 4.5s3.5 1.3 3.5 3c0 2.2-3.5 2.5-3.5 5M12 17.5h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M12 7.5v8M9.5 10.5c0-1.2 1.1-2 2.5-2s2.5.8 2.5 2c0 1.6-2.5 1.8-2.5 3.2M12 16.8h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     </svg>
                   </span>
                   <span class="station-card__titles">
@@ -1489,7 +1491,7 @@ declare global {
             <span>
               <strong>Restablecer configuración</strong>
               @if (activeTab() === 'station') {
-                <small>Volver a valores por defecto</small>
+                <small>Se perderán los cambios no guardados</small>
               }
             </span>
           </button>
@@ -1499,7 +1501,10 @@ declare global {
                 <path d="M4 12a8 8 0 0113.8-5.6M20 4v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
                 <path d="M20 12a8 8 0 01-13.8 5.6M4 20v-5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              Tienes cambios sin guardar
+              <span>
+                <strong>Tienes cambios sin guardar</strong>
+                <small>Recuerda guardar para aplicar tu configuración.</small>
+              </span>
             </p>
           }
           <button
@@ -1692,39 +1697,48 @@ declare global {
       white-space: nowrap;
     }
     .station-hero {
+      position: relative;
       display: flex;
-      align-items: stretch;
+      align-items: flex-end;
       justify-content: space-between;
-      gap: 1rem;
+      gap: 1.25rem;
       margin-bottom: 0.9rem;
-      padding: 1rem 1.1rem;
+      padding: 1.2rem 1.15rem 0.65rem;
       border: 1px solid var(--pos-border);
       border-radius: 5px;
       background: linear-gradient(135deg, var(--pos-elevated), var(--pos-surface-2));
       box-shadow: var(--pos-shadow-soft);
+      overflow: hidden;
+      min-height: 9.25rem;
     }
     .station-hero__copy {
       flex: 1;
       min-width: 0;
+      align-self: flex-start;
+      padding-bottom: 0.55rem;
+    }
+    .station-hero .eyebrow {
+      margin-bottom: 0.35rem;
     }
     .station-hero h1 {
-      margin: 0;
-      font-size: 1.24rem;
+      margin: 0.2rem 0 0;
+      font-size: 1.38rem;
       font-weight: 900;
-      line-height: 1.15;
+      line-height: 1.28;
+      letter-spacing: -0.015em;
     }
     .station-hero p {
-      margin: 0.35rem 0 0;
-      max-width: 36rem;
+      margin: 0.55rem 0 0;
+      max-width: 34rem;
       color: var(--pos-muted);
-      font-size: 0.82rem;
-      line-height: 1.45;
+      font-size: 0.84rem;
+      line-height: 1.55;
     }
     .station-hero__status {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.45rem;
-      margin-top: 0.7rem;
+      gap: 0.5rem;
+      margin-top: 0.95rem;
     }
     .station-pill {
       display: inline-flex;
@@ -1753,17 +1767,21 @@ declare global {
       color: var(--pos-muted);
     }
     .station-hero__art {
-      flex: 0 0 min(42%, 15.5rem);
+      flex: 0 0 min(46%, 20rem);
       display: flex;
-      align-items: center;
-      justify-content: center;
+      align-items: flex-end;
+      justify-content: flex-end;
+      margin-right: -0.35rem;
+      margin-bottom: -1.65rem;
+      pointer-events: none;
     }
     .station-hero__img {
       display: block;
-      width: 100%;
-      max-width: 15.5rem;
+      width: 118%;
+      max-width: 21rem;
       height: auto;
       object-fit: contain;
+      object-position: right bottom;
     }
     .station-board {
       display: grid;
@@ -1790,6 +1808,10 @@ declare global {
       grid-column: 2;
       grid-row: 1;
     }
+    .station-card--efactura-pending {
+      background: linear-gradient(180deg, #fffbeb 0%, #fef8ee 100%);
+      border-color: color-mix(in srgb, #fbbf24 28%, var(--pos-border));
+    }
     .station-card--experience {
       grid-column: 3;
       grid-row: 1 / span 2;
@@ -1807,8 +1829,15 @@ declare global {
       align-items: center;
       gap: 0.6rem;
     }
-    .station-card__head--split {
+    .station-card__head--split,
+    .station-card__head--efactura {
       justify-content: space-between;
+    }
+    .station-card__title-plain {
+      font-size: 0.84rem;
+      font-weight: 850;
+      color: var(--pos-text);
+      line-height: 1.2;
     }
     .station-card__head-main {
       display: flex;
@@ -1862,14 +1891,13 @@ declare global {
       line-height: 1.3;
     }
     .station-card__badge {
-      justify-self: start;
-      margin-top: 0.12rem;
-      padding: 0.14rem 0.42rem;
+      flex-shrink: 0;
+      padding: 0.18rem 0.48rem;
       border-radius: 999px;
-      border: 1px solid color-mix(in srgb, #f59e0b 30%, var(--pos-border));
-      background: color-mix(in srgb, #f59e0b 12%, var(--pos-elevated));
-      color: #b45309;
-      font-size: 0.62rem;
+      border: 1px solid color-mix(in srgb, #f59e0b 34%, var(--pos-border));
+      background: color-mix(in srgb, #f59e0b 16%, #fff);
+      color: #c2410c;
+      font-size: 0.64rem;
       font-weight: 850;
     }
     .station-card__badge--ok {
@@ -1887,6 +1915,19 @@ declare global {
       text-align: center;
       min-height: 6.5rem;
     }
+    .station-card__body--compact {
+      gap: 0.15rem;
+    }
+    .station-card--experience .station-toggle-row {
+      padding: 0.3rem 0;
+    }
+    .station-card--experience .station-toggle-row__copy {
+      gap: 0.06rem;
+    }
+    .station-card--experience .station-toggle-row__copy small {
+      font-size: 0.66rem;
+      line-height: 1.28;
+    }
     .station-card__copy {
       margin: 0;
       color: var(--pos-muted);
@@ -1894,16 +1935,21 @@ declare global {
       line-height: 1.45;
     }
     .station-card__cta {
-      justify-self: center;
-      margin-top: 0.15rem;
-      padding: 0.42rem 0.85rem;
-      border: 1px solid color-mix(in srgb, #f59e0b 40%, var(--pos-border));
+      width: 100%;
+      margin-top: 0.35rem;
+      padding: 0.5rem 0.85rem;
+      border: 1px solid color-mix(in srgb, #f59e0b 55%, #fcd34d);
       border-radius: 5px;
-      background: var(--pos-elevated);
-      color: #b45309;
-      font-size: 0.74rem;
+      background: #fff;
+      color: #ea580c;
+      font-size: 0.76rem;
       font-weight: 800;
       cursor: pointer;
+      box-shadow: 0 1px 0 color-mix(in srgb, #f59e0b 12%, transparent);
+    }
+    .station-card--efactura-pending .station-card__cta:hover {
+      background: #fffdf8;
+      border-color: #f59e0b;
     }
     .station-field {
       display: grid;
@@ -1942,8 +1988,8 @@ declare global {
       align-items: center;
       justify-content: space-between;
       gap: 0.65rem;
-      padding: 0.55rem 0;
-      border-top: 1px solid color-mix(in srgb, var(--pos-border) 80%, transparent);
+      padding: 0.42rem 0;
+      border-top: 1px solid color-mix(in srgb, var(--pos-border) 70%, transparent);
     }
     .station-card__body > .station-toggle-row:first-child {
       border-top: none;
@@ -2009,15 +2055,20 @@ declare global {
     .station-chip {
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
-      width: fit-content;
-      padding: 0.3rem 0.55rem;
-      border-radius: 999px;
-      border: 1px solid color-mix(in srgb, var(--pos-accent) 24%, var(--pos-border));
-      background: color-mix(in srgb, var(--pos-accent) 9%, var(--pos-elevated));
+      justify-content: center;
+      gap: 0.38rem;
+      width: 100%;
+      margin-top: 0.2rem;
+      padding: 0.42rem 0.65rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 28%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent) 12%, var(--pos-elevated));
       color: var(--pos-accent-hover);
-      font-size: 0.68rem;
-      font-weight: 800;
+      font-size: 0.7rem;
+      font-weight: 850;
+    }
+    .station-card--upsell .station-card__body {
+      gap: 0.42rem;
     }
     .section-head {
       margin-bottom: 0.75rem;
@@ -2946,16 +2997,37 @@ declare global {
     .settings-footer__pending {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 0.35rem;
+      justify-content: flex-start;
+      gap: 0.5rem;
       margin: 0;
+      padding: 0.55rem 0.8rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-accent) 5%, var(--pos-bg));
       color: var(--pos-muted);
       font-size: 0.76rem;
       font-weight: 700;
     }
+    .settings-footer__pending span {
+      display: grid;
+      gap: 0.06rem;
+      text-align: left;
+    }
+    .settings-footer__pending strong {
+      color: var(--pos-text);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+    .settings-footer__pending small {
+      font-size: 0.66rem;
+      font-weight: 650;
+      color: var(--pos-muted);
+    }
     .settings-footer__save--rich {
-      min-height: 2.85rem;
-      padding: 0.45rem 1rem;
+      min-height: 2.95rem;
+      padding: 0.5rem 1.1rem;
+      border-radius: 5px;
+      box-shadow: 0 10px 24px -16px color-mix(in srgb, var(--pos-accent) 55%, transparent);
     }
     @media (max-width: 840px) {
       .settings {
@@ -2982,6 +3054,12 @@ declare global {
       .station-hero__art {
         flex-basis: auto;
         width: 100%;
+        margin-bottom: -0.75rem;
+        justify-content: center;
+      }
+      .station-hero__img {
+        width: 100%;
+        max-width: 16rem;
       }
       .station-board {
         grid-template-columns: 1fr;
