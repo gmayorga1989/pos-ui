@@ -1408,7 +1408,7 @@ type ModalState =
       font-size: 0.76rem;
     }
     .customer-panel__btn {
-      border-radius: 10px;
+      border-radius: 5px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
       color: var(--lux-indigo);
@@ -1816,9 +1816,10 @@ type ModalState =
       padding: 0.55rem 0.65rem;
     }
     .products--list .card__foot {
-      border-top: none;
-      padding-top: 0;
-      margin-top: 0.15rem;
+      border-top: 1px solid #e2e8f0;
+      padding: 0.38rem 0.55rem;
+      align-self: stretch;
+      min-width: 8.5rem;
     }
     @media (max-width: 1500px) {
       .products {
@@ -1957,34 +1958,53 @@ type ModalState =
       color: var(--pos-text);
     }
     .card__foot {
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem;
       margin-top: 0;
-      padding: 0.38rem 0.55rem 0.45rem;
+      padding: 0.42rem 0.55rem 0.5rem;
       border-top: 1px solid #e2e8f0;
       flex-shrink: 0;
     }
     .card__badge {
-      border: none;
-      background: transparent;
-      padding: 0;
+      width: 100%;
+      min-height: 1.7rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      padding: 0.28rem 0.35rem;
       margin: 0;
       font-size: 0.58rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       cursor: pointer;
-      line-height: 1.2;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition:
+        border-color var(--pos-transition),
+        background var(--pos-transition),
+        color var(--pos-transition);
     }
     .card__badge--stock {
       color: #0d9488;
+      border-color: color-mix(in srgb, #0d9488 38%, #e2e8f0);
+      background: color-mix(in srgb, #0d9488 9%, #ffffff);
     }
     .card__badge--promo {
-      color: #94a3b8;
+      color: #334155;
+      border-color: #e2e8f0;
+      background: #ffffff;
     }
-    .card__badge:hover:not(.card__badge--locked) {
-      filter: brightness(0.92);
+    .card__badge--stock:hover:not(.card__badge--locked) {
+      border-color: color-mix(in srgb, #0d9488 55%, #e2e8f0);
+      background: color-mix(in srgb, #0d9488 14%, #ffffff);
+    }
+    .card__badge--promo:hover:not(.card__badge--locked) {
+      border-color: #cbd5e1;
+      background: #f8fafc;
     }
     .card__badge--locked {
       opacity: 0.55;
@@ -1992,6 +2012,13 @@ type ModalState =
     }
     html[data-theme='dark'] .card__badge--stock {
       color: #5eead4;
+      border-color: color-mix(in srgb, #5eead4 35%, var(--pos-border));
+      background: color-mix(in srgb, #5eead4 10%, var(--pos-elevated));
+    }
+    html[data-theme='dark'] .card__badge--promo {
+      color: var(--pos-text);
+      border-color: var(--pos-border);
+      background: var(--pos-surface);
     }
     html[data-theme='dark'] .card__foot {
       border-top-color: var(--pos-border);

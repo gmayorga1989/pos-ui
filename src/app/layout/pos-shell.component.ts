@@ -411,16 +411,18 @@ type CashPanelMode = 'open' | 'close' | 'history';
       border: 0;
     }
     .rail-shell {
+      position: relative;
+      z-index: 160;
       flex-shrink: 0;
       width: var(--pos-nav-rail-w);
       display: flex;
       align-items: stretch;
       padding: 0.7rem 0 0.7rem 0.75rem;
       background: transparent;
+      overflow: visible;
     }
     .rail {
       position: relative;
-      isolation: isolate;
       width: 100%;
       flex: 1;
       display: flex;
@@ -431,6 +433,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
       background: var(--pos-rail-bg);
       border: none;
       box-shadow: 0 4px 18px -10px rgba(99, 102, 241, 0.16);
+      overflow: visible;
     }
     .rail::before {
       content: '';
@@ -470,9 +473,11 @@ type CashPanelMode = 'open' | 'close' | 'history';
       gap: 0.08rem;
       width: 100%;
       padding: 0.1rem 0;
+      overflow: visible;
     }
     .rail__btn {
       position: relative;
+      z-index: 1;
       width: 2.35rem;
       height: 2.35rem;
       min-height: 2.35rem;
@@ -481,14 +486,16 @@ type CashPanelMode = 'open' | 'close' | 'history';
       place-items: center;
       color: var(--pos-rail-fg);
       text-decoration: none;
-      
+      overflow: visible;
       transition:
         background var(--pos-transition),
         color var(--pos-transition),
-        border-color var(--pos-transition);
+        border-color var(--pos-transition),
+        z-index 0s;
     }
     .rail__btn:hover,
     .rail__btn:focus-visible {
+      z-index: 220;
       background: var(--pos-rail-well);
       color: var(--pos-rail-fg-hover);
     }
@@ -515,7 +522,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
     }
     .rail__pop {
       position: absolute;
-      left: calc(100% + 8px);
+      left: calc(100% + 10px);
       top: 50%;
       transform: translateY(-50%) translateX(-6px);
       padding: 0.45rem 0.65rem 0.5rem;
@@ -532,7 +539,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
         opacity 0.14s ease,
         transform 0.14s ease,
         visibility 0.14s;
-      z-index: 80;
+      z-index: 300;
     }
     .rail__btn:hover .rail__pop,
     .rail__btn:focus-visible .rail__pop {
@@ -601,6 +608,8 @@ type CashPanelMode = 'open' | 'close' | 'history';
       border-color: rgba(255, 255, 255, 0.16);
     }
     .main {
+      position: relative;
+      z-index: 1;
       flex: 1;
       min-width: 0;
       min-height: 0;
