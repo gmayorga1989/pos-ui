@@ -3345,13 +3345,12 @@ export class PosVentaPage {
   readonly custPickerColumns: ColumnDefinition[] = [
     {
       title: '',
-      field: 'id',
+      field: 'displayName',
       width: 128,
       headerSort: false,
       hozAlign: 'left',
       formatter: (cell) => {
-        const row = cell.getRow().getData() as { displayName?: string };
-        const initials = customerDisplayInitials(String(row.displayName ?? ''));
+        const initials = customerDisplayInitials(String(tabulatorCellValue(cell) ?? ''));
         return `<div class="cust-picker-row__lead">
           <button type="button" class="cust-picker-grid__use" data-ts-action="use">Usar</button>
           <span class="cust-picker-row__avatar" aria-hidden="true">${escapeHtml(initials)}</span>
