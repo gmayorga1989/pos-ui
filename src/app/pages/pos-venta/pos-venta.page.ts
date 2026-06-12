@@ -1324,7 +1324,7 @@ type ModalState =
       align-items: center;
       gap: 0.5rem;
       padding: 0.5rem 0.55rem;
-      border-radius: 10px;
+      border-radius: 5px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
     }
@@ -1427,7 +1427,7 @@ type ModalState =
       cursor: wait;
     }
     .customer-panel__chip {
-      border-radius: 10px;
+      border-radius: 5px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
       color: var(--pos-text);
@@ -1460,7 +1460,7 @@ type ModalState =
     .cust-picker-toolbar__input {
       width: 100%;
       border: 1px solid var(--pos-maestro-border, var(--pos-border));
-      border-radius: 10px;
+      border-radius: 5px;
       background: var(--pos-maestro-card, var(--pos-surface));
       color: var(--pos-text);
       padding: 0.55rem 0.7rem;
@@ -1969,7 +1969,7 @@ type ModalState =
     .card__badge {
       width: 100%;
       min-height: 1.7rem;
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
       padding: 0.28rem 0.35rem;
@@ -2251,7 +2251,7 @@ type ModalState =
     .line-card__qty-btn {
       width: 1.85rem;
       height: 1.85rem;
-      border-radius: 8px;
+      border-radius: 5px;
       border: 1px solid var(--pos-border-strong);
       background: var(--pos-surface-2);
       color: var(--pos-text);
@@ -2455,7 +2455,7 @@ type ModalState =
       place-items: center;
       width: 2.35rem;
       height: 2.35rem;
-      border-radius: 10px;
+      border-radius: 5px;
       background: rgba(255, 255, 255, 0.14);
       flex-shrink: 0;
     }
