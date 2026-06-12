@@ -170,8 +170,18 @@ type ModalState =
                 [value]="catalogQuery()"
                 (input)="onCatalogQuery($event)"
                 (keydown.enter)="onCatalogEnter($event)" />
+              <button
+                type="button"
+                class="catalog-search__scan pos-focus-ring"
+                title="Escanear código de barras"
+                aria-label="Escanear código de barras"
+                (click)="focusCatalogScan()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 7V5a1 1 0 011-1h2M4 17v2a1 1 0 001 1h2M16 5h2a1 1 0 011 1v2M16 19h2a1 1 0 001-1v-2M7 12h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                </svg>
+              </button>
             </label>
-            <div class="catalog-toolbar__tools">
+            <div class="catalog-toolbar__row">
               <label class="catalog-filter">
                 <span class="sr-only">Categoría</span>
                 <select
@@ -195,10 +205,39 @@ type ModalState =
                   </button>
                 }
               </div>
+              <div class="catalog-view" role="group" aria-label="Vista del catálogo">
+                <button
+                  type="button"
+                  class="catalog-view__btn pos-focus-ring"
+                  [class.catalog-view__btn--on]="catalogView() === 'grid'"
+                  title="Vista en cuadrícula"
+                  aria-label="Vista en cuadrícula"
+                  [attr.aria-pressed]="catalogView() === 'grid'"
+                  (click)="catalogView.set('grid')">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="4" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.6" />
+                    <rect x="14" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.6" />
+                    <rect x="4" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.6" />
+                    <rect x="14" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.6" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="catalog-view__btn pos-focus-ring"
+                  [class.catalog-view__btn--on]="catalogView() === 'list'"
+                  title="Vista en lista"
+                  aria-label="Vista en lista"
+                  [attr.aria-pressed]="catalogView() === 'list'"
+                  (click)="catalogView.set('list')">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
           <div class="products-scroll">
-            <div class="products">
+            <div class="products" [class.products--list]="catalogView() === 'list'">
               @for (p of pagedProducts(); track p.id) {
                 <article class="card">
                   <button type="button" class="card__main pos-focus-ring" [class.card__main--locked]="!desk.cajaOpen()" (click)="addLine(p)">
@@ -343,6 +382,7 @@ type ModalState =
           <div class="customer-panel">
             @if (activeCustomer(); as ac) {
               <div class="customer-panel__active customer-panel__active--compact">
+                <span class="customer-panel__avatar" aria-hidden="true">{{ customerInitials(ac.name) }}</span>
                 <div class="customer-panel__active-text">
                   <strong>{{ ac.name }}</strong>
                   <span class="customer-panel__meta">
@@ -352,8 +392,10 @@ type ModalState =
                     }
                   </span>
                 </div>
-                @if (!ac.isConsumidorFinal) {
-                  <button type="button" class="customer-panel__reset pos-focus-ring" (click)="applyConsumidorFinal()" title="Usar consumidor final">
+                @if (ac.isConsumidorFinal) {
+                  <span class="customer-panel__cf-badge customer-panel__cf-badge--on">CF</span>
+                } @else {
+                  <button type="button" class="customer-panel__cf-badge pos-focus-ring" (click)="applyConsumidorFinal()" title="Usar consumidor final">
                     CF
                   </button>
                 }
@@ -1055,6 +1097,7 @@ type ModalState =
       border: 0;
     }
     .venta {
+      --venta-tool-h: 2.25rem;
       flex: 1;
       min-height: 0;
       display: flex;
@@ -1278,20 +1321,52 @@ type ModalState =
     .customer-panel__active {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 0.45rem;
-      padding: 0.34rem 0.45rem;
+      gap: 0.5rem;
+      padding: 0.5rem 0.55rem;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+    }
+    .customer-panel__avatar {
+      width: 2.15rem;
+      height: 2.15rem;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #334155;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+    }
+    .customer-panel__cf-badge {
+      border: 1px solid #e2e8f0;
       border-radius: 8px;
-      border: 1px solid var(--pos-border);
-      background: var(--pos-surface-2);
+      background: #ffffff;
+      color: #334155;
+      font-size: 0.64rem;
+      font-weight: 700;
+      padding: 0.28rem 0.42rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      min-width: 2rem;
+      text-align: center;
+    }
+    .customer-panel__cf-badge--on {
+      background: #f8fafc;
+      color: var(--lux-indigo);
     }
     .customer-panel__active-text {
       display: grid;
       gap: 0.1rem;
       min-width: 0;
+      flex: 1;
     }
     .customer-panel__active-text strong {
-      font-size: 0.78rem;
+      font-size: 0.8rem;
+      font-weight: 700;
       line-height: 1.2;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1306,64 +1381,58 @@ type ModalState =
     .customer-panel__active--compact {
       margin-bottom: 0;
     }
-    .customer-panel__reset {
-      border: 1px solid var(--pos-border-strong);
-      border-radius: 6px;
-      background: var(--pos-surface);
-      color: var(--pos-muted);
-      font-size: 0.64rem;
-      font-weight: 700;
-      padding: 0.24rem 0.45rem;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
     .customer-panel__search {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 0.32rem;
       align-items: center;
     }
     .customer-panel__input {
       flex: 1;
       min-width: 0;
-      border-radius: 8px;
-      border: 1px solid var(--pos-border-strong);
-      background: var(--pos-bg);
+      height: var(--venta-tool-h);
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
       color: var(--pos-text);
-      padding: 0.38rem 0.5rem;
+      padding: 0 0.55rem;
       font-size: 0.76rem;
     }
     .customer-panel__btn {
-      border-radius: 8px;
-      border: 1px solid var(--pos-border);
-      background: var(--pos-elevated);
-      color: var(--pos-text);
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 0.36rem 0.55rem;
+      height: var(--venta-tool-h);
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: var(--lux-indigo);
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 0 0.72rem;
       cursor: pointer;
       flex-shrink: 0;
+      white-space: nowrap;
     }
     .customer-panel__btn:disabled {
       opacity: 0.6;
       cursor: wait;
     }
     .customer-panel__chip {
-      border-radius: 8px;
-      border: 1px solid var(--pos-border);
-      background: var(--pos-elevated);
+      height: var(--venta-tool-h);
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
       color: var(--pos-text);
-      font-size: 0.66rem;
+      font-size: 0.72rem;
       font-weight: 600;
-      padding: 0.34rem 0.5rem;
+      padding: 0 0.62rem;
       cursor: pointer;
       flex-shrink: 0;
       white-space: nowrap;
     }
     .customer-panel__chip--active {
-      border-color: var(--pos-border);
+      border-color: #e2e8f0;
       background: #f8fafc;
-      color: var(--pos-text);
+      color: var(--lux-indigo);
+      font-weight: 700;
     }
     .customer-panel__chip--ghost {
       background: transparent;
@@ -1460,22 +1529,23 @@ type ModalState =
     }
     .catalog-toolbar {
       flex-shrink: 0;
-      padding: 0.7rem 0.75rem 0.6rem;
+      padding: 0.65rem 0.75rem 0.6rem;
       border-bottom: 1px solid var(--pos-border);
       background: var(--pos-elevated);
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.42rem;
     }
     .catalog-search {
       display: flex;
       align-items: center;
       gap: 0.45rem;
-      padding: 0.42rem 0.6rem 0.42rem 0.52rem;
-      border-radius: var(--pos-radius-sm);
-      border: 1px solid var(--pos-border-strong);
-      background: var(--pos-elevated);
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      height: var(--venta-tool-h);
+      padding: 0 0.65rem 0 0.55rem;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      box-shadow: none;
     }
     .catalog-search:focus-within {
       border-color: color-mix(in srgb, var(--pos-accent) 42%, var(--pos-border-strong));
@@ -1500,26 +1570,75 @@ type ModalState =
     .catalog-search__input::placeholder {
       color: var(--pos-faint);
     }
-    .catalog-toolbar__tools {
+    .catalog-search__scan {
+      display: grid;
+      place-items: center;
+      width: 1.85rem;
+      height: 1.85rem;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--lux-indigo);
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
+      transition: background var(--pos-transition);
+    }
+    .catalog-search__scan:hover {
+      background: color-mix(in srgb, var(--lux-indigo) 8%, #ffffff);
+    }
+    .catalog-toolbar__row {
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
-      gap: 0.4rem 0.55rem;
+      gap: 0.38rem;
+      min-width: 0;
     }
     .catalog-filter {
-      flex: 1 1 11rem;
-      min-width: 9rem;
-      max-width: 16rem;
+      flex: 0 1 11.5rem;
+      min-width: 8.5rem;
     }
     .catalog-filter__select {
       width: 100%;
-      padding: 0.34rem 0.5rem;
-      border-radius: var(--pos-radius-xs);
-      border: 1px solid var(--pos-border-strong);
-      background: var(--pos-elevated);
+      height: var(--venta-tool-h);
+      padding: 0 0.55rem;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
       color: var(--pos-text);
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       font-weight: 600;
+    }
+    .catalog-view {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.22rem;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .catalog-view__btn {
+      width: var(--venta-tool-h);
+      height: var(--venta-tool-h);
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: var(--pos-muted);
+      cursor: pointer;
+      padding: 0;
+      transition:
+        border-color var(--pos-transition),
+        background var(--pos-transition),
+        color var(--pos-transition);
+    }
+    .catalog-view__btn:hover {
+      border-color: #cbd5e1;
+      color: var(--pos-text);
+    }
+    .catalog-view__btn--on {
+      border-color: color-mix(in srgb, var(--lux-indigo) 28%, #e2e8f0);
+      background: color-mix(in srgb, var(--lux-indigo) 8%, #ffffff);
+      color: var(--lux-indigo);
     }
     .catalog-pager {
       flex-shrink: 0;
@@ -1609,18 +1728,22 @@ type ModalState =
     }
     .cats {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 0.28rem;
+      min-width: 0;
+      overflow-x: auto;
     }
     .cat {
-      border: 1px solid var(--pos-border);
-      background: var(--pos-elevated);
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
       color: var(--pos-muted);
-      font-size: 0.65rem;
+      font-size: 0.72rem;
       font-weight: 600;
-      padding: 0.24rem 0.52rem;
-      border-radius: var(--pos-radius-xs);
+      height: var(--venta-tool-h);
+      padding: 0 0.72rem;
+      border-radius: 10px;
       cursor: pointer;
+      white-space: nowrap;
       transition: border-color var(--pos-transition), color var(--pos-transition), background var(--pos-transition);
     }
     .cat--on {
@@ -1641,6 +1764,34 @@ type ModalState =
       gap: 0.58rem;
       padding: 0.62rem 0.68rem 0.72rem;
       align-content: start;
+    }
+    .products--list {
+      grid-template-columns: 1fr;
+      gap: 0.45rem;
+    }
+    .products--list .card {
+      flex-direction: row;
+      align-items: stretch;
+    }
+    .products--list .card__main {
+      flex-direction: row;
+      align-items: center;
+    }
+    .products--list .card__thumb {
+      width: 4.25rem;
+      aspect-ratio: 1;
+      border-bottom: none;
+      border-right: 1px solid var(--pos-border);
+    }
+    .products--list .card__body {
+      flex: 1;
+      padding: 0.55rem 0.65rem;
+    }
+    .products--list .card__actions {
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 0.55rem 0 0;
+      gap: 0.25rem;
     }
     @media (max-width: 1500px) {
       .products {
@@ -1837,23 +1988,23 @@ type ModalState =
     .line-card {
       position: relative;
       display: flex;
-      gap: 0.55rem;
-      align-items: flex-start;
-      border: 1px solid var(--pos-border);
-      border-radius: var(--pos-radius);
-      background: var(--pos-elevated);
-      padding: 0.55rem 0.58rem 0.5rem 0.5rem;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+      gap: 0.62rem;
+      align-items: center;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 0.62rem 0.65rem 0.62rem 0.85rem;
+      box-shadow: none;
       overflow: hidden;
     }
     .line-card__thumb {
-      width: 2.65rem;
-      height: 2.65rem;
+      width: 3.35rem;
+      height: 3.35rem;
       flex-shrink: 0;
-      border-radius: 10px;
+      border-radius: 8px;
       overflow: hidden;
-      border: 1px solid var(--pos-border);
-      background: color-mix(in srgb, var(--pos-surface-2) 88%, var(--pos-border));
+      border: none;
+      background: #f8fafc;
     }
     .line-card__thumb img {
       width: 100%;
@@ -1866,27 +2017,40 @@ type ModalState =
       min-width: 0;
     }
     .line-card::before {
-      display: none;
       content: '';
       position: absolute;
       left: 0;
       top: 0;
       bottom: 0;
-      width: 3px;
-      background: linear-gradient(180deg, var(--pos-accent), color-mix(in srgb, var(--pos-accent) 35%, #6366f1));
-      border-radius: var(--pos-radius-xs) 0 0 var(--pos-radius-xs);
+      width: 4px;
+      background: linear-gradient(180deg, #c026d3 0%, #6366f1 48%, #00e5ff 100%);
+      border-radius: 12px 0 0 12px;
     }
     html[data-theme='dark'] .line-card {
+      background: var(--pos-elevated);
+      border-color: var(--pos-border);
+    }
+    html[data-theme='dark'] .customer-panel__active,
+    html[data-theme='dark'] .customer-panel__input,
+    html[data-theme='dark'] .customer-panel__btn,
+    html[data-theme='dark'] .customer-panel__chip,
+    html[data-theme='dark'] .catalog-search,
+    html[data-theme='dark'] .catalog-filter__select,
+    html[data-theme='dark'] .cat,
+    html[data-theme='dark'] .catalog-view__btn {
+      background: var(--pos-elevated);
+      border-color: var(--pos-border);
+    }
+    html[data-theme='dark'] .customer-panel__input,
+    html[data-theme='dark'] .catalog-search {
       background: var(--pos-surface);
-      border-color: var(--pos-border-strong);
     }
     .line-card__head {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 0.55rem;
-      margin-bottom: 0.48rem;
-      padding-left: 0.15rem;
+      margin-bottom: 0.42rem;
     }
     .line-card__identity {
       min-width: 0;
@@ -1894,8 +2058,8 @@ type ModalState =
     }
     .line-card__name {
       display: block;
-      font-size: 0.8rem;
-      font-weight: 650;
+      font-size: 0.82rem;
+      font-weight: 700;
       color: var(--pos-text);
       line-height: 1.25;
       overflow: hidden;
@@ -1941,19 +2105,20 @@ type ModalState =
     .line-card__actions {
       display: flex;
       align-items: center;
-      gap: 0.32rem;
-      padding-left: 0.15rem;
+      gap: 0.35rem;
+      flex-wrap: wrap;
     }
     .line-card__price {
       display: inline-flex;
       align-items: center;
-      gap: 0.28rem;
+      gap: 0.35rem;
       min-width: 0;
-      max-width: 7.5rem;
-      padding: 0.32rem 0.42rem;
+      max-width: 9rem;
+      height: 1.85rem;
+      padding: 0 0.5rem;
       border-radius: 8px;
-      border: 1px solid color-mix(in srgb, var(--pos-accent) 18%, var(--pos-border-strong));
-      background: color-mix(in srgb, var(--pos-accent-muted) 22%, var(--pos-surface-2));
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
       color: var(--pos-text);
       cursor: pointer;
       flex-shrink: 0;
@@ -1971,17 +2136,18 @@ type ModalState =
     }
     .line-card__price-val {
       font-family: var(--pos-mono);
-      font-size: 0.72rem;
+      font-size: 0.76rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
+      color: #0f172a;
     }
     .line-card__price-tag {
-      font-size: 0.5rem;
-      font-weight: 750;
+      font-size: 0.52rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--pos-accent-hover);
+      letter-spacing: 0.04em;
+      color: var(--lux-indigo);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -1994,12 +2160,13 @@ type ModalState =
     }
     .line-card__dcto {
       border-radius: 8px;
-      border: 1px solid var(--pos-border-strong);
-      background: var(--pos-surface-2);
-      color: var(--pos-muted);
-      font-size: 0.64rem;
-      font-weight: 700;
-      padding: 0.34rem 0.48rem;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: #334155;
+      font-size: 0.68rem;
+      font-weight: 600;
+      height: 1.85rem;
+      padding: 0 0.55rem;
       cursor: pointer;
       flex-shrink: 0;
       white-space: nowrap;
@@ -3095,6 +3262,7 @@ export class PosVentaPage {
   readonly priceLists = signal<PosPriceListResponse[]>([]);
   readonly catalogQuery = signal('');
   readonly catalogPage = signal(1);
+  readonly catalogView = signal<'grid' | 'list'>('grid');
 
   private readonly catalogSearchRef = viewChild<ElementRef<HTMLInputElement>>('catalogSearch');
 
@@ -3668,6 +3836,24 @@ export class PosVentaPage {
         el.focus({ preventScroll: true });
       }
     });
+  }
+
+  focusCatalogScan(): void {
+    queueMicrotask(() => {
+      const el = this.catalogSearchRef()?.nativeElement;
+      if (el) {
+        el.focus({ preventScroll: true });
+        el.select();
+      }
+    });
+  }
+
+  customerInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase();
+    }
+    return (parts[0]?.slice(0, 2) ?? 'CF').toUpperCase();
   }
 
   onCatalogQuery(ev: Event): void {

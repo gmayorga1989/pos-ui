@@ -22,7 +22,8 @@ type CashPanelMode = 'open' | 'close' | 'history';
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
     <div class="shell">
-      <aside class="rail" aria-label="Navegación principal">
+      <aside class="rail-shell" aria-label="Navegación principal">
+        <div class="rail">
         <nav class="rail__nav">
           @for (item of nav; track item.path) {
             <a
@@ -53,6 +54,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
               stroke-linejoin="round" />
           </svg>
         </button>
+        </div>
       </aside>
 
       <div class="main">
@@ -408,35 +410,56 @@ type CashPanelMode = 'open' | 'close' | 'history';
       clip: rect(0, 0, 0, 0);
       border: 0;
     }
-    .rail {
-      width: var(--pos-nav-rail-w);
+    .rail-shell {
       flex-shrink: 0;
+      width: var(--pos-nav-rail-w);
+      display: flex;
+      align-items: stretch;
+      padding: 0.7rem 0 0.7rem 0.75rem;
+      background: transparent;
+    }
+    .rail {
+      width: 100%;
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 0.55rem 0 0.5rem;
+      padding: 0.45rem 0.35rem 0.4rem;
+      border-radius: 14px;
       background: var(--pos-rail-bg);
-      border-right: none;
-      box-shadow: none;
+      border: 2px solid transparent;
+      box-shadow: 0 4px 18px -10px rgba(99, 102, 241, 0.16);
+    }
+    html[data-theme='light'] .rail {
+      background-image:
+        linear-gradient(#ffffff, #ffffff),
+        linear-gradient(180deg, #00e5ff 0%, #6366f1 52%, #c026d3 100%);
+      background-origin: border-box;
+      background-clip: padding-box, border-box;
     }
     html[data-theme='dark'] .rail {
-      border-right: 1px solid var(--pos-rail-border);
+      background-image:
+        linear-gradient(var(--pos-night-card), var(--pos-night-card)),
+        linear-gradient(180deg, #00e5ff 0%, #6366f1 52%, #c026d3 100%);
+      background-origin: border-box;
+      background-clip: padding-box, border-box;
+      box-shadow: 0 4px 22px -10px rgba(0, 229, 255, 0.12);
     }
     .rail__nav {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.2rem;
+      gap: 0.08rem;
       width: 100%;
-      padding: 0.2rem 0;
+      padding: 0.1rem 0;
     }
     .rail__btn {
       position: relative;
-      width: calc(var(--pos-nav-rail-w) - 0.45rem);
-      height: calc(var(--pos-nav-rail-w) - 0.28rem);
+      width: 2.35rem;
+      height: 2.35rem;
       min-height: 2.35rem;
-      border-radius: var(--pos-radius-sm);
+      border-radius: 10px;
       display: grid;
       place-items: center;
       color: var(--pos-rail-fg);
@@ -458,13 +481,19 @@ type CashPanelMode = 'open' | 'close' | 'history';
       border-color: transparent;
       box-shadow: 0 0 18px -6px var(--pos-accent-glow);
     }
+    html[data-theme='light'] .rail__btn {
+      color: #334155;
+    }
     html[data-theme='light'] .rail__btn--active {
-      background: var(--lux-gradient-diagonal);
+      background: linear-gradient(135deg, #00e5ff 0%, #6366f1 55%, #c026d3 100%);
       color: #fff;
-      border-radius: var(--pos-radius-sm);
-      box-shadow:
-        0 4px 16px -6px rgba(var(--lux-primary-rgb), 0.45),
-        0 0 0 1px color-mix(in srgb, var(--lux-cyan) 22%, transparent);
+      border-radius: 10px;
+      box-shadow: 0 4px 14px -4px rgba(99, 102, 241, 0.42);
+    }
+    html[data-theme='dark'] .rail__btn--active {
+      background: linear-gradient(135deg, #00e5ff 0%, #6366f1 55%, #c026d3 100%);
+      color: #fff;
+      box-shadow: 0 0 16px -4px rgba(0, 229, 255, 0.35);
     }
     .rail__btn--active::before {
       content: '';
@@ -546,17 +575,17 @@ type CashPanelMode = 'open' | 'close' | 'history';
       box-shadow: 0 0 0 2px var(--pos-rail-bg);
     }
     html[data-theme='light'] .rail__logout {
-      border: none;
-      background: transparent;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
     }
     .rail__logout {
       margin-top: auto;
-      width: calc(var(--pos-nav-rail-w) - 0.45rem);
-      height: calc(var(--pos-nav-rail-w) - 0.28rem);
+      width: 2.35rem;
+      height: 2.35rem;
       min-height: 2.35rem;
       display: grid;
       place-items: center;
-      border-radius: var(--pos-radius-sm);
+      border-radius: 10px;
       color: var(--pos-rail-fg);
       border: 1px solid rgba(255, 255, 255, 0.1);
       background: rgba(255, 255, 255, 0.03);

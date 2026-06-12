@@ -34,7 +34,7 @@ html[data-theme='light'] {
 
   .catalog-search {
     border-color: #e2e8f0;
-    background: #f8fafc;
+    background: #ffffff;
     box-shadow: none;
   }
 
@@ -60,8 +60,7 @@ html[data-theme='light'] {
     background: color-mix(in srgb, var(--lux-indigo) 8%, #ffffff);
   }
 
-  .card::before,
-  .line-card::before {
+  .card::before {
     display: none;
   }
 
@@ -228,9 +227,12 @@ html[data-theme='dark'] {
     border-color: var(--lux-ds-border-dark);
   }
 
-  .card::before,
-  .line-card::before {
+  .card::before {
     display: none;
+  }
+
+  .line-card::before {
+    display: block;
   }
 
   .card {
