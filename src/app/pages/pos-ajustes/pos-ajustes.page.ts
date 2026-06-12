@@ -189,18 +189,18 @@ declare global {
                   </div>
                 }
 
-                <div class="card-grid card-grid--rules">
-                  <label class="field field--plain">
-                    <span>Documento por defecto</span>
-                    <div class="field-input-icon">
-                      <span class="field-input-icon__ico" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                          <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
-                          <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                        </svg>
-                      </span>
+                <div class="rules-field-grid">
+                  <label class="rule-field-card">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Documento por defecto</span>
                       <select
-                        class="input input--icon pos-focus-ring"
+                        class="rule-field-card__input pos-focus-ring"
                         [disabled]="!canManageBusinessRules()"
                         [ngModel]="prefs.defaultDocumentType()"
                         (ngModelChange)="prefs.setDefaultDocumentType($event)">
@@ -208,20 +208,20 @@ declare global {
                         <option value="factura">Factura</option>
                         <option value="preguntar">Preguntar al cobrar</option>
                       </select>
-                    </div>
+                    </span>
                   </label>
 
-                  <label class="field field--plain">
-                    <span>Formato de comprobante</span>
-                    <div class="field-input-icon">
-                      <span class="field-input-icon__ico" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                          <path d="M7 8V4h10v4M7 17H5a2 2 0 01-2-2v-3a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2h-2" stroke="currentColor" stroke-width="1.5" />
-                          <path d="M7 14h10v6H7z" stroke="currentColor" stroke-width="1.5" />
-                        </svg>
-                      </span>
+                  <label class="rule-field-card">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Formato de comprobante</span>
                       <select
-                        class="input input--icon pos-focus-ring"
+                        class="rule-field-card__input pos-focus-ring"
                         [disabled]="!canManageBusinessRules()"
                         [ngModel]="prefs.receiptTemplate()"
                         (ngModelChange)="prefs.setReceiptTemplate($event)">
@@ -229,85 +229,94 @@ declare global {
                         <option value="ticket-80">Ticket 80 mm</option>
                         <option value="a4">A4 factura completa</option>
                       </select>
-                    </div>
+                    </span>
                   </label>
 
-                  <label class="field field--plain">
-                    <span>Límite máximo de descuento (%)</span>
-                    <div class="field-input-icon">
-                      <span class="field-input-icon__ico" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                          <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
-                          <path d="M9.5 9.5L14.5 14.5M14.5 9.5L9.5 14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                        </svg>
-                      </span>
+                  <label class="rule-field-card">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M9.5 9.5L14.5 14.5M14.5 9.5L9.5 14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Límite máximo de descuento (%)</span>
                       <input
-                        class="input input--icon pos-focus-ring"
+                        class="rule-field-card__input pos-focus-ring"
                         type="number"
                         min="0"
                         max="100"
                         [disabled]="!canManageBusinessRules()"
                         [ngModel]="prefs.maxDiscountPercent()"
                         (ngModelChange)="prefs.setMaxDiscountPercent($event)" />
-                    </div>
+                    </span>
                   </label>
 
-                  <label class="field field--plain">
-                    <span>Factura obligatoria desde</span>
-                    <div class="field-input-icon">
-                      <span class="field-input-icon__ico" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                          <path d="M6 4h11l3 3v13a1 1 0 01-1 1H6a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-                          <path d="M17 4v3h3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-                        </svg>
-                      </span>
+                  <label class="rule-field-card">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M6 4h11l3 3v13a1 1 0 01-1 1H6a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                        <path d="M17 4v3h3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Factura obligatoria desde</span>
                       <input
-                        class="input input--icon pos-focus-ring"
+                        class="rule-field-card__input pos-focus-ring"
                         type="number"
                         min="0"
                         inputmode="decimal"
                         [disabled]="!canManageBusinessRules()"
                         [ngModel]="prefs.minInvoiceAmount()"
                         (ngModelChange)="prefs.setMinInvoiceAmount($event)" />
-                    </div>
+                    </span>
                   </label>
 
-                  <label class="field field--plain">
-                    <span>Cliente requerido sobre</span>
-                    <div class="field-input-icon">
-                      <span class="field-input-icon__ico" aria-hidden="true">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                          <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
-                          <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" />
-                        </svg>
-                      </span>
+                  <label class="rule-field-card rule-field-card--wide">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Cliente requerido sobre</span>
                       <input
-                        class="input input--icon pos-focus-ring"
+                        class="rule-field-card__input pos-focus-ring"
                         type="number"
                         min="0"
                         inputmode="decimal"
                         [disabled]="!canManageBusinessRules()"
                         [ngModel]="prefs.requireCustomerOver()"
                         (ngModelChange)="prefs.setRequireCustomerOver($event)" />
-                    </div>
+                    </span>
                   </label>
                 </div>
               </div>
 
               <aside class="settings-promo" aria-label="Ayuda sobre reglas">
-                <div class="settings-promo__art" aria-hidden="true">
-                  <svg width="120" height="96" viewBox="0 0 120 96" fill="none">
-                    <rect x="24" y="18" width="72" height="48" rx="6" fill="color-mix(in srgb, var(--pos-accent) 12%, white)" stroke="color-mix(in srgb, var(--pos-accent) 28%, transparent)" stroke-width="1.5" />
-                    <rect x="32" y="26" width="56" height="32" rx="3" fill="white" stroke="color-mix(in srgb, var(--pos-accent) 18%, transparent)" stroke-width="1" />
-                    <path d="M78 58l14 12" stroke="color-mix(in srgb, var(--pos-accent) 45%, transparent)" stroke-width="2" stroke-linecap="round" />
-                    <circle cx="88" cy="68" r="10" fill="color-mix(in srgb, var(--pos-accent) 14%, white)" stroke="var(--pos-accent)" stroke-width="1.5" />
-                    <path d="M84.5 68l2.5 2.5 5-5" stroke="var(--pos-accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
+                <span class="settings-promo__badge">Global</span>
+                <div class="settings-promo__art">
+                  <img
+                    class="settings-promo__img"
+                    src="assets/iconos/seguridad_pos_config.png"
+                    alt=""
+                    loading="lazy"
+                    decoding="async" />
                 </div>
-                <strong class="settings-promo__title">Reglas inteligentes</strong>
-                <p class="settings-promo__text">
-                  Configura políticas que garantizan el correcto funcionamiento de tu punto de venta.
-                </p>
+                <div class="settings-promo__footer">
+                  <h3 class="settings-promo__title">
+                    <span class="settings-promo__sparkle" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3l1.4 4.3H18l-3.6 2.6 1.4 4.3L12 11.6 8.2 14.2l1.4-4.3L6 7.3h4.6L12 3z" fill="currentColor" />
+                      </svg>
+                    </span>
+                    Reglas inteligentes
+                  </h3>
+                  <p class="settings-promo__text">
+                    Configura políticas que garantizan el correcto funcionamiento de tu punto de venta.
+                  </p>
+                </div>
               </aside>
             </div>
           }
@@ -1254,24 +1263,65 @@ declare global {
               </div>
             </div>
 
-            <div class="learned learned--split">
-              <div class="learned__content">
-                <h2>Ventajas tomadas como referencia</h2>
-                <ul>
-                  <li>Permisos por rol para descuentos, configuración e impresión.</li>
-                  <li>Impresoras por estación: recibo, etiquetas y cajón de dinero.</li>
-                  <li>Recibos automáticos u opcionales después del pago.</li>
-                  <li>Plantillas de etiquetas y formatos de ticket configurables.</li>
-                  <li>Densidad táctil/compacta según operación y perfil.</li>
+            <div class="learned-panel">
+              <div class="learned-panel__content">
+                <h2 class="learned-panel__title">
+                  <span class="learned-panel__title-ico" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  Ventajas tomadas como referencia
+                </h2>
+                <ul class="learned-panel__list">
+                  <li>
+                    <span class="learned-panel__check" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span>Permisos por rol para descuentos, configuración e impresión.</span>
+                  </li>
+                  <li>
+                    <span class="learned-panel__check" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span>Impresoras por estación: recibo, etiquetas y cajón de dinero.</span>
+                  </li>
+                  <li>
+                    <span class="learned-panel__check" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span>Recibos automáticos u opcionales después del pago.</span>
+                  </li>
+                  <li>
+                    <span class="learned-panel__check" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span>Plantillas de etiquetas y formatos de ticket configurables.</span>
+                  </li>
+                  <li>
+                    <span class="learned-panel__check" aria-hidden="true">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span>Densidad táctil/compacta según operación y perfil.</span>
+                  </li>
                 </ul>
               </div>
-              <div class="learned__art">
+              <div class="learned-panel__art">
                 <img
-                  class="learned__img"
+                  class="learned-panel__img"
                   src="assets/iconos/configuracion01.png"
                   alt=""
-                  width="160"
-                  height="128"
                   loading="lazy"
                   decoding="async" />
               </div>
@@ -1987,61 +2037,129 @@ declare global {
       cursor: pointer;
       white-space: nowrap;
     }
-    .field--plain {
-      border: none;
-      background: transparent;
-      box-shadow: none;
-      padding: 0;
-    }
-    .field--plain:hover {
-      transform: none;
-      border-color: transparent;
-      box-shadow: none;
-    }
-    .field-input-icon {
+    .rules-field-grid {
       display: grid;
-      grid-template-columns: 2.15rem minmax(0, 1fr);
-      align-items: stretch;
-      border: 1px solid var(--pos-border-strong);
-      border-radius: var(--pos-radius-sm);
-      background: var(--pos-bg);
-      overflow: hidden;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
     }
-    .field-input-icon__ico {
+    .rule-field-card {
+      display: grid;
+      grid-template-columns: 2.65rem minmax(0, 1fr);
+      gap: 0.7rem;
+      align-items: start;
+      padding: 0.85rem 0.9rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 28px -26px rgba(17, 24, 39, 0.28);
+      cursor: default;
+    }
+    .rule-field-card--wide {
+      grid-column: 1 / -1;
+    }
+    .rule-field-card__icon {
       display: grid;
       place-items: center;
+      width: 2.65rem;
+      height: 2.65rem;
+      border-radius: 5px;
       color: var(--pos-accent-hover);
-      background: color-mix(in srgb, var(--pos-accent) 8%, var(--pos-surface));
-      border-right: 1px solid var(--pos-border);
+      background: color-mix(in srgb, var(--pos-accent) 10%, var(--pos-surface));
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 18%, var(--pos-border));
     }
-    .input--icon {
-      border: none;
-      border-radius: 0;
-      min-height: 2.35rem;
+    .rule-field-card__body {
+      display: grid;
+      gap: 0.38rem;
+      min-width: 0;
     }
-    .input--icon:focus {
+    .rule-field-card__label {
+      font-size: 0.74rem;
+      font-weight: 800;
+      line-height: 1.25;
+      color: color-mix(in srgb, var(--pos-accent-hover) 88%, var(--pos-text));
+    }
+    .rule-field-card__input {
+      width: 100%;
+      min-height: 2.4rem;
+      padding: 0.48rem 0.65rem;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 14%, var(--pos-border));
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-accent) 5%, var(--pos-bg));
+      color: var(--pos-text);
+      font-size: 0.82rem;
+    }
+    .rule-field-card__input:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+    }
+    .rule-field-card__input:focus {
       outline: none;
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pos-accent) 45%, transparent);
+      border-color: color-mix(in srgb, var(--pos-accent) 42%, var(--pos-border));
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--pos-accent) 14%, transparent);
     }
     .settings-promo {
-      display: grid;
-      gap: 0.55rem;
-      padding: 1rem 0.9rem;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 0;
       border: 1px solid var(--pos-border);
-      border-radius: var(--pos-radius);
-      background: linear-gradient(160deg, color-mix(in srgb, var(--pos-accent) 7%, var(--pos-elevated)), var(--pos-surface));
+      border-radius: 5px;
+      background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--pos-accent) 9%, var(--pos-elevated)) 0%,
+        color-mix(in srgb, var(--pos-accent) 4%, var(--pos-surface)) 58%,
+        var(--pos-elevated) 100%
+      );
       box-shadow: var(--pos-shadow-soft);
-      text-align: center;
+    }
+    .settings-promo__badge {
+      position: absolute;
+      top: 0.65rem;
+      right: 0.65rem;
+      z-index: 1;
+      padding: 0.22rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 34%, var(--pos-border));
+      background: var(--pos-elevated);
+      color: var(--pos-accent-hover);
+      font-size: 0.64rem;
+      font-weight: 850;
     }
     .settings-promo__art {
-      display: grid;
-      place-items: center;
-      min-height: 6.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.35rem 0.85rem 0.65rem;
+      min-height: 10rem;
+    }
+    .settings-promo__img {
+      display: block;
+      width: 100%;
+      max-width: 11.5rem;
+      height: auto;
+      object-fit: contain;
+    }
+    .settings-promo__footer {
+      margin-top: auto;
+      padding: 0.9rem 1rem 1rem;
+      border-top: 1px solid var(--pos-border);
+      background: var(--pos-elevated);
+      text-align: left;
     }
     .settings-promo__title {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin: 0 0 0.35rem;
       font-size: 0.9rem;
       font-weight: 850;
       color: var(--pos-text);
+    }
+    .settings-promo__sparkle {
+      display: grid;
+      place-items: center;
+      color: var(--pos-accent-hover);
     }
     .settings-promo__text {
       margin: 0;
@@ -2167,29 +2285,76 @@ declare global {
       line-height: 1.3;
       overflow-wrap: anywhere;
     }
-    .learned--split {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 1rem;
+    .learned-panel {
+      display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
       margin-top: 0.35rem;
-      padding: 0.9rem 1rem;
+      padding: 1rem 1.15rem;
       border: 1px solid color-mix(in srgb, #38bdf8 28%, var(--pos-border));
       border-radius: var(--pos-radius-sm);
       background: color-mix(in srgb, #38bdf8 8%, var(--pos-surface));
+      color: var(--pos-text);
     }
-    .learned__content h2 {
-      margin: 0 0 0.45rem;
-      font-size: 0.86rem;
+    .learned-panel__content {
+      flex: 1 1 58%;
+      min-width: 0;
     }
-    .learned__art {
+    .learned-panel__title {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin: 0 0 0.65rem;
+      font-size: 0.88rem;
+      font-weight: 800;
+      line-height: 1.3;
+      color: var(--pos-text);
+    }
+    .learned-panel__title-ico {
       display: grid;
       place-items: center;
       flex-shrink: 0;
+      color: #0284c7;
     }
-    .learned__img {
+    .learned-panel__list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.42rem;
+    }
+    .learned-panel__list li {
+      display: grid;
+      grid-template-columns: 1.15rem minmax(0, 1fr);
+      gap: 0.5rem;
+      align-items: start;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      color: var(--pos-muted);
+    }
+    .learned-panel__check {
+      display: grid;
+      place-items: center;
+      width: 1.15rem;
+      height: 1.15rem;
+      margin-top: 0.12rem;
+      border-radius: 50%;
+      color: #0284c7;
+      background: color-mix(in srgb, #38bdf8 16%, white);
+    }
+    .learned-panel__art {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: min(38%, 13.5rem);
+      min-width: 9.5rem;
+    }
+    .learned-panel__img {
       display: block;
-      width: min(10rem, 100%);
+      width: 100%;
+      max-width: 13.5rem;
       height: auto;
       object-fit: contain;
     }
@@ -2275,8 +2440,23 @@ declare global {
       .kushki-hosted-grid,
       .settings-body--split,
       .system-details__grid,
-      .learned--split {
+      .learned-panel {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .rules-field-grid {
         grid-template-columns: 1fr;
+      }
+      .rule-field-card--wide {
+        grid-column: auto;
+      }
+      .learned-panel__art {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+      }
+      .learned-panel__img {
+        max-width: 11rem;
       }
       .settings-promo {
         order: -1;
