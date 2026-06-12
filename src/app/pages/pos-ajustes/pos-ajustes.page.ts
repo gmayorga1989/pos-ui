@@ -1823,13 +1823,8 @@ declare global {
       margin-bottom: 0.1rem;
       border-bottom: 1px solid color-mix(in srgb, var(--pos-border) 72%, transparent);
     }
-    .station-card__body--experience {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      flex: 1;
-    }
     .station-card--experience .station-toggle-row {
+      flex: 0 0 auto;
       padding: 0.28rem 0;
       border-top: none;
       border-bottom: 1px solid color-mix(in srgb, var(--pos-border) 72%, transparent);
@@ -1945,6 +1940,13 @@ declare global {
       display: grid;
       gap: 0.55rem;
       flex: 1;
+    }
+    .station-card--experience .station-card__body {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      justify-content: flex-start;
+      align-content: flex-start;
     }
     .station-card__body--center {
       place-content: center;
