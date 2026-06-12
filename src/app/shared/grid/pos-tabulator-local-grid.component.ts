@@ -26,13 +26,20 @@ import {
 } from './pos-tabulator-locale.util';
 
 /** Opciones Tabulator 6 no cubiertas del todo por @types (selectableRows, rowHeader). */
+type TabulatorRowHeader = {
+  formatter: string;
+  titleFormatter?: string;
+  headerSort?: boolean;
+  resizable?: boolean;
+  frozen?: boolean;
+  headerHozAlign?: string;
+  hozAlign?: string;
+  width?: number;
+};
+
 type TabulatorGridOptions = Options & {
   selectableRows?: boolean;
-  rowHeader?: ColumnDefinition & {
-    titleFormatter?: string;
-    headerHozAlign?: string;
-    resizable?: boolean;
-  };
+  rowHeader?: TabulatorRowHeader;
 };
 
 @Component({
@@ -238,18 +245,22 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
     };
     if (this.rowSelection) {
       opts.selectableRows = true;
-      opts.rowHeader = {
-        formatter: 'rowSelection',
-        titleFormatter: 'rowSelection',
-        headerSort: false,
-        resizable: false,
-        frozen: true,
-        headerHozAlign: 'center',
-        hozAlign: 'center',
-        width: 42,
-      };
+      opts.rowHeader = this.buildRowHeader();
     }
     return opts;
+  }
+
+  private buildRowHeader(): TabulatorRowHeader {
+    return {
+      formatter: 'rowSelection',
+      titleFormatter: 'rowSelection',
+      headerSort: false,
+      resizable: false,
+      frozen: true,
+      headerHozAlign: 'center',
+      hozAlign: 'center',
+      width: 42,
+    };
   }
 
   private applyRowSelectionOptions(): void {
@@ -259,16 +270,7 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
     const opts = this.table.options as TabulatorGridOptions;
     if (this.rowSelection) {
       opts.selectableRows = true;
-      opts.rowHeader = {
-        formatter: 'rowSelection',
-        titleFormatter: 'rowSelection',
-        headerSort: false,
-        resizable: false,
-        frozen: true,
-        headerHozAlign: 'center',
-        hozAlign: 'center',
-        width: 42,
-      };
+      opts.rowHeader = this.buildRowHeader();
     } else {
       opts.selectableRows = false;
       delete opts.rowHeader;
