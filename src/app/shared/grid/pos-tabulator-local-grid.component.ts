@@ -25,6 +25,16 @@ import {
   posTabulatorPaginationCounter,
 } from './pos-tabulator-locale.util';
 
+/** Opciones Tabulator 6 no cubiertas del todo por @types (selectableRows, rowHeader). */
+type TabulatorGridOptions = Options & {
+  selectableRows?: boolean;
+  rowHeader?: ColumnDefinition & {
+    titleFormatter?: string;
+    headerHozAlign?: string;
+    resizable?: boolean;
+  };
+};
+
 @Component({
   selector: 'pos-tabulator-local-grid',
   standalone: true,
@@ -96,10 +106,9 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
       this.table.setColumns(this.normalizedColumns());
     }
     if (changes['rowSelection'] && !changes['rowSelection'].firstChange) {
-      this.table.setColumns(this.normalizedColumns());
-      this.table.options.selectable = this.rowSelection;
+      this.applyRowSelectionOptions();
     }
-    if (changes['pagination'] || changes['paginationSize'] || changes['rowSelection']) {
+    if (changes['pagination'] || changes['paginationSize']) {
       this.applyPaginationOptions();
     }
     if (
@@ -124,20 +133,7 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
   }
 
   private buildTable(): void {
-    const opts: Options = {
-      layout: 'fitColumns',
-      height: this.height,
-      locale: POS_TABULATOR_LOCALE,
-      langs: posTabulatorLangs(),
-      selectable: this.rowSelection,
-      pagination: this.pagination,
-      paginationSize: this.paginationSize,
-      paginationSizeSelector: this.pagination ? [10, 15, 20, 50] : undefined,
-      paginationCounter: this.pagination ? posTabulatorPaginationCounter : undefined,
-      placeholder: this.buildPlaceholder(),
-      data: [...this.data],
-      columns: this.normalizedColumns(),
-    };
+    const opts = this.buildTableOptions();
     this.table = new Tabulator(this.host.nativeElement, opts);
     this.lastDataInputSignature = JSON.stringify(this.data);
     this.lastReloadNonceApplied = this.reloadNonce;
@@ -223,30 +219,69 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
     this.table.options.paginationSize = this.paginationSize;
     this.table.options.paginationSizeSelector = this.pagination ? [10, 15, 20, 50] : undefined;
     this.table.options.paginationCounter = this.pagination ? posTabulatorPaginationCounter : undefined;
-    this.table.options.selectable = this.rowSelection;
+    void this.table.redraw(true);
+  }
+
+  private buildTableOptions(): TabulatorGridOptions {
+    const opts: TabulatorGridOptions = {
+      layout: 'fitColumns',
+      height: this.height,
+      locale: POS_TABULATOR_LOCALE,
+      langs: posTabulatorLangs(),
+      pagination: this.pagination,
+      paginationSize: this.paginationSize,
+      paginationSizeSelector: this.pagination ? [10, 15, 20, 50] : undefined,
+      paginationCounter: this.pagination ? posTabulatorPaginationCounter : undefined,
+      placeholder: this.buildPlaceholder(),
+      data: [...this.data],
+      columns: this.normalizedColumns(),
+    };
+    if (this.rowSelection) {
+      opts.selectableRows = true;
+      opts.rowHeader = {
+        formatter: 'rowSelection',
+        titleFormatter: 'rowSelection',
+        headerSort: false,
+        resizable: false,
+        frozen: true,
+        headerHozAlign: 'center',
+        hozAlign: 'center',
+        width: 42,
+      };
+    }
+    return opts;
+  }
+
+  private applyRowSelectionOptions(): void {
+    if (!this.table) {
+      return;
+    }
+    const opts = this.table.options as TabulatorGridOptions;
+    if (this.rowSelection) {
+      opts.selectableRows = true;
+      opts.rowHeader = {
+        formatter: 'rowSelection',
+        titleFormatter: 'rowSelection',
+        headerSort: false,
+        resizable: false,
+        frozen: true,
+        headerHozAlign: 'center',
+        hozAlign: 'center',
+        width: 42,
+      };
+    } else {
+      opts.selectableRows = false;
+      delete opts.rowHeader;
+    }
     void this.table.redraw(true);
   }
 
   private normalizedColumns(): ColumnDefinition[] {
-    const cols = this.columns.map((col) => ({
+    return this.columns.map((col) => ({
       ...col,
       headerSort: col.headerSort === true,
       headerWordWrap: true,
     }));
-    if (!this.rowSelection) {
-      return cols;
-    }
-    return [
-      {
-        formatter: 'rowSelection',
-        titleFormatter: 'rowSelection',
-        hozAlign: 'center',
-        headerSort: false,
-        width: 42,
-        frozen: true,
-      },
-      ...cols,
-    ];
   }
 
   private closeActionMenus(): void {
