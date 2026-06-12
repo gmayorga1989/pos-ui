@@ -47,6 +47,7 @@ import { applyCedulaConsultaToForm, applyRucConsultaToForm } from '../../shared/
 import {
   customerResponseToSale,
   SALE_CONSUMIDOR_FINAL,
+  customerDisplayInitials,
   saleCustomerTipoLabel,
   type SaleCustomer,
 } from '../../shared/customer/pos-sale-customer.util';
@@ -57,7 +58,7 @@ import { PosLayoutPreferencesService } from '../../core/layout/pos-layout-prefer
 import { PosOfflineSyncService } from '../../core/offline/pos-offline-sync.service';
 import { PosToastService } from '../../core/ui/pos-toast.service';
 import { PosTabulatorLocalGridComponent } from '../../shared/grid/pos-tabulator-local-grid.component';
-import { tabulatorCellValue, tabulatorTextareaCell } from '../../shared/grid/tabulator-formatters.util';
+import { escapeHtml, tabulatorCellValue, tabulatorTextareaCell } from '../../shared/grid/tabulator-formatters.util';
 
 interface DemoProduct {
   id: string;
@@ -719,7 +720,7 @@ type ModalState =
       </section>
       } @else if (m.kind === 'pickCustomer') {
       <div class="ts-modal-backdrop" (click)="closeModal()"></div>
-      <section class="ts-form-modal ts-form-modal--wide cust-picker-modal" role="dialog" aria-modal="true" aria-labelledby="mdl-pickc">
+      <section class="ts-form-modal ts-form-modal--picker" role="dialog" aria-modal="true" aria-labelledby="mdl-pickc">
         <header class="ts-form-modal__header">
           <div class="ts-form-modal__icon" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -740,28 +741,46 @@ type ModalState =
           </button>
         </header>
         <div class="ts-form-modal__body">
-          <div class="cust-picker-toolbar">
-            <input
-              type="search"
-              class="cust-picker-toolbar__input pos-focus-ring"
-              placeholder="RUC, cédula, nombre o correo…"
-              [value]="custPickerQuery()"
-              (input)="onCustPickerQueryInput($event)"
-              (keydown.enter)="reloadCustomerPicker()" />
-            <button type="button" class="pos-btn pos-btn--soft" [disabled]="custPickerLoading()" (click)="reloadCustomerPicker()">
+          <div class="ts-modal-searchbar">
+            <label class="ts-modal-searchbar__field">
+              <svg class="ts-modal-searchbar__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.6" />
+                <path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+              </svg>
+              <input
+                type="search"
+                class="ts-modal-searchbar__input pos-focus-ring"
+                placeholder="RUC, cédula, nombre o correo…"
+                [value]="custPickerQuery()"
+                (input)="onCustPickerQueryInput($event)"
+                (keydown.enter)="reloadCustomerPicker()" />
+            </label>
+            <button
+              type="button"
+              class="pos-btn pos-btn--primary ts-modal-searchbar__btn"
+              [disabled]="custPickerLoading()"
+              (click)="reloadCustomerPicker()">
               {{ custPickerLoading() ? '…' : 'Buscar' }}
             </button>
           </div>
 
-          <p class="cust-picker-meta">
-            @if (custPickerLoading()) {
-              Cargando clientes…
-            } @else {
-              {{ custPickerRows().length }} resultado{{ custPickerRows().length === 1 ? '' : 's' }}
-            }
-          </p>
+          <div class="ts-modal-list-meta">
+            <p class="ts-modal-list-meta__count">
+              @if (custPickerLoading()) {
+                Cargando clientes…
+              } @else {
+                {{ custPickerRows().length }} resultado{{ custPickerRows().length === 1 ? '' : 's' }}
+              }
+            </p>
+            <button type="button" class="ts-modal-list-meta__link" (click)="openNewCustomerFromPicker()">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              Nuevo cliente
+            </button>
+          </div>
 
-          <div class="cust-picker-grid">
+          <div class="ts-modal-grid-wrap">
             <pos-tabulator-local-grid
               [data]="custPickerGridRows()"
               [columns]="custPickerColumns"
@@ -777,7 +796,7 @@ type ModalState =
         </div>
         <footer class="ts-form-modal__footer">
           <button type="button" class="pos-btn pos-btn--ghost" (click)="closeModal()">Cancelar</button>
-          <button type="button" class="pos-btn pos-btn--soft" (click)="openNewCustomerFromPicker()">+ Nuevo cliente</button>
+          <button type="button" class="pos-btn pos-btn--primary" (click)="openNewCustomerFromPicker()">+ Nuevo cliente</button>
         </footer>
       </section>
       } @else {
@@ -1450,32 +1469,6 @@ type ModalState =
     .customer-panel__chip--ghost {
       background: transparent;
       color: var(--pos-muted);
-    }
-    .cust-picker-toolbar {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0.55rem;
-      margin-bottom: 0.65rem;
-    }
-    .cust-picker-toolbar__input {
-      width: 100%;
-      border: 1px solid var(--pos-maestro-border, var(--pos-border));
-      border-radius: 5px;
-      background: var(--pos-maestro-card, var(--pos-surface));
-      color: var(--pos-text);
-      padding: 0.55rem 0.7rem;
-      font-size: 0.84rem;
-    }
-    .cust-picker-meta {
-      margin: 0 0 0.55rem;
-      font-size: 0.72rem;
-      color: var(--pos-muted);
-    }
-    .cust-picker-grid {
-      border: 1px solid var(--pos-maestro-border, var(--pos-border));
-      border-radius: 12px;
-      overflow: hidden;
-      background: var(--pos-maestro-card, var(--pos-surface));
     }
     .btn-xs {
       border-radius: 6px;
@@ -3353,31 +3346,49 @@ export class PosVentaPage {
     {
       title: '',
       field: 'id',
-      width: 92,
+      width: 128,
       headerSort: false,
-      hozAlign: 'center',
-      formatter: () =>
-        `<button type="button" class="cust-picker-grid__use" data-ts-action="use">Usar</button>`,
+      hozAlign: 'left',
+      formatter: (cell) => {
+        const row = cell.getRow().getData() as { displayName?: string };
+        const initials = customerDisplayInitials(String(row.displayName ?? ''));
+        return `<div class="cust-picker-row__lead">
+          <button type="button" class="cust-picker-grid__use" data-ts-action="use">Usar</button>
+          <span class="cust-picker-row__avatar" aria-hidden="true">${escapeHtml(initials)}</span>
+        </div>`;
+      },
     },
     {
       title: 'Nombre / Razón social',
       field: 'displayName',
       minWidth: 220,
-      formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell)),
+      formatter: (cell) => {
+        const value = String(tabulatorCellValue(cell) ?? '');
+        return `<span class="cust-picker-row__name">${escapeHtml(value.toUpperCase())}</span>`;
+      },
     },
-    { title: 'Tipo', field: 'tipoLabel', width: 120 },
+    { title: 'Tipo', field: 'tipoLabel', width: 110 },
     {
       title: 'Identificación',
       field: 'identificacion',
       width: 140,
       formatter: (cell) =>
-        `<span class="cust-picker-grid__id">${tabulatorTextareaCell(tabulatorCellValue(cell))}</span>`,
+        `<span class="cust-picker-grid__id">${escapeHtml(String(tabulatorCellValue(cell) ?? ''))}</span>`,
     },
     {
       title: 'Correo',
       field: 'email',
-      minWidth: 180,
+      minWidth: 160,
       formatter: (cell) => tabulatorTextareaCell(tabulatorCellValue(cell) ?? '—'),
+    },
+    {
+      title: '',
+      field: '_nav',
+      width: 40,
+      headerSort: false,
+      hozAlign: 'right',
+      formatter: () =>
+        `<span class="cust-picker-row__chev" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`,
     },
   ];
   readonly modal = signal<ModalState | null>(null);
@@ -3936,11 +3947,7 @@ export class PosVentaPage {
   }
 
   customerInitials(name: string): string {
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) {
-      return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase();
-    }
-    return (parts[0]?.slice(0, 2) ?? 'CF').toUpperCase();
+    return customerDisplayInitials(name);
   }
 
   onCatalogQuery(ev: Event): void {

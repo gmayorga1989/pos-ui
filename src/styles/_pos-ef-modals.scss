@@ -1,14 +1,19 @@
-/* Modales POS — mismo patrón visual que efactura-ui (ts-form-modal) */
+/* Modales POS — patrón Luxora DS v1 (Enterprise / Stripe-like) */
 
 .ts-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 1090;
   background: rgba(15, 23, 42, 0.38);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(4px);
+}
+
+html[data-theme='dark'] .ts-modal-backdrop {
+  background: rgba(0, 0, 0, 0.55);
 }
 
 .ts-form-modal {
+  --ts-modal-input-h: var(--lux-ds-input-h, 2.75rem);
   position: fixed;
   z-index: 1100;
   left: 50%;
@@ -21,13 +26,14 @@
   background: var(--pos-maestro-card, var(--pos-elevated));
   color: var(--pos-text);
   border: 1px solid var(--pos-maestro-border, var(--pos-border));
-  border-radius: 16px;
+  border-radius: var(--lux-ds-radius-card, 16px);
   box-shadow: var(--pos-maestro-shadow, var(--pos-panel-shadow));
   overflow: hidden;
 }
 
-.ts-form-modal--wide {
-  width: min(760px, calc(100vw - 2rem));
+.ts-form-modal--wide,
+.ts-form-modal--picker {
+  width: min(900px, calc(100vw - 2rem));
 }
 
 .ts-form-modal--product {
@@ -49,25 +55,32 @@
   width: min(440px, calc(100vw - 2rem));
 }
 
+/* —— Cabecera —— */
 .ts-form-modal__header {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  padding: 1rem 1.1rem;
+  gap: 0.85rem;
+  padding: 1.15rem 1.25rem 1.05rem;
   border-bottom: 1px solid var(--pos-maestro-divider, var(--pos-border));
-  background: var(--pos-maestro-header-bg, var(--pos-surface-2));
+  background: var(--pos-maestro-card, var(--pos-elevated));
 }
 
 .ts-form-modal__icon {
   display: grid;
   place-items: center;
-  flex: 0 0 42px;
-  width: 42px;
-  height: 42px;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
   color: var(--lux-primary-strong);
-  background: var(--pos-maestro-icon-bg, var(--pos-surface-2));
-  border: 1px solid var(--pos-maestro-icon-border, var(--pos-border-strong));
+  background: var(--pos-maestro-icon-bg, var(--lux-primary-soft));
+  border: 1px solid color-mix(in srgb, var(--lux-indigo) 18%, var(--pos-maestro-border, var(--pos-border)));
   border-radius: 12px;
+}
+
+html[data-theme='light'] .ts-form-modal__icon {
+  background: color-mix(in srgb, var(--lux-indigo) 10%, #ffffff);
+  border-color: color-mix(in srgb, var(--lux-indigo) 16%, #e2e8f0);
+  color: var(--lux-primary-deep);
 }
 
 .ts-form-modal__head-text {
@@ -76,25 +89,36 @@
 }
 
 .ts-form-modal__eyebrow {
-  margin: 0 0 0.12rem;
-  color: var(--pos-muted);
-  font-size: 0.72rem;
+  margin: 0 0 0.18rem;
+  color: var(--lux-primary-strong);
+  font-size: 0.68rem;
   font-weight: 700;
+  line-height: 1;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+html[data-theme='light'] .ts-form-modal__eyebrow {
+  background: var(--lux-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .ts-form-modal__header h3 {
   margin: 0;
   color: var(--pos-text);
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .ts-form-modal__subtitle {
-  margin: 0.2rem 0 0;
+  margin: 0.28rem 0 0;
   color: var(--pos-muted);
-  font-size: 0.78rem;
-  line-height: 1.35;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .ts-form-modal__close {
@@ -108,7 +132,7 @@
   border: 1px solid var(--pos-maestro-border, var(--pos-border-strong));
   border-radius: 10px;
   color: var(--pos-muted);
-  background: var(--pos-maestro-card, var(--pos-elevated));
+  background: color-mix(in srgb, var(--pos-maestro-card, #fff) 92%, var(--pos-bg));
   line-height: 0;
   cursor: pointer;
   transition:
@@ -127,10 +151,10 @@
 }
 
 .ts-form-modal__close:hover {
-  background: color-mix(in srgb, var(--lux-indigo) 10%, var(--pos-maestro-card, var(--pos-elevated)));
-  border-color: color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-maestro-border, var(--pos-border)));
+  background: color-mix(in srgb, var(--lux-indigo) 8%, var(--pos-maestro-card, var(--pos-elevated)));
+  border-color: color-mix(in srgb, var(--lux-indigo) 24%, var(--pos-maestro-border, var(--pos-border)));
   color: var(--pos-text);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--lux-indigo) 18%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--lux-indigo) 14%, transparent);
 }
 
 .ts-form-modal__close:hover .ts-form-modal__close-icon {
@@ -142,23 +166,171 @@
   outline-offset: 2px;
 }
 
+/* —— Cuerpo —— */
 .ts-form-modal__body {
   display: grid;
-  gap: 0.8rem;
-  padding: 1rem 1.1rem 0.25rem;
+  gap: 0.85rem;
+  padding: 1.1rem 1.25rem 0.35rem;
   overflow-y: auto;
 }
 
+.ts-form-modal--picker .ts-form-modal__body {
+  gap: 0.75rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Barra de búsqueda reutilizable en modales */
+.ts-modal-searchbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.ts-modal-searchbar__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.ts-modal-searchbar__icon {
+  position: absolute;
+  left: 0.85rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--pos-muted);
+  pointer-events: none;
+}
+
+.ts-modal-searchbar__input {
+  width: 100%;
+  height: var(--ts-modal-input-h);
+  min-height: var(--ts-modal-input-h);
+  padding: 0 0.85rem 0 2.35rem;
+  border: 1px solid var(--pos-maestro-border, var(--pos-border));
+  border-radius: var(--lux-ds-radius-input, 12px);
+  background: var(--pos-maestro-card, var(--pos-surface));
+  color: var(--pos-text);
+  font-size: 0.86rem;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.ts-modal-searchbar__input::placeholder {
+  color: color-mix(in srgb, var(--pos-muted) 88%, transparent);
+}
+
+.ts-modal-searchbar__input:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--lux-indigo) 42%, var(--pos-maestro-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lux-indigo) 14%, transparent);
+}
+
+.ts-modal-searchbar__btn {
+  height: var(--ts-modal-input-h);
+  min-height: var(--ts-modal-input-h);
+  padding-inline: 1.15rem;
+  border-radius: var(--lux-ds-radius-input, 12px);
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+/* Meta de listado (conteo + acción secundaria) */
+.ts-modal-list-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 1.5rem;
+}
+
+.ts-modal-list-meta__count {
+  margin: 0;
+  color: var(--pos-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.ts-modal-list-meta__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.15rem;
+  border: none;
+  background: transparent;
+  color: var(--lux-primary-strong);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.16s ease;
+}
+
+html[data-theme='light'] .ts-modal-list-meta__link {
+  color: var(--lux-primary-deep);
+}
+
+.ts-modal-list-meta__link:hover {
+  color: var(--lux-indigo);
+}
+
+.ts-modal-list-meta__link svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+}
+
+/* Contenedor de grid dentro de modal */
+.ts-modal-grid-wrap {
+  border: 1px solid var(--pos-maestro-border, var(--pos-border));
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--pos-maestro-card, var(--pos-surface));
+}
+
+.ts-form-modal--picker .ts-modal-grid-wrap .ts-tabulator-grid.tabulator {
+  border: none;
+  border-radius: 0;
+}
+
+/* —— Pie —— */
 .ts-form-modal__footer {
   display: flex;
   flex-shrink: 0;
   justify-content: flex-end;
-  gap: 0.5rem;
-  padding: 0.85rem 1.1rem 1.05rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1rem 1.25rem 1.15rem;
   border-top: 1px solid var(--pos-maestro-divider, var(--pos-border));
-  background: color-mix(in srgb, var(--pos-bg) 12%, var(--pos-maestro-card, var(--pos-elevated)));
+  background: var(--pos-maestro-card, var(--pos-elevated));
 }
 
+.ts-form-modal__footer .pos-btn {
+  min-height: 2.25rem;
+  padding-inline: 1rem;
+  border-radius: 10px;
+  font-size: 0.86rem;
+}
+
+.ts-form-modal__footer .pos-btn--ghost {
+  color: var(--pos-text);
+  background: color-mix(in srgb, var(--pos-maestro-card) 88%, var(--pos-bg));
+  border-color: var(--pos-maestro-border, var(--pos-border-strong));
+}
+
+html[data-theme='light'] .ts-form-modal__footer .pos-btn--ghost {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+
+.ts-form-modal__footer .pos-btn--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--lux-indigo) 6%, var(--pos-maestro-card));
+  border-color: color-mix(in srgb, var(--lux-indigo) 22%, var(--pos-maestro-border));
+}
+
+/* —— Confirmación —— */
 .ts-confirm-modal {
   position: fixed;
   z-index: 1100;
