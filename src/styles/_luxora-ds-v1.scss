@@ -6,7 +6,7 @@
 .lux-input,
 .shell-input {
   min-height: var(--lux-ds-input-h, 2.75rem);
-  border-radius: var(--lux-ds-radius-input, 12px);
+  border-radius: var(--lux-ds-radius-input, 5px);
   transition:
     border-color var(--lux-ds-transition, 0.2s ease),
     box-shadow var(--lux-ds-transition, 0.2s ease),
@@ -36,14 +36,14 @@ html[data-theme='dark'] .shell-input:focus {
 .card,
 .line-card,
 .shell-modal {
-  border-radius: var(--lux-ds-radius-card, 16px);
+  border-radius: var(--lux-ds-radius-card, 5px);
 }
 
 /* Botón primario DS */
 .lux-btn-primary,
 .shell-btn--primary {
   min-height: var(--lux-ds-btn-h, 2.75rem);
-  border-radius: var(--lux-ds-radius-input, 12px);
+  border-radius: var(--lux-ds-radius-input, 5px);
   background: var(--lux-gradient-diagonal);
   color: #fff;
   border: 1px solid color-mix(in srgb, var(--lux-magenta) 24%, var(--lux-indigo));

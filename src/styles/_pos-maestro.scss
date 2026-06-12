@@ -35,7 +35,7 @@ html[data-theme='dark'] {
 .pos-page-card {
   overflow: hidden;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 10px;
+  border-radius: 5px;
   box-shadow: var(--pos-maestro-shadow);
   background: var(--pos-maestro-card);
   color: var(--pos-text);
@@ -66,7 +66,7 @@ html[data-theme='dark'] {
   height: 2.3rem;
   flex: 0 0 2.3rem;
   border: 1px solid var(--pos-maestro-icon-border);
-  border-radius: 8px;
+  border-radius: 5px;
   background: var(--pos-maestro-icon-bg);
   color: var(--lux-primary-strong);
 }
@@ -176,7 +176,7 @@ html[data-theme='dark'] .pos-page-actions-toolbar .pos-btn--outline {
   padding: 0.72rem;
   background: var(--pos-maestro-card);
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 12px;
+  border-radius: 5px;
   box-shadow: var(--pos-maestro-shadow);
   transform: translateY(-6px);
   transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -206,7 +206,7 @@ html[data-theme='dark'] .pos-page-actions-toolbar .pos-btn--outline {
 
 .pos-maestro-filter input,
 .pos-maestro-filter select {
-  border-radius: 6px;
+  border-radius: 5px;
   border: 1px solid var(--pos-border-strong);
   background: var(--pos-bg);
   color: var(--pos-text);
@@ -222,7 +222,7 @@ html[data-theme='dark'] .pos-page-actions-toolbar .pos-btn--outline {
   gap: 0.35rem;
   min-height: 1.95rem;
   padding: 0.32rem 0.72rem;
-  border-radius: 6px;
+  border-radius: 5px;
   font-size: 0.84rem;
   font-weight: 600;
   border: 1px solid transparent;
@@ -308,7 +308,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 
 .pos-maestro-grid-wrap {
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 10px;
+  border-radius: 5px;
   overflow: auto;
   background: var(--pos-maestro-card);
   box-shadow: var(--pos-maestro-shadow);
@@ -414,7 +414,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   width: min(720px, calc(100vw - 2rem));
   background: var(--pos-maestro-card);
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 16px;
+  border-radius: 5px;
   box-shadow: var(--pos-maestro-shadow);
   overflow: hidden;
   color: var(--pos-text);
@@ -452,7 +452,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   width: 2rem;
   height: 2rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 5px;
   background: transparent;
   color: var(--pos-muted);
   cursor: pointer;
@@ -501,7 +501,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 .pos-form-field input,
 .pos-form-field select,
 .pos-form-field textarea {
-  border-radius: 6px;
+  border-radius: 5px;
   border: 1px solid var(--pos-border-strong);
   background: var(--pos-bg);
   color: var(--pos-text);
@@ -593,7 +593,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 
 .pos-form-section {
   border: 1px solid var(--pos-maestro-border, var(--pos-border));
-  border-radius: 12px;
+  border-radius: 5px;
   background: color-mix(in srgb, var(--pos-bg) 28%, var(--pos-maestro-card, var(--pos-elevated)));
   overflow: hidden;
 }
@@ -665,7 +665,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 
 .pos-price-table__row input {
   width: 100%;
-  border-radius: 6px;
+  border-radius: 5px;
   border: 1px solid var(--pos-border-strong);
   background: var(--pos-bg);
   color: var(--pos-text);
@@ -717,7 +717,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   min-height: 220px;
   padding: 1rem;
   border: 1.5px dashed color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-maestro-border, var(--pos-border)));
-  border-radius: 14px;
+  border-radius: 5px;
   background:
     radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--lux-indigo) 7%, transparent), transparent 58%),
     color-mix(in srgb, var(--pos-bg) 35%, var(--pos-maestro-card, var(--pos-elevated)));
@@ -765,7 +765,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   place-items: center;
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 5px;
   color: var(--lux-primary-strong);
   background: color-mix(in srgb, var(--lux-indigo) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--lux-indigo) 18%, transparent);
@@ -789,7 +789,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   width: 100%;
   max-height: 240px;
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: 5px;
   background: color-mix(in srgb, var(--pos-bg) 50%, transparent);
 }
 
@@ -831,7 +831,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 }
 
 .pos-image-url-field input {
-  border-radius: 6px;
+  border-radius: 5px;
   border: 1px solid var(--pos-border-strong);
   background: var(--pos-bg);
   color: var(--pos-text);
@@ -865,7 +865,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   padding: 1.1rem 1.15rem;
   background: var(--pos-maestro-card);
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 14px;
+  border-radius: 5px;
   box-shadow: var(--pos-maestro-shadow);
 }
 
@@ -899,7 +899,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 .pos-maestro-msg--info {
   color: var(--pos-text);
   padding: 0.55rem 0.7rem;
-  border-radius: 8px;
+  border-radius: 5px;
   border: 1px solid var(--pos-maestro-border);
   background: color-mix(in srgb, var(--lux-indigo) 5%, var(--pos-maestro-card));
   font-size: 0.82rem;
@@ -917,7 +917,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   max-width: 920px;
   margin: 0 auto 1rem;
   padding: 1rem 1.15rem;
-  border-radius: 14px;
+  border-radius: 5px;
   border: 1px solid var(--pos-maestro-border);
   background: color-mix(in srgb, var(--pos-maestro-card) 94%, var(--lux-indigo) 3%);
   box-shadow: 0 10px 28px color-mix(in srgb, var(--lux-indigo) 8%, transparent);
@@ -946,7 +946,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   place-items: center;
   width: 2.35rem;
   height: 2.35rem;
-  border-radius: 10px;
+  border-radius: 5px;
   flex-shrink: 0;
   color: var(--lux-primary-strong);
   background: color-mix(in srgb, var(--lux-indigo) 12%, transparent);
@@ -998,7 +998,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   height: 1.85rem;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: 5px;
   background: transparent;
   color: var(--pos-muted);
   cursor: pointer;
@@ -1022,7 +1022,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   margin: 0 0 0.85rem;
   padding: 0.5rem 0.55rem;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 10px;
+  border-radius: 5px;
   background: color-mix(in srgb, var(--pos-maestro-card) 92%, var(--lux-indigo) 2%);
 }
 
@@ -1033,7 +1033,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   gap: 0.35rem;
   min-width: 0;
   padding: 0.3rem 0.4rem;
-  border-radius: 8px;
+  border-radius: 5px;
   color: var(--pos-muted);
   font-size: 0.74rem;
   font-weight: 600;
@@ -1146,7 +1146,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 
 .pos-mig-filter-row select {
   padding: 0.42rem 0.55rem;
-  border-radius: 8px;
+  border-radius: 5px;
   border: 1px solid var(--pos-maestro-border);
   background: var(--pos-maestro-card);
 }
@@ -1164,7 +1164,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   padding: 0.75rem 0.8rem;
   text-align: left;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 10px;
+  border-radius: 5px;
   background: var(--pos-maestro-card);
   color: var(--pos-text);
   cursor: pointer;
@@ -1218,7 +1218,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   gap: 0.7rem;
   padding: 0.8rem 0.9rem;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 12px;
+  border-radius: 5px;
   background: color-mix(in srgb, var(--pos-bg) 28%, var(--pos-maestro-card));
 }
 
@@ -1320,7 +1320,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 .pos-mig-guide__upsert {
   margin: 0;
   padding: 0.5rem 0.6rem;
-  border-radius: 8px;
+  border-radius: 5px;
   background: var(--pos-status-ok-bg);
   border: 1px solid var(--pos-status-ok-border);
   color: var(--pos-text);
@@ -1334,7 +1334,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   padding: 0.85rem 0.9rem;
   text-align: left;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 12px;
+  border-radius: 5px;
   background: var(--pos-maestro-card);
   color: var(--pos-text);
   cursor: pointer;
@@ -1393,7 +1393,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 .pos-mig-cols__block {
   padding: 0.75rem 0.85rem;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 10px;
+  border-radius: 5px;
   background: color-mix(in srgb, var(--pos-bg) 40%, var(--pos-maestro-card));
 }
 
@@ -1421,7 +1421,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   gap: 0.35rem;
   margin-bottom: 0.85rem;
   padding: 0.75rem 0.85rem;
-  border-radius: 10px;
+  border-radius: 5px;
   border: 1px dashed color-mix(in srgb, var(--lux-indigo) 30%, var(--pos-maestro-border));
   background: color-mix(in srgb, var(--lux-indigo) 5%, var(--pos-maestro-card));
 }
@@ -1459,7 +1459,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 .pos-mig-upsert {
   margin: 0;
   padding: 0.55rem 0.7rem;
-  border-radius: 8px;
+  border-radius: 5px;
   background: var(--pos-status-ok-bg);
   border: 1px solid var(--pos-status-ok-border);
   color: var(--pos-text);
@@ -1472,7 +1472,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   gap: 0.35rem;
   padding: 1.65rem 1.1rem;
   border: 2px dashed var(--pos-maestro-border);
-  border-radius: 14px;
+  border-radius: 5px;
   background: color-mix(in srgb, var(--pos-bg) 35%, var(--pos-maestro-card));
   color: var(--pos-muted);
   text-align: center;
@@ -1509,7 +1509,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 .pos-mig-summary__metric {
   padding: 0.7rem 0.8rem;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 10px;
+  border-radius: 5px;
   background: var(--pos-maestro-card);
 }
 
@@ -1588,7 +1588,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   margin-bottom: 0.75rem;
   padding: 0.35rem;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 12px;
+  border-radius: 5px;
   background: color-mix(in srgb, var(--pos-maestro-card) 94%, var(--lux-indigo) 2%);
 }
 
@@ -1598,7 +1598,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   gap: 0.4rem;
   padding: 0.45rem 0.85rem;
   border: none;
-  border-radius: 9px;
+  border-radius: 5px;
   background: transparent;
   color: var(--pos-muted);
   font-size: 0.82rem;
@@ -1646,7 +1646,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 .pos-mig-inline-alert {
   margin: 0;
   padding: 0.65rem 0.85rem;
-  border-radius: 10px;
+  border-radius: 5px;
   font-size: 0.84rem;
   line-height: 1.45;
 }
@@ -1668,7 +1668,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   gap: 0.85rem;
   margin-bottom: 0.85rem;
   padding: 1rem 1.1rem;
-  border-radius: 14px;
+  border-radius: 5px;
   border: 1px solid color-mix(in srgb, var(--lux-indigo) 24%, var(--pos-maestro-border));
   background: linear-gradient(
     160deg,
@@ -1717,7 +1717,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   display: grid;
   gap: 0.75rem;
   padding: 0.9rem 1rem;
-  border-radius: 12px;
+  border-radius: 5px;
   border: 1px solid color-mix(in srgb, var(--lux-indigo) 22%, var(--pos-maestro-border));
   background: linear-gradient(
     135deg,
@@ -1752,7 +1752,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   display: grid;
   gap: 0.15rem;
   padding: 0.45rem 0.55rem;
-  border-radius: 8px;
+  border-radius: 5px;
   border: 1px solid var(--pos-maestro-border);
   background: var(--pos-maestro-card);
   font-size: 0.78rem;
@@ -1781,7 +1781,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   margin-bottom: 1rem;
   padding: 0.85rem;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 12px;
+  border-radius: 5px;
   background: color-mix(in srgb, var(--pos-bg) 30%, var(--pos-maestro-card));
 }
 
@@ -1810,7 +1810,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
   gap: 0.65rem;
   align-items: center;
   padding: 0.45rem 0.55rem;
-  border-radius: 8px;
+  border-radius: 5px;
   background: var(--pos-maestro-card);
   border: 1px solid var(--pos-maestro-border);
 }
@@ -1838,7 +1838,7 @@ html[data-theme='light'] .pos-btn--soft:hover:not(:disabled) {
 
 .pos-mig-mapping__row select {
   width: 100%;
-  border-radius: 6px;
+  border-radius: 5px;
   border: 1px solid var(--pos-border-strong);
   background: var(--pos-bg);
   color: var(--pos-text);

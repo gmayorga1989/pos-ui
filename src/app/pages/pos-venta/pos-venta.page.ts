@@ -153,7 +153,7 @@ type ModalState =
   template: `
     <div class="venta">
       <div class="venta__grid" [class.venta__grid--catalog-left]="prefs.handedness() === 'right'">
-        <section class="panel panel--wide" aria-label="Catálogo de venta">
+        <section class="panel panel--wide" #catalogPanel aria-label="Catálogo de venta">
           <div class="catalog-toolbar">
             <label class="catalog-search">
               <span class="sr-only">Buscar por nombre, SKU o código de barras</span>
@@ -509,14 +509,91 @@ type ModalState =
                 </div>
               </article>
             } @empty {
-              <div class="lines-empty">
-                <svg class="lines-empty__ico" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M6 8h15l-1.5 9H7.5L6 8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-                  <path d="M6 8L5 4H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                  <circle cx="9" cy="20" r="1" fill="currentColor" />
-                  <circle cx="18" cy="20" r="1" fill="currentColor" />
-                </svg>
-                <p>{{ desk.cajaOpen() ? 'Pulse un producto para agregarlo al ticket.' : 'Debe aperturar caja para agregar productos.' }}</p>
+              <div class="cart-empty">
+                <div class="cart-empty__hero">
+                  <div class="cart-empty__icon-wrap" aria-hidden="true">
+                    <span class="cart-empty__spark cart-empty__spark--1">✦</span>
+                    <span class="cart-empty__spark cart-empty__spark--2">+</span>
+                    <span class="cart-empty__spark cart-empty__spark--3">✦</span>
+                    <svg class="cart-empty__icon" width="34" height="34" viewBox="0 0 24 24" fill="none">
+                      <defs>
+                        <linearGradient id="cart-empty-grad" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+                          <stop stop-color="#00e5ff" />
+                          <stop offset="0.5" stop-color="#6366f1" />
+                          <stop offset="1" stop-color="#c026d3" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M6 8h15l-1.5 9H7.5L6 8z" stroke="url(#cart-empty-grad)" stroke-width="1.6" stroke-linejoin="round" />
+                      <path d="M6 8L5 4H2" stroke="url(#cart-empty-grad)" stroke-width="1.6" stroke-linecap="round" />
+                      <circle cx="9" cy="20" r="1.2" fill="url(#cart-empty-grad)" />
+                      <circle cx="18" cy="20" r="1.2" fill="url(#cart-empty-grad)" />
+                    </svg>
+                  </div>
+                  <h3 class="cart-empty__title">
+                    @if (desk.cajaOpen()) {
+                      Tu ticket está vacío
+                    } @else {
+                      Caja cerrada
+                    }
+                  </h3>
+                  <p class="cart-empty__desc">
+                    @if (desk.cajaOpen()) {
+                      Agrega productos a tu ticket para comenzar la venta.
+                    } @else {
+                      Debe aperturar caja para agregar productos.
+                    }
+                  </p>
+                </div>
+                @if (desk.cajaOpen()) {
+                  <div class="cart-empty__actions">
+                    <button type="button" class="cart-empty__action pos-focus-ring" (click)="focusCatalogScan()">
+                      <span class="cart-empty__action-ico cart-empty__action-ico--scan">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M4 7V5a1 1 0 011-1h2M4 17v2a1 1 0 001 1h2M16 5h2a1 1 0 011 1v2M16 19h2a1 1 0 001-1v-2M7 12h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      </span>
+                      <span class="cart-empty__action-text">
+                        <strong>Escanear código</strong>
+                        <small>Usa el lector de código de barras</small>
+                      </span>
+                      <svg class="cart-empty__action-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      </svg>
+                    </button>
+                    <button type="button" class="cart-empty__action pos-focus-ring" (click)="focusCatalogSearch()">
+                      <span class="cart-empty__action-ico cart-empty__action-ico--search">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M7 7h10v10H7z" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M9 11h6M12 8v6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                        </svg>
+                      </span>
+                      <span class="cart-empty__action-text">
+                        <strong>Buscar producto</strong>
+                        <small>Busca por nombre, SKU o código</small>
+                      </span>
+                      <svg class="cart-empty__action-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      </svg>
+                    </button>
+                    <button type="button" class="cart-empty__action pos-focus-ring" (click)="focusCatalogPanel()">
+                      <span class="cart-empty__action-ico cart-empty__action-ico--catalog">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="4" y="4" width="6" height="6" stroke="currentColor" stroke-width="1.6" />
+                          <rect x="14" y="4" width="6" height="6" stroke="currentColor" stroke-width="1.6" />
+                          <rect x="4" y="14" width="6" height="6" stroke="currentColor" stroke-width="1.6" />
+                          <rect x="14" y="14" width="6" height="6" stroke="currentColor" stroke-width="1.6" />
+                        </svg>
+                      </span>
+                      <span class="cart-empty__action-text">
+                        <strong>Ver catálogo</strong>
+                        <small>Explora todas las categorías</small>
+                      </span>
+                      <svg class="cart-empty__action-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+                }
               </div>
             }
           </div>
@@ -1471,7 +1548,7 @@ type ModalState =
       color: var(--pos-muted);
     }
     .btn-xs {
-      border-radius: 6px;
+      border-radius: 5px;
       border: 1px solid var(--pos-border-strong);
       background: var(--pos-surface);
       color: var(--pos-text);
@@ -2046,7 +2123,7 @@ type ModalState =
       flex: 0 0 auto;
       flex-shrink: 0;
       border: 1px solid #e2e8f0;
-      border-radius: 12px;
+      border-radius: 5px;
       background: #ffffff;
       padding: 0.62rem 0.65rem 0.62rem 0.85rem;
       box-shadow: none;
@@ -2079,7 +2156,7 @@ type ModalState =
       bottom: 0;
       width: 4px;
       background: linear-gradient(180deg, #c026d3 0%, #6366f1 48%, #00e5ff 100%);
-      border-radius: 12px 0 0 12px;
+      border-radius: 5px 0 0 5px;
     }
     html[data-theme='dark'] .line-card {
       background: var(--pos-elevated);
@@ -2305,18 +2382,163 @@ type ModalState =
     html[data-theme='dark'] .line-card__remove {
       color: #fca5a5;
     }
-    .lines-empty {
-      margin: 1.5rem 0.5rem;
-      text-align: center;
-      color: var(--pos-muted);
-      font-size: 0.78rem;
-      display: grid;
-      gap: 0.35rem;
-      justify-items: center;
+    .cart-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: 1.15rem;
+      padding: 1.25rem 0.85rem 1.5rem;
+      min-height: min(28rem, 100%);
     }
-    .lines-empty__ico {
+    .cart-empty__hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.55rem;
+    }
+    .cart-empty__icon-wrap {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 5.5rem;
+      height: 5.5rem;
+      margin-bottom: 0.35rem;
+      border: 1.5px dashed color-mix(in srgb, var(--lux-indigo) 28%, #e2e8f0);
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--lux-indigo) 4%, #ffffff);
+    }
+    html[data-theme='dark'] .cart-empty__icon-wrap {
+      border-color: color-mix(in srgb, var(--lux-indigo) 35%, var(--pos-border));
+      background: color-mix(in srgb, var(--lux-indigo) 8%, var(--pos-elevated));
+    }
+    .cart-empty__spark {
+      position: absolute;
+      font-size: 0.72rem;
+      line-height: 1;
+      color: color-mix(in srgb, var(--lux-indigo) 55%, #94a3b8);
+      pointer-events: none;
+    }
+    .cart-empty__spark--1 {
+      top: 0.55rem;
+      right: 0.85rem;
+    }
+    .cart-empty__spark--2 {
+      top: 1.1rem;
+      left: 0.45rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .cart-empty__spark--3 {
+      bottom: 0.75rem;
+      right: 0.55rem;
+    }
+    .cart-empty__icon {
+      display: block;
+    }
+    .cart-empty__title {
+      margin: 0;
+      font-size: 1.02rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--pos-text);
+    }
+    .cart-empty__desc {
+      margin: 0;
+      max-width: 16rem;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: var(--pos-muted);
+    }
+    .cart-empty__actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.45rem;
+      width: 100%;
+    }
+    @media (max-width: 720px) {
+      .cart-empty__actions {
+        grid-template-columns: 1fr;
+      }
+    }
+    .cart-empty__action {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      width: 100%;
+      min-height: 3.65rem;
+      padding: 0.55rem 0.62rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      background: #ffffff;
+      color: var(--pos-text);
+      text-align: left;
+      cursor: pointer;
+      transition:
+        border-color var(--pos-transition),
+        box-shadow var(--pos-transition),
+        transform 0.15s ease;
+    }
+    html[data-theme='dark'] .cart-empty__action {
+      background: var(--pos-elevated);
+      border-color: var(--pos-border);
+    }
+    .cart-empty__action:hover {
+      border-color: color-mix(in srgb, var(--lux-indigo) 32%, #e2e8f0);
+      box-shadow: 0 8px 22px -16px color-mix(in srgb, var(--lux-indigo) 35%, transparent);
+      transform: translateY(-1px);
+    }
+    .cart-empty__action-ico {
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      width: 2.15rem;
+      height: 2.15rem;
+      border-radius: 5px;
+    }
+    .cart-empty__action-ico--scan {
+      color: #0284c7;
+      background: color-mix(in srgb, #0ea5e9 12%, #ffffff);
+    }
+    .cart-empty__action-ico--search {
+      color: var(--lux-primary-deep);
+      background: color-mix(in srgb, var(--lux-indigo) 10%, #ffffff);
+    }
+    .cart-empty__action-ico--catalog {
+      color: #0891b2;
+      background: color-mix(in srgb, #06b6d4 12%, #ffffff);
+    }
+    html[data-theme='dark'] .cart-empty__action-ico--scan {
+      background: color-mix(in srgb, #0ea5e9 16%, var(--pos-elevated));
+    }
+    html[data-theme='dark'] .cart-empty__action-ico--search {
+      background: color-mix(in srgb, var(--lux-indigo) 16%, var(--pos-elevated));
+    }
+    html[data-theme='dark'] .cart-empty__action-ico--catalog {
+      background: color-mix(in srgb, #06b6d4 16%, var(--pos-elevated));
+    }
+    .cart-empty__action-text {
+      display: grid;
+      gap: 0.12rem;
+      min-width: 0;
+      flex: 1;
+    }
+    .cart-empty__action-text strong {
+      font-size: 0.74rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--pos-text);
+    }
+    .cart-empty__action-text small {
+      font-size: 0.62rem;
+      line-height: 1.3;
+      color: var(--pos-muted);
+    }
+    .cart-empty__action-chev {
+      flex-shrink: 0;
       color: var(--pos-faint);
-      opacity: 0.7;
     }
     .price-pick {
       display: grid;
@@ -3320,6 +3542,7 @@ export class PosVentaPage {
   readonly catalogView = signal<'grid' | 'list'>('grid');
 
   private readonly catalogSearchRef = viewChild<ElementRef<HTMLInputElement>>('catalogSearch');
+  private readonly catalogPanelRef = viewChild<ElementRef<HTMLElement>>('catalogPanel');
   private readonly cartLinesRef = viewChild<ElementRef<HTMLElement>>('cartLines');
 
   private tabSeq = 1;
@@ -3361,10 +3584,8 @@ export class PosVentaPage {
       title: 'Nombre / Razón social',
       field: 'displayName',
       minWidth: 220,
-      formatter: (cell) => {
-        const value = String(tabulatorCellValue(cell) ?? '');
-        return `<span class="cust-picker-row__name">${escapeHtml(value.toUpperCase())}</span>`;
-      },
+      formatter: (cell) =>
+        tabulatorTextareaCell(String(tabulatorCellValue(cell) ?? '').toUpperCase()),
     },
     { title: 'Tipo', field: 'tipoLabel', width: 110 },
     {
@@ -3918,6 +4139,17 @@ export class PosVentaPage {
         el.focus({ preventScroll: true });
         el.select();
       }
+    });
+  }
+
+  focusCatalogSearch(): void {
+    this.focusCatalogScan();
+  }
+
+  focusCatalogPanel(): void {
+    queueMicrotask(() => {
+      this.catalogPanelRef()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      this.focusCatalogScan();
     });
   }
 

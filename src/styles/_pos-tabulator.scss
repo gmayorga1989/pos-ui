@@ -2,7 +2,7 @@
 
 .ts-tabulator-grid.tabulator {
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 8px;
+  border-radius: 5px;
   overflow: hidden;
   background: var(--pos-maestro-card);
   color: var(--pos-text);
@@ -67,7 +67,7 @@
   width: 34px;
   height: 34px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 5px;
   border: 1px solid var(--pos-maestro-border, #e2e8f0);
   background: #fff;
   vertical-align: middle;
@@ -98,7 +98,7 @@
   height: 1.95rem;
   padding: 0;
   border: 1px solid var(--pos-border-strong);
-  border-radius: 8px;
+  border-radius: 5px;
   background: color-mix(in srgb, var(--pos-maestro-card) 88%, var(--lux-indigo) 12%);
   color: var(--pos-muted);
   cursor: pointer;
@@ -127,7 +127,7 @@ body > .ts-grid-actions__menu,
   min-width: 9.5rem;
   margin: 0;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 8px;
+  border-radius: 5px;
   padding: 0.35rem;
   background: var(--pos-maestro-card);
   opacity: 0;
@@ -154,7 +154,7 @@ body > .ts-grid-actions__menu .dropdown-item,
   min-height: 2.15rem;
   padding: 0.45rem 0.6rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 5px;
   background: transparent;
   font-size: 0.9rem;
   color: var(--pos-text);
@@ -251,7 +251,7 @@ body > .ts-grid-actions__menu .dropdown-item:hover,
   margin-top: 0.35rem;
   padding: 0.38rem 0.95rem;
   border: 1px solid color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-maestro-border));
-  border-radius: 8px;
+  border-radius: 5px;
   background: var(--pos-maestro-card);
   color: var(--lux-primary-strong);
   font-size: 0.86rem;
@@ -292,7 +292,7 @@ html[data-theme='dark'] .ts-tabulator-empty__cta {
 
 .cust-picker-grid__use {
   border: 1px solid color-mix(in srgb, var(--lux-indigo) 30%, var(--pos-maestro-border));
-  border-radius: 8px;
+  border-radius: 5px;
   background: color-mix(in srgb, var(--lux-indigo) 8%, var(--pos-maestro-card));
   color: var(--lux-primary-strong);
   font-size: 0.72rem;
@@ -341,8 +341,7 @@ html[data-theme='dark'] .cust-picker-row__avatar {
   border-color: rgba(148, 163, 184, 0.2);
 }
 
-.cust-picker-row__name {
-  display: block;
+.ts-form-modal--picker .ts-cell-textarea {
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -416,7 +415,7 @@ html[data-theme='dark'] .cust-picker-row__avatar {
 .ts-tabulator-grid.tabulator .tabulator-footer .tabulator-page-size select {
   min-width: 4.25rem;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 8px;
+  border-radius: 5px;
   background: var(--pos-maestro-card);
   color: var(--pos-text);
   font-size: 0.8rem;
@@ -448,7 +447,7 @@ html[data-theme='dark'] .cust-picker-row__avatar {
   height: 1.85rem;
   padding: 0 0.45rem;
   border: 1px solid var(--pos-maestro-border);
-  border-radius: 8px;
+  border-radius: 5px;
   background: var(--pos-maestro-card);
   color: var(--pos-muted);
   font-size: 0.76rem;

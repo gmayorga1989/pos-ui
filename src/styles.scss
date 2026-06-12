@@ -22,10 +22,10 @@ html {
   --pos-product-gap: 0.55rem;
   --pos-qty-size: 1.65rem;
   --pos-font-base: 15px;
-  --pos-radius-xs: 6px;
-  --pos-radius-sm: var(--lux-ds-radius-input);
-  --pos-radius: var(--lux-ds-radius-card);
-  --pos-radius-lg: 18px;
+  --pos-radius-xs: 5px;
+  --pos-radius-sm: 5px;
+  --pos-radius: 5px;
+  --pos-radius-lg: 5px;
   --pos-transition: var(--lux-ds-transition);
   --pos-font: 'Sora', 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --pos-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
@@ -42,8 +42,8 @@ html {
   --pos-product-gap: 0.45rem;
   --pos-qty-size: 1.45rem;
   --pos-font-base: 14px;
-  --pos-radius-sm: 6px;
-  --pos-radius: 9px;
+  --pos-radius-sm: 5px;
+  --pos-radius: 5px;
 }
 
 [data-density='comfortable'] {
@@ -65,8 +65,8 @@ html {
   --pos-product-gap: 0.65rem;
   --pos-qty-size: 2.35rem;
   --pos-font-base: 16px;
-  --pos-radius-sm: 9px;
-  --pos-radius: 13px;
+  --pos-radius-sm: 5px;
+  --pos-radius: 5px;
 }
 
 /* Tema claro — superficie marca #F5F7FA + acentos cyan/indigo/magenta visibles */
