@@ -436,7 +436,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
       content: '';
       position: absolute;
       inset: 0;
-      border-radius: 14px;
+      border-radius: 5px;
       padding: 1.5px;
       background: linear-gradient(180deg, #00e5ff 0%, #6366f1 50%, #c026d3 100%);
       -webkit-mask:
@@ -481,7 +481,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
       place-items: center;
       color: var(--pos-rail-fg);
       text-decoration: none;
-      border: 1px solid transparent;
+      
       transition:
         background var(--pos-transition),
         color var(--pos-transition),
@@ -499,7 +499,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
       background: linear-gradient(135deg, #00e5ff 0%, #6366f1 55%, #c026d3 100%);
       color: #fff;
       border-color: transparent;
-      border-radius: 10px;
+      border-radius: 5px;
       box-shadow: 0 4px 14px -4px rgba(99, 102, 241, 0.42);
     }
     html[data-theme='dark'] .rail__btn--active {

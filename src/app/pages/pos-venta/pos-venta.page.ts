@@ -1400,7 +1400,7 @@ type ModalState =
     .customer-panel__input {
       flex: 1;
       min-width: 0;
-      border-radius: 10px;
+      border-radius: 5px;
       border: 1px solid #e2e8f0;
       background: #f8fafc;
       color: var(--pos-text);
@@ -1561,7 +1561,7 @@ type ModalState =
       max-height: var(--venta-tool-h);
       box-sizing: border-box;
       padding: 0 0.65rem 0 0.55rem;
-      border-radius: 10px;
+      border-radius: 5px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
       box-shadow: none;
@@ -1628,7 +1628,7 @@ type ModalState =
     .catalog-filter__select {
       width: 100%;
       padding: 0 0.55rem;
-      border-radius: 10px;
+      border-radius: 5px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
       color: var(--pos-text);
@@ -1646,7 +1646,7 @@ type ModalState =
       width: var(--venta-tool-h);
       display: grid;
       place-items: center;
-      border-radius: 10px;
+      border-radius: 5px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
       color: var(--pos-muted);
@@ -1766,7 +1766,7 @@ type ModalState =
       font-size: 0.72rem;
       font-weight: 600;
       padding: 0 0.72rem;
-      border-radius: 10px;
+      border-radius: 5px;
       cursor: pointer;
       white-space: nowrap;
       display: inline-flex;
@@ -2310,7 +2310,7 @@ type ModalState =
       gap: 0.65rem;
       width: 100%;
       padding: 0.55rem 0.65rem;
-      border-radius: 10px;
+      border-radius: 5px;
       border: 1px solid var(--pos-border-strong);
       background: var(--pos-surface-2);
       color: var(--pos-text);
