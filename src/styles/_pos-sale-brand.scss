@@ -1,207 +1,236 @@
 /**
- * Superficies de venta (catálogo + carrito) — acentos Luxora en modo claro.
+ * Venta POS — Luxora DS v1.0 (alineado al boceto Enterprise Light).
+ * Sin bordes pesados, sin fondos tintados, sin rayas decorativas.
  */
 
 html[data-theme='light'] {
   .panel {
     position: relative;
-    border-color: color-mix(in srgb, var(--lux-indigo) 14%, var(--pos-border));
-    box-shadow: var(--pos-panel-shadow);
+    border: none;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   }
 
   .panel::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--lux-gradient);
-    opacity: 0.8;
-    z-index: 2;
-    pointer-events: none;
+    display: none;
+  }
+
+  .catalog-toolbar,
+  .catalog-pager,
+  .cart-head,
+  .customer-panel,
+  .totals {
+    background: #ffffff;
+    border-color: #e2e8f0;
   }
 
   .catalog-toolbar {
-    background: var(--lux-brand-wash);
-    border-bottom-color: color-mix(in srgb, var(--lux-indigo) 12%, var(--pos-border));
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .catalog-pager {
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .catalog-search {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    box-shadow: none;
   }
 
   .catalog-search:focus-within {
-    border-color: color-mix(in srgb, var(--lux-cyan) 48%, var(--lux-indigo));
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--lux-cyan) 22%, transparent),
-      0 6px 18px -8px rgba(var(--lux-cyan-rgb), 0.35);
+    border-color: #cbd5e1;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lux-indigo) 10%, transparent);
   }
 
-  .catalog-filter__select:focus {
-    border-color: color-mix(in srgb, var(--lux-indigo) 45%, var(--pos-border-strong));
-    outline: none;
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--lux-indigo) 16%, transparent);
+  .catalog-filter__select {
+    border-color: #e2e8f0;
+    background: #ffffff;
+  }
+
+  .cat {
+    border-color: #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
   }
 
   .cat--on {
-    border-color: color-mix(in srgb, var(--lux-indigo) 38%, var(--pos-border-strong));
-    color: var(--lux-primary-deep);
-    background: var(--lux-cyan-soft);
+    border-color: #e2e8f0;
+    color: var(--lux-indigo);
+    background: color-mix(in srgb, var(--lux-indigo) 8%, #ffffff);
   }
 
   .card::before,
   .line-card::before {
-    width: 3px;
-    background: var(--lux-gradient-vertical);
-    box-shadow: 0 0 10px var(--lux-glow-cyan);
+    display: none;
   }
 
   .card {
-    border-color: color-mix(in srgb, var(--lux-indigo) 10%, var(--pos-border));
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: none;
   }
 
   .card:hover {
-    border-color: color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-border-strong));
-    box-shadow:
-      0 1px 2px rgba(var(--lux-ink-rgb), 0.04),
-      0 16px 36px -18px rgba(var(--lux-primary-rgb), 0.28);
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 14px -10px rgba(15, 23, 42, 0.08);
   }
 
   .card__cat {
-    background: var(--lux-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    color: var(--lux-indigo);
   }
 
   .card__price {
-    color: var(--lux-primary-deep);
+    color: #2563eb;
   }
 
   .card__thumb {
-    background: linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--lux-cyan) 10%, #ffffff) 0%,
-      color-mix(in srgb, var(--lux-indigo) 6%, #f8fafc) 100%
-    );
+    background: #f1f5f9;
+  }
+
+  .card__actions {
+    border-top: none;
+    background: transparent;
+  }
+
+  .mini {
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .mini--stock {
+    color: #0d9488;
+    background: transparent;
+  }
+
+  .mini--promo {
+    color: #94a3b8;
+    background: transparent;
   }
 
   .line-card {
-    border-color: color-mix(in srgb, var(--lux-indigo) 12%, var(--pos-border));
-    box-shadow:
-      0 1px 2px rgba(var(--lux-ink-rgb), 0.03),
-      0 8px 22px -16px rgba(var(--lux-primary-rgb), 0.2);
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: none;
   }
 
   .line-card__sum {
-    color: var(--lux-primary-deep);
+    color: #2563eb;
   }
 
   .line-card__price {
-    border-color: color-mix(in srgb, var(--lux-cyan) 38%, var(--pos-border-strong));
-    background: var(--lux-cyan-soft);
+    border-color: #e2e8f0;
+    background: #ffffff;
+    color: #334155;
   }
 
   .line-card__price:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--lux-indigo) 42%, var(--pos-border-strong));
-    background: color-mix(in srgb, var(--lux-cyan) 30%, #ffffff);
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+
+  .line-card__price-val {
+    color: #2563eb;
   }
 
   .line-card__price-tag {
-    color: var(--lux-primary-strong);
+    color: #64748b;
+  }
+
+  .sale-tab {
+    border-color: #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
   }
 
   .sale-tab--on {
-    border-color: color-mix(in srgb, var(--lux-indigo) 40%, var(--pos-border-strong));
-    background: var(--lux-cyan-soft);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--lux-cyan) 20%, transparent);
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #0f172a;
+    box-shadow: none;
   }
 
-  .cart-hint--link {
-    border-color: color-mix(in srgb, var(--lux-cyan) 42%, transparent);
-    background: var(--lux-cyan-soft);
-    color: #0e7490;
+  .customer-panel__active {
+    border-color: #e2e8f0;
+    background: #ffffff;
   }
 
-  .btn-pay {
-    background: var(--lux-gradient-diagonal);
-    border: 1px solid color-mix(in srgb, var(--lux-magenta) 28%, var(--lux-indigo));
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.2) inset,
-      0 12px 32px -10px rgba(var(--lux-primary-rgb), 0.45);
-  }
-
-  .btn-pay:hover:not(:disabled) {
-    filter: brightness(1.04) saturate(1.06);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.22) inset,
-      0 16px 38px -12px rgba(var(--lux-magenta-rgb), 0.32);
-  }
-
-  .totals {
-    background: var(--lux-brand-wash);
-    border-top-color: color-mix(in srgb, var(--lux-indigo) 14%, var(--pos-border));
-  }
-
-  .totals__row--total span:last-child {
-    color: var(--lux-primary-deep);
-  }
-
-  .mini:hover {
-    color: var(--lux-primary-deep);
-    background: var(--lux-cyan-soft);
+  .customer-panel__btn,
+  .customer-panel__chip {
+    border-color: #e2e8f0;
+    background: #ffffff;
+    color: #334155;
   }
 
   .customer-panel__chip--active {
-    border-color: color-mix(in srgb, var(--lux-indigo) 40%, var(--pos-border-strong));
-    background: var(--lux-cyan-soft);
-    color: var(--lux-primary-deep);
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #0f172a;
+  }
+
+  .customer-panel__input {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+  }
+
+  .btn-pay {
+    background: linear-gradient(90deg, #00e5ff 0%, #6366f1 52%, #c026d3 100%);
+    border: none;
+    box-shadow: 0 8px 24px -8px rgba(99, 102, 241, 0.45);
+  }
+
+  .btn-pay:hover:not(:disabled) {
+    filter: brightness(1.03);
+    box-shadow: 0 12px 28px -10px rgba(99, 102, 241, 0.5);
+  }
+
+  .totals {
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .totals__row--total span:last-child {
+    color: #2563eb;
+  }
+
+  .pager-nav {
+    color: #64748b;
+  }
+
+  .pager-page--on {
+    background: color-mix(in srgb, var(--lux-indigo) 12%, #ffffff);
+    color: var(--lux-indigo);
   }
 }
 
-/* Modo oscuro — Dark Enterprise DS v1.0 */
+/* Modo oscuro — limpio, sin decoración extra */
 html[data-theme='dark'] {
   .panel {
     position: relative;
-    border-color: var(--lux-ds-border-dark);
+    border: 1px solid var(--lux-ds-border-dark);
     background: var(--pos-night-card);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.04),
-      0 20px 50px -28px rgba(0, 0, 0, 0.55);
+    box-shadow: none;
   }
 
   .panel::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.35), transparent);
-    opacity: 0.9;
-    z-index: 2;
-    pointer-events: none;
+    display: none;
   }
 
-  .catalog-toolbar {
-    background: color-mix(in srgb, var(--pos-night-panel) 88%, var(--lux-indigo) 4%);
-    border-bottom-color: var(--lux-ds-border-dark);
-  }
-
-  .catalog-search:focus-within {
-    border-color: color-mix(in srgb, var(--lux-cyan) 45%, var(--pos-border-strong));
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--lux-cyan) 20%, transparent),
-      0 0 24px -8px var(--lux-glow-cyan);
-  }
-
-  .cat--on {
-    border-color: color-mix(in srgb, var(--lux-cyan) 35%, var(--pos-border-strong));
-    color: var(--lux-cyan);
-    background: color-mix(in srgb, var(--lux-cyan) 10%, var(--pos-night-card));
+  .catalog-toolbar,
+  .catalog-pager,
+  .cart-head,
+  .customer-panel,
+  .totals {
+    background: var(--pos-night-card);
+    border-color: var(--lux-ds-border-dark);
   }
 
   .card::before,
   .line-card::before {
-    background: var(--lux-gradient-vertical);
-    box-shadow: 0 0 12px var(--lux-glow-cyan);
+    display: none;
   }
 
   .card {
@@ -210,10 +239,8 @@ html[data-theme='dark'] {
   }
 
   .card:hover {
-    border-color: color-mix(in srgb, var(--lux-cyan) 28%, var(--pos-border-strong));
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.04),
-      0 0 28px -12px var(--lux-glow-cyan);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: none;
   }
 
   .card__cat {
@@ -235,32 +262,26 @@ html[data-theme='dark'] {
   }
 
   .line-card__price {
-    border-color: color-mix(in srgb, var(--lux-cyan) 28%, var(--pos-border-strong));
-    background: color-mix(in srgb, var(--lux-cyan) 8%, var(--pos-night-panel));
+    border-color: var(--lux-ds-border-dark);
+    background: var(--pos-night-panel);
   }
 
   .btn-pay {
-    background: var(--lux-gradient-diagonal);
+    background: linear-gradient(90deg, #00e5ff 0%, #6366f1 52%, #c026d3 100%);
   }
 
-  .sale-tab--on {
-    border-color: color-mix(in srgb, var(--lux-cyan) 32%, var(--pos-border-strong));
-    background: color-mix(in srgb, var(--lux-indigo) 18%, var(--pos-elevated));
-    box-shadow: 0 0 18px -10px var(--lux-glow-cyan);
-  }
-
-  .totals {
-    background: color-mix(in srgb, var(--pos-night-panel) 90%, var(--lux-indigo) 5%);
-    border-top-color: var(--lux-ds-border-dark);
+  .cat--on {
+    border-color: var(--lux-ds-border-dark);
+    color: var(--lux-cyan);
+    background: color-mix(in srgb, var(--lux-cyan) 8%, var(--pos-night-card));
   }
 
   .totals__row--total span:last-child {
     color: var(--lux-cyan);
   }
 
-  .customer-panel__chip--active {
-    border-color: color-mix(in srgb, var(--lux-cyan) 35%, var(--pos-border-strong));
-    background: color-mix(in srgb, var(--lux-cyan) 10%, var(--pos-night-card));
+  .pager-page--on {
     color: var(--lux-cyan);
+    background: color-mix(in srgb, var(--lux-cyan) 10%, var(--pos-night-card));
   }
 }

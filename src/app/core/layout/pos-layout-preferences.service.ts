@@ -43,7 +43,7 @@ const K_CARD_LINK_MODE = 'pos_ui_card_link_mode';
 export class PosLayoutPreferencesService {
   private readonly auth = inject(PosAuthService);
 
-  readonly theme = signal<PosTheme>('dark');
+  readonly theme = signal<PosTheme>('light');
   readonly densitySource = signal<PosDensitySource>('auto');
   readonly densityManual = signal<PosDensity>('comfortable');
   readonly roleProfile = signal<PosRoleProfile>('auto');

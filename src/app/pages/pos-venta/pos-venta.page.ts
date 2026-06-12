@@ -247,21 +247,45 @@ type ModalState =
           <div class="catalog-pager" role="navigation" aria-label="Paginación del catálogo">
             <button
               type="button"
-              class="pager-btn pos-focus-ring"
+              class="pager-nav pos-focus-ring"
               [disabled]="catalogPageClamped() <= 1"
               (click)="catalogPrev()">
-              Anterior
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span>Anterior</span>
             </button>
-            <span class="catalog-pager__meta"
-              >Página {{ catalogPageClamped() }} de {{ catalogTotalPages() }} · {{ filteredCatalog().length }}
-              ítems</span
-            >
+            <div class="catalog-pager__center">
+              <div class="catalog-pager__pages">
+                @for (slot of catalogPagerSlots(); track $index) {
+                  @if (slot === 'ellipsis') {
+                    <span class="pager-ellipsis" aria-hidden="true">…</span>
+                  } @else {
+                    <button
+                      type="button"
+                      class="pager-page pos-focus-ring"
+                      [class.pager-page--on]="slot === catalogPageClamped()"
+                      [attr.aria-current]="slot === catalogPageClamped() ? 'page' : null"
+                      (click)="goCatalogPage(slot)">
+                      {{ slot }}
+                    </button>
+                  }
+                }
+              </div>
+              <span class="catalog-pager__meta"
+                >Página {{ catalogPageClamped() }} de {{ catalogTotalPages() }} · {{ filteredCatalog().length }}
+                ítems</span
+              >
+            </div>
             <button
               type="button"
-              class="pager-btn pos-focus-ring"
+              class="pager-nav pos-focus-ring"
               [disabled]="catalogPageClamped() >= catalogTotalPages()"
               (click)="catalogNext()">
-              Siguiente
+              <span>Siguiente</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
             </button>
           </div>
         </section>
@@ -1085,8 +1109,11 @@ type ModalState =
       gap: 0.5rem;
       padding: 0.5rem 0.65rem;
       border-bottom: 1px solid var(--pos-border);
-      background: var(--pos-elevated);
+      background: #ffffff;
       flex-shrink: 0;
+    }
+    html[data-theme='dark'] .cart-head {
+      background: var(--pos-elevated);
     }
     .cart-head__aside {
       display: flex;
@@ -1212,10 +1239,13 @@ type ModalState =
       position: relative;
       padding: 0.45rem 0.6rem 0.5rem;
       border-bottom: 1px solid var(--pos-border);
-      background: var(--pos-elevated);
+      background: #ffffff;
       flex-shrink: 0;
       display: grid;
       gap: 0.38rem;
+    }
+    html[data-theme='dark'] .customer-panel {
+      background: var(--pos-elevated);
     }
     .customer-panel__head {
       display: flex;
@@ -1305,11 +1335,11 @@ type ModalState =
     }
     .customer-panel__btn {
       border-radius: 8px;
-      border: 1px solid color-mix(in srgb, var(--lux-indigo) 28%, var(--pos-border-strong));
-      background: color-mix(in srgb, var(--lux-indigo) 10%, var(--pos-surface));
-      color: var(--lux-primary-strong);
+      border: 1px solid var(--pos-border);
+      background: var(--pos-elevated);
+      color: var(--pos-text);
       font-size: 0.7rem;
-      font-weight: 700;
+      font-weight: 600;
       padding: 0.36rem 0.55rem;
       cursor: pointer;
       flex-shrink: 0;
@@ -1320,20 +1350,20 @@ type ModalState =
     }
     .customer-panel__chip {
       border-radius: 8px;
-      border: 1px solid color-mix(in srgb, var(--lux-indigo) 24%, var(--pos-border-strong));
-      background: var(--pos-surface);
+      border: 1px solid var(--pos-border);
+      background: var(--pos-elevated);
       color: var(--pos-text);
       font-size: 0.66rem;
-      font-weight: 650;
+      font-weight: 600;
       padding: 0.34rem 0.5rem;
       cursor: pointer;
       flex-shrink: 0;
       white-space: nowrap;
     }
     .customer-panel__chip--active {
-      border-color: color-mix(in srgb, var(--lux-indigo) 42%, var(--pos-border-strong));
-      background: color-mix(in srgb, var(--lux-indigo) 12%, var(--pos-surface));
-      color: var(--lux-primary-strong);
+      border-color: var(--pos-border);
+      background: #f8fafc;
+      color: var(--pos-text);
     }
     .customer-panel__chip--ghost {
       background: transparent;
@@ -1413,7 +1443,7 @@ type ModalState =
     }
     .panel {
       border-radius: var(--pos-radius);
-      border: 1px solid var(--pos-border);
+      border: none;
       background: var(--pos-elevated);
       box-shadow: var(--pos-panel-shadow);
       overflow: hidden;
@@ -1432,7 +1462,7 @@ type ModalState =
       flex-shrink: 0;
       padding: 0.7rem 0.75rem 0.6rem;
       border-bottom: 1px solid var(--pos-border);
-      background: var(--pos-surface-2);
+      background: var(--pos-elevated);
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
@@ -1493,39 +1523,89 @@ type ModalState =
     }
     .catalog-pager {
       flex-shrink: 0;
-      display: flex;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
       align-items: center;
-      justify-content: space-between;
-      gap: 0.45rem;
-      padding: 0.4rem 0.55rem;
+      gap: 0.65rem;
+      padding: 0.55rem 0.85rem 0.65rem;
       border-top: 1px solid var(--pos-border);
-      background: var(--pos-surface-2);
+      background: var(--pos-elevated);
       font-size: 0.72rem;
       color: var(--pos-muted);
     }
+    .catalog-pager__center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.28rem;
+      min-width: 0;
+    }
+    .catalog-pager__pages {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+      flex-wrap: wrap;
+    }
     .catalog-pager__meta {
       text-align: center;
-      flex: 1;
       min-width: 0;
+      font-size: 0.68rem;
       font-variant-numeric: tabular-nums;
+      color: var(--pos-faint);
     }
-    .pager-btn {
-      border-radius: 6px;
-      border: 1px solid var(--pos-border-strong);
-      background: var(--pos-elevated);
-      color: var(--pos-text);
-      font-size: 0.7rem;
+    .pager-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+      border: none;
+      background: transparent;
+      color: var(--pos-muted);
+      font-size: 0.72rem;
       font-weight: 600;
-      padding: 0.32rem 0.55rem;
+      padding: 0.28rem 0.15rem;
       cursor: pointer;
       flex-shrink: 0;
+      transition: color var(--pos-transition);
     }
-    .pager-btn:hover:not(:disabled) {
-      border-color: var(--pos-text);
+    .pager-nav:hover:not(:disabled) {
+      color: var(--pos-text);
     }
-    .pager-btn:disabled {
-      opacity: 0.4;
+    .pager-nav:disabled {
+      opacity: 0.35;
       cursor: not-allowed;
+    }
+    .pager-page {
+      min-width: 1.65rem;
+      height: 1.65rem;
+      padding: 0 0.35rem;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--pos-muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-variant-numeric: tabular-nums;
+      transition:
+        background var(--pos-transition),
+        color var(--pos-transition);
+    }
+    .pager-page:hover {
+      color: var(--pos-text);
+      background: color-mix(in srgb, var(--pos-muted) 10%, transparent);
+    }
+    .pager-page--on {
+      color: var(--lux-indigo);
+      background: color-mix(in srgb, var(--lux-indigo) 12%, #ffffff);
+      font-weight: 700;
+    }
+    .pager-ellipsis {
+      min-width: 1.2rem;
+      text-align: center;
+      color: var(--pos-faint);
+      font-size: 0.78rem;
+      user-select: none;
     }
     .cats {
       display: flex;
@@ -1597,15 +1677,7 @@ type ModalState =
         box-shadow var(--pos-transition);
     }
     .card::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: linear-gradient(180deg, var(--pos-accent), color-mix(in srgb, var(--pos-accent) 40%, #6366f1));
-      border-radius: var(--pos-radius-xs) 0 0 var(--pos-radius-xs);
-      opacity: 0.95;
+      display: none;
     }
     html[data-theme='dark'] .card {
       background: var(--pos-surface);
@@ -1707,24 +1779,25 @@ type ModalState =
       color: var(--pos-text);
     }
     .card__actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      border-top: 1px solid var(--pos-border);
-      background: var(--pos-border);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0 0.55rem 0.42rem;
+      border-top: none;
+      background: transparent;
       flex-shrink: 0;
     }
     .mini {
       border: none;
-      background: var(--pos-surface-2);
+      background: transparent;
       color: var(--pos-muted);
-      font-size: 0.62rem;
+      font-size: 0.58rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
-      padding: 0.38rem 0.2rem;
+      letter-spacing: 0.05em;
+      padding: 0;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 0;
     }
     .mini:hover {
       color: var(--pos-accent-hover);
@@ -1732,17 +1805,15 @@ type ModalState =
     }
     .mini--stock {
       color: #0d9488;
-      background: color-mix(in srgb, #0d9488 10%, var(--pos-surface-2));
     }
     .mini--promo {
-      color: var(--lux-magenta);
-      background: color-mix(in srgb, var(--lux-magenta) 10%, var(--pos-surface-2));
+      color: #94a3b8;
     }
     html[data-theme='dark'] .mini--stock {
       color: #5eead4;
     }
     html[data-theme='dark'] .mini--promo {
-      color: #e879f9;
+      color: #94a3b8;
     }
     .badge {
       font-size: 0.63rem;
@@ -1795,6 +1866,7 @@ type ModalState =
       min-width: 0;
     }
     .line-card::before {
+      display: none;
       content: '';
       position: absolute;
       left: 0;
@@ -2077,10 +2149,7 @@ type ModalState =
       margin-top: auto;
       padding: 0.8rem 0.85rem 0.9rem;
       border-top: 1px solid var(--pos-border);
-      background: var(--pos-surface-2);
-    }
-    html[data-theme='dark'] .totals {
-      background: var(--pos-surface);
+      background: var(--pos-elevated);
     }
     .totals__row {
       display: flex;
@@ -2115,11 +2184,9 @@ type ModalState =
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
-      background: var(--lux-gradient-diagonal);
-      border: 1px solid color-mix(in srgb, var(--lux-magenta) 24%, var(--lux-indigo));
-      box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.18) inset,
-        0 14px 36px -12px rgba(var(--lux-primary-rgb), 0.48);
+      background: linear-gradient(90deg, #00e5ff 0%, #6366f1 52%, #c026d3 100%);
+      border: none;
+      box-shadow: 0 8px 24px -8px rgba(99, 102, 241, 0.45);
       transition:
         filter var(--lux-ds-transition, 0.2s ease),
         transform 0.15s ease,
@@ -3169,6 +3236,24 @@ export class PosVentaPage {
     Math.min(Math.max(1, this.catalogPage()), this.catalogTotalPages()),
   );
 
+  readonly catalogPagerSlots = computed((): (number | 'ellipsis')[] => {
+    const total = this.catalogTotalPages();
+    const current = this.catalogPageClamped();
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const pages = new Set<number>([1, total, current - 1, current, current + 1]);
+    const sorted = Array.from(pages).filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+    const slots: (number | 'ellipsis')[] = [];
+    for (let i = 0; i < sorted.length; i++) {
+      if (i > 0 && sorted[i]! - sorted[i - 1]! > 1) {
+        slots.push('ellipsis');
+      }
+      slots.push(sorted[i]!);
+    }
+    return slots;
+  });
+
   readonly pagedProducts = computed(() => {
     const list = this.filteredCatalog();
     const page = this.catalogPageClamped();
@@ -3624,6 +3709,11 @@ export class PosVentaPage {
   catalogNext(): void {
     const max = this.catalogTotalPages();
     this.catalogPage.update((p) => Math.min(max, p + 1));
+  }
+
+  goCatalogPage(page: number): void {
+    const max = this.catalogTotalPages();
+    this.catalogPage.set(Math.min(Math.max(1, page), max));
   }
 
   private patchTabs(updater: (tabs: SaleTab[]) => SaleTab[]): void {

@@ -416,8 +416,11 @@ type CashPanelMode = 'open' | 'close' | 'history';
       align-items: center;
       padding: 0.55rem 0 0.5rem;
       background: var(--pos-rail-bg);
+      border-right: none;
+      box-shadow: none;
+    }
+    html[data-theme='dark'] .rail {
       border-right: 1px solid var(--pos-rail-border);
-      box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
     }
     .rail__nav {
       flex: 1;
@@ -542,12 +545,9 @@ type CashPanelMode = 'open' | 'close' | 'history';
       line-height: 1;
       box-shadow: 0 0 0 2px var(--pos-rail-bg);
     }
-    html[data-theme='light'] .rail {
-      box-shadow: 1px 0 0 var(--pos-rail-border);
-    }
     html[data-theme='light'] .rail__logout {
-      border-color: var(--pos-rail-border);
-      background: var(--pos-rail-well);
+      border: none;
+      background: transparent;
     }
     .rail__logout {
       margin-top: auto;
@@ -590,8 +590,11 @@ type CashPanelMode = 'open' | 'close' | 'history';
       padding: 0 var(--pos-content-pad-x);
       border-bottom: 1px solid var(--pos-border);
       background: var(--pos-topbar-bg);
-      backdrop-filter: blur(14px) saturate(1.35);
-      -webkit-backdrop-filter: blur(14px) saturate(1.35);
+    }
+    html[data-theme='light'] .topbar {
+      border-bottom-color: #e2e8f0;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
 
     .topbar__brand-line {
@@ -605,8 +608,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
       pointer-events: none;
     }
     html[data-theme='light'] .topbar__brand-line {
-      height: 3px;
-      opacity: 1;
+      display: none;
     }
     .topbar__left {
       display: flex;
