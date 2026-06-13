@@ -1036,130 +1036,248 @@ type ModalState =
           }
           @case ('cobro') {
             <div class="pos-pay-modal">
-              <div class="pos-pay-modal__head">
-                <div>
-                  <span class="modal__eyebrow">Registro de cobro</span>
-                  <h3 class="modal__title" id="mdl-cobro">Cobrar ticket</h3>
+              <header class="pos-pay-top">
+                <div class="pos-pay-top__main">
+                  <span class="pos-pay-top__icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      <path d="M16.5 15.5l2 2L21 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                  <div class="pos-pay-top__copy">
+                    <h3 class="pos-pay-top__title" id="mdl-cobro">Cobro de ticket</h3>
+                    <p class="pos-pay-top__meta">
+                      Cliente: <strong>{{ activeCustomer()?.name || 'Consumidor final' }}</strong>
+                      · Caja: <strong>{{ desk.cajaDisplayId() }}</strong>
+                    </p>
+                  </div>
                 </div>
-                <div class="pos-pay-head__meta">
-                  <span>Cliente: <strong>{{ activeCustomer()?.name || 'Consumidor final' }}</strong></span>
-                  <span>Caja: <strong>{{ desk.cajaDisplayId() }}</strong></span>
+                <button type="button" class="pos-pay-top__close pos-focus-ring" aria-label="Cerrar" (click)="closeModal()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </button>
+              </header>
+
+              <div class="pos-pay-hero">
+                <div class="pos-pay-hero__copy">
+                  <span class="pos-pay-hero__label">Total a pagar</span>
+                  <strong class="pos-pay-hero__amount">{{ total() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
                 </div>
-                <strong class="modal__amount">{{ total() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                <div class="pos-pay-hero__art">
+                  <img class="pos-pay-hero__img" src="assets/iconos/cobro.png" alt="" loading="lazy" decoding="async" />
+                </div>
               </div>
+
               @if (!desk.cajaOpen()) {
-                <p class="modal__p modal__p--warn">La caja esta cerrada. Abrala desde el resumen de caja en la barra superior.</p>
-                <button type="button" class="btn-modal pos-focus-ring" (click)="closeModal()">Entendido</button>
+                <div class="pos-pay-body">
+                  <p class="modal__p modal__p--warn">La caja está cerrada. Ábrala desde el resumen de caja en la barra superior.</p>
+                  <button type="button" class="btn-modal pos-focus-ring" (click)="closeModal()">Entendido</button>
+                </div>
               } @else {
-                @if (checkoutError()) {
-                  <p class="modal__p modal__p--warn">{{ checkoutError() }}</p>
-                }
                 <div class="pos-pay-layout">
-                  <section class="pos-pay-entry" aria-label="Captura de pagos">
-                    <div class="payment-method-strip" role="list" aria-label="Formas de pago">
-                      @for (method of paymentMethods; track method.code) {
-                        <button
-                          type="button"
-                          class="payment-method-chip pos-focus-ring"
-                          [class.payment-method-chip--on]="selectedPaymentMethod() === method.code"
-                          [class.payment-method-chip--ready]="hasPaymentFor(method.code)"
-                          (click)="selectPaymentMethod(method.code)">
-                          <span class="payment-method-chip__icon">{{ method.icon }}</span>
-                          <span>{{ method.label }}</span>
-                        </button>
-                      }
+                  <section class="pos-pay-flow" aria-label="Captura de pagos">
+                    <div class="pos-pay-step">
+                      <h4 class="pos-pay-step__title">1. Método de pago</h4>
+                      <div class="pos-pay-methods" role="list">
+                        @for (method of paymentMethods; track method.code) {
+                          <button
+                            type="button"
+                            class="payment-method-card pos-focus-ring"
+                            role="listitem"
+                            [class.payment-method-card--on]="selectedPaymentMethod() === method.code"
+                            [class.payment-method-card--ready]="hasPaymentFor(method.code)"
+                            [class.payment-method-card--blocked]="hasPaymentFor(method.code)"
+                            [disabled]="hasPaymentFor(method.code)"
+                            (click)="selectPaymentMethod(method.code)">
+                            <span class="payment-method-card__icon" aria-hidden="true">
+                              @switch (method.code) {
+                                @case ('cash') {
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <rect x="3" y="7" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.6" />
+                                    <circle cx="12" cy="12" r="2" stroke="currentColor" stroke-width="1.5" />
+                                  </svg>
+                                }
+                                @case ('card') {
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6" />
+                                    <path d="M3 10h18" stroke="currentColor" stroke-width="1.6" />
+                                  </svg>
+                                }
+                                @case ('transfer') {
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M7 7h10M7 12h6M7 17h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                                    <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.6" />
+                                  </svg>
+                                }
+                                @default {
+                                  <span class="payment-method-card__glyph">{{ method.icon }}</span>
+                                }
+                              }
+                            </span>
+                            <span class="payment-method-card__label">{{ method.label }}</span>
+                            @if (selectedPaymentMethod() === method.code) {
+                              <span class="payment-method-card__check" aria-hidden="true">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                                  <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                              </span>
+                            }
+                          </button>
+                        }
+                      </div>
                     </div>
 
-                    <div class="pos-pay-form">
-                      <label class="modal-field">
-                        <span>Monto</span>
-                        <input class="modal-input pos-focus-ring" type="text" inputmode="decimal" [value]="draftAmount()" (input)="onDraftAmount($event)" />
-                      </label>
+                    <div class="pos-pay-step">
+                      <h4 class="pos-pay-step__title">
+                        @if (selectedPaymentMethod() === 'cash') {
+                          2. Monto recibido
+                        } @else {
+                          2. Captura de pago
+                        }
+                      </h4>
+
                       @if (selectedPaymentMethod() === 'cash') {
-                        <label class="modal-field">
-                          <span>Recibido</span>
-                          <input class="modal-input pos-focus-ring" type="text" inputmode="decimal" [value]="draftReceived()" (input)="onDraftReceived($event)" />
-                        </label>
-                        <div class="pos-pay-form__metric">
-                          <span>Vuelto</span>
-                          <strong>{{ draftChange() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                        <div class="pos-pay-cash-row">
+                          <label class="pos-pay-amount">
+                            <span class="pos-pay-amount__prefix" aria-hidden="true">$</span>
+                            <input
+                              class="pos-pay-amount__input pos-focus-ring"
+                              type="text"
+                              inputmode="decimal"
+                              [value]="draftReceived()"
+                              (input)="onDraftReceived($event)" />
+                            <span class="pos-pay-amount__steppers">
+                              <button type="button" class="pos-pay-amount__step pos-focus-ring" aria-label="Aumentar monto" (click)="bumpDraftReceived(1)">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                  <path d="M8 14l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                              </button>
+                              <button type="button" class="pos-pay-amount__step pos-focus-ring" aria-label="Disminuir monto" (click)="bumpDraftReceived(-1)">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                  <path d="M8 10l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                              </button>
+                            </span>
+                          </label>
+                          <div class="pos-pay-cash-side">
+                            <div class="pos-pay-quick">
+                              <div class="pos-pay-quick__row">
+                                <span>Saldo pendiente</span>
+                                <strong>{{ saldoPendiente() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                              </div>
+                              <div class="pos-pay-quick__row">
+                                <span>A aplicar</span>
+                                <strong>{{ draftAmount() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                              </div>
+                              <div class="pos-pay-quick__row pos-pay-quick__row--ok">
+                                <span>Vuelto</span>
+                                <strong>{{ draftChange() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                              </div>
+                            </div>
+                            <div class="pos-pay-cash-actions">
+                              <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="fillDraftPending()">Saldo pendiente</button>
+                              <button type="button" class="btn-modal pos-focus-ring" [class.btn-modal--disabled]="!canAddPaymentLine()" (click)="tryAddPaymentLine()">Agregar pago</button>
+                            </div>
+                          </div>
+                        </div>
+                      } @else {
+                        <div class="pos-pay-form-grid">
+                          <label class="modal-field">
+                            <span>Monto</span>
+                            <input class="modal-input pos-focus-ring" type="text" inputmode="decimal" [value]="draftAmount()" (input)="onDraftAmount($event)" />
+                          </label>
+                          @if (selectedPaymentMethod() === 'card') {
+                            <label class="modal-field">
+                              <span>Código autorización</span>
+                              <input class="modal-input pos-focus-ring" type="text" [value]="draftAuthCode()" (input)="onDraftAuthCode($event)" />
+                            </label>
+                          }
+                          @if (selectedPaymentMethod() === 'stripe' || selectedPaymentMethod() === 'kushki' || selectedPaymentMethod() === 'payphone') {
+                            <label class="modal-field">
+                              <span>Estado transacción</span>
+                              <select class="modal-input pos-focus-ring" [value]="draftExternalStatus()" (change)="onDraftExternalStatus($event)">
+                                <option value="idle">Sin iniciar</option>
+                                <option value="pending">Pendiente</option>
+                                <option value="confirmed">Confirmada</option>
+                                <option value="rejected">Rechazada</option>
+                              </select>
+                            </label>
+                            <label class="modal-field">
+                              <span>ID proveedor</span>
+                              <input class="modal-input pos-focus-ring" type="text" [value]="draftProviderTransactionId()" (input)="onDraftProviderTransactionId($event)" />
+                            </label>
+                          }
+                          @if (selectedPaymentMethod() !== 'cash') {
+                            <label class="modal-field">
+                              <span>Referencia</span>
+                              <input class="modal-input pos-focus-ring" type="text" [value]="draftReference()" (input)="onDraftReference($event)" />
+                            </label>
+                          }
                         </div>
                       }
-                      @if (selectedPaymentMethod() === 'card') {
-                        <label class="modal-field">
-                          <span>Codigo autorizacion</span>
-                          <input class="modal-input pos-focus-ring" type="text" [value]="draftAuthCode()" (input)="onDraftAuthCode($event)" />
-                        </label>
-                      }
-                      @if (selectedPaymentMethod() === 'stripe' || selectedPaymentMethod() === 'kushki' || selectedPaymentMethod() === 'payphone') {
-                        <label class="modal-field">
-                          <span>Estado transaccion</span>
-                          <select class="modal-input pos-focus-ring" [value]="draftExternalStatus()" (change)="onDraftExternalStatus($event)">
-                            <option value="idle">Sin iniciar</option>
-                            <option value="pending">Pendiente</option>
-                            <option value="confirmed">Confirmada</option>
-                            <option value="rejected">Rechazada</option>
-                          </select>
-                        </label>
-                        <label class="modal-field">
-                          <span>ID proveedor</span>
-                          <input class="modal-input pos-focus-ring" type="text" [value]="draftProviderTransactionId()" (input)="onDraftProviderTransactionId($event)" />
-                        </label>
-                      }
+
                       @if (selectedPaymentMethod() !== 'cash') {
-                        <label class="modal-field">
-                          <span>Referencia</span>
-                          <input class="modal-input pos-focus-ring" type="text" [value]="draftReference()" (input)="onDraftReference($event)" />
-                        </label>
+                        <div class="pos-pay-form__actions">
+                          <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="fillDraftPending()">Saldo pendiente</button>
+                          @if (selectedPaymentMethod() === 'stripe' || selectedPaymentMethod() === 'kushki' || selectedPaymentMethod() === 'payphone') {
+                            <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="prepareExternalPayment()">Iniciar / confirmar proveedor</button>
+                          }
+                          <button type="button" class="btn-modal pos-focus-ring" [class.btn-modal--disabled]="!canAddPaymentLine()" (click)="tryAddPaymentLine()">Agregar pago</button>
+                        </div>
                       }
-                      @if (selectedPaymentMethod() === 'stripe' || selectedPaymentMethod() === 'kushki' || selectedPaymentMethod() === 'payphone') {
-                        <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="prepareExternalPayment()">
-                          Iniciar / confirmar proveedor
-                        </button>
-                      }
-                      <div class="pos-pay-form__actions">
-                        <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="fillDraftPending()">Saldo pendiente</button>
-                        <button type="button" class="btn-modal pos-focus-ring" [class.btn-modal--disabled]="!canAddPaymentLine()" (click)="tryAddPaymentLine()">Agregar pago</button>
-                      </div>
                     </div>
 
                     @if (selectedPaymentMethod() === 'cash') {
-                      <div class="cash-denoms" aria-label="Denominaciones de efectivo">
+                      <div class="pos-pay-step">
                         <div class="cash-denoms__head">
-                          <span>Denominaciones rapidas</span>
-                          <button type="button" class="cash-denoms__clear pos-focus-ring" (click)="clearDraftCash()">Limpiar</button>
+                          <h4 class="pos-pay-step__title pos-pay-step__title--inline">3. Denominaciones rápidas</h4>
                         </div>
-                        <div class="cash-denoms__grid">
-                          <button type="button" class="cash-denom cash-denom--exact pos-focus-ring" (click)="setDraftCashExact()">
-                            Exacto
-                            <strong>{{ saldoPendiente() || total() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
-                          </button>
-                          @for (d of tenderDenominations; track d) {
-                            <button type="button" class="cash-denom pos-focus-ring" (click)="setDraftCashTender(d)">
-                              {{ d | currency: 'USD' : 'symbol-narrow' : '1.0-0' }}
+                        <div class="cash-denoms__rows">
+                          <div class="cash-denoms__grid cash-denoms__grid--row">
+                            <button type="button" class="cash-denom cash-denom--exact pos-focus-ring" (click)="setDraftCashExact()">
+                              Exacto
+                              <strong>{{ saldoPendiente() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
                             </button>
-                          }
-                        </div>
-                        @if (suggestedTenderAmounts().length) {
-                          <div class="cash-denoms__suggested">
-                            @for (amount of suggestedTenderAmounts(); track amount) {
-                              <button type="button" class="cash-chip pos-focus-ring" (click)="setDraftCashTender(amount)">
-                                {{ amount | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}
+                            @for (d of tenderDenominationsRow1; track d) {
+                              <button type="button" class="cash-denom pos-focus-ring" (click)="setDraftCashTender(d)">
+                                {{ d | currency: 'USD' : 'symbol-narrow' : '1.0-0' }}
                               </button>
                             }
                           </div>
-                        }
+                          <div class="cash-denoms__grid cash-denoms__grid--row">
+                            @for (d of tenderDenominationsRow2; track d) {
+                              <button type="button" class="cash-denom pos-focus-ring" (click)="setDraftCashTender(d)">
+                                {{ d | currency: 'USD' : 'symbol-narrow' : '1.0-0' }}
+                              </button>
+                            }
+                            @for (amount of suggestedTenderAmounts(); track amount) {
+                              <button type="button" class="cash-denom pos-focus-ring" (click)="setDraftCashTender(amount)">
+                                {{ amount | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}
+                              </button>
+                            }
+                            <button type="button" class="cash-denom cash-denom--clear pos-focus-ring" (click)="clearDraftCash()">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7h12z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                              </svg>
+                              Limpiar
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     }
 
-                    <div class="pos-pay-lines">
+                    <div class="pos-pay-step">
                       <div class="pos-pay-lines__head">
-                        <span>Pagos registrados</span>
-                        <button type="button" class="cash-denoms__clear pos-focus-ring" (click)="clearPayments()">Limpiar</button>
+                        <h4 class="pos-pay-step__title pos-pay-step__title--inline">Pagos registrados ({{ paymentLines().length }})</h4>
+                        @if (paymentLines().length) {
+                          <button type="button" class="cash-denoms__clear pos-focus-ring" (click)="clearPayments()">Limpiar</button>
+                        }
                       </div>
-                      <div class="pos-pay-table" role="table" aria-label="Lineas de pago">
+                      <div class="pos-pay-table" role="table" aria-label="Líneas de pago">
                         <div class="pos-pay-table__row pos-pay-table__row--head" role="row">
-                          <span>Metodo</span>
+                          <span>Método</span>
                           <span>Canal</span>
                           <span>Monto</span>
                           <span>Recibido</span>
@@ -1174,17 +1292,26 @@ type ModalState =
                             <strong>{{ line.total | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
                             <span>{{ (line.recibido ?? line.total) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
                             <span>{{ line.vuelto | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
-                            <span>{{ line.referencia || line.codigoAutorizacion || line.transaccionProveedorId || '-' }}</span>
-                            <button type="button" class="pos-pay-remove pos-focus-ring" (click)="removePaymentLine(line.id)" aria-label="Eliminar pago">x</button>
+                            <span>{{ line.referencia || line.codigoAutorizacion || line.transaccionProveedorId || '—' }}</span>
+                            <button type="button" class="pos-pay-remove pos-focus-ring" (click)="removePaymentLine(line.id)" aria-label="Eliminar pago">×</button>
                           </div>
                         } @empty {
-                          <div class="pos-pay-table__empty">Agregue un pago para registrar el cobro.</div>
+                          <div class="pos-pay-table__empty">
+                            <span class="pos-pay-table__empty-icon" aria-hidden="true">
+                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                                <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" />
+                                <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                              </svg>
+                            </span>
+                            <span>Aún no se han registrado pagos</span>
+                          </div>
                         }
                       </div>
                     </div>
                   </section>
 
-                  <aside class="pos-pay-summary" aria-label="Resumen del cobro">
+                  <aside class="pos-pay-side" aria-label="Resumen del cobro">
+                    <h4 class="pos-pay-side__title">Resumen del cobro</h4>
                     <div class="pos-pay-summary__row">
                       <span>Total a pagar</span>
                       <strong>{{ total() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
@@ -1194,12 +1321,24 @@ type ModalState =
                       <strong>{{ totalPagado() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
                     </div>
                     <div class="pos-pay-summary__row" [class.pos-pay-summary__row--warn]="saldoPendiente() > 0">
-                      <span>Saldo pendiente</span>
+                      <span>Pendiente</span>
                       <strong>{{ saldoPendiente() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
                     </div>
                     <div class="pos-pay-summary__row" [class.pos-pay-summary__row--ok]="vueltoTotal() > 0">
-                      <span>Vuelto total</span>
+                      <span>Vuelto</span>
                       <strong>{{ vueltoTotal() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                    </div>
+                    <div class="pos-pay-safe">
+                      <span class="pos-pay-safe__icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 3.5l7 3.2v5.1c0 4.1-2.9 7.9-7 9.2-4.1-1.3-7-5.1-7-9.2V6.7l7-3.2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                          <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                      <span class="pos-pay-safe__copy">
+                        <strong>Pago seguro</strong>
+                        <small>Verifica el monto recibido antes de confirmar el cobro.</small>
+                      </span>
                     </div>
                     @if (paymentCollection(); as collection) {
                       <div class="pos-pay-receipt">
@@ -1217,28 +1356,91 @@ type ModalState =
                   </aside>
                 </div>
 
-                <div class="pos-pay-footer">
-                  <div>
-                    <span>Total</span>
-                    <strong>{{ total() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                <footer class="pos-pay-footer">
+                  @if (checkoutError()) {
+                    <div class="pos-pay-feedback" role="alert" aria-live="polite">
+                      <span class="pos-pay-feedback__icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 8v5M12 16h.01M10.3 4.3l-7.4 12.8A2 2 0 004.6 20h14.8a2 2 0 001.7-2.9l-7.4-12.8a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                      <div class="pos-pay-feedback__copy">
+                        <strong>{{ checkoutErrorTitle() }}</strong>
+                        <p>{{ checkoutError() }}</p>
+                      </div>
+                      <button type="button" class="pos-pay-feedback__dismiss pos-focus-ring" aria-label="Cerrar mensaje" (click)="dismissCheckoutError()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  }
+                  <div class="pos-pay-footer__bar">
+                  <div class="pos-pay-footer__stats">
+                    <div class="pos-pay-stat pos-pay-stat--total">
+                      <span class="pos-pay-stat__icon" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" /></svg>
+                      </span>
+                      <span class="pos-pay-stat__copy">
+                        <small>Total</small>
+                        <strong>{{ total() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                      </span>
+                    </div>
+                    <div class="pos-pay-stat pos-pay-stat--paid">
+                      <span class="pos-pay-stat__icon" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M17 7H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+                      </span>
+                      <span class="pos-pay-stat__copy">
+                        <small>Pagado</small>
+                        <strong>{{ totalPagado() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                      </span>
+                    </div>
+                    <div class="pos-pay-stat pos-pay-stat--pending">
+                      <span class="pos-pay-stat__icon" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16h.01M10.3 4.3l-7.4 12.8A2 2 0 004.6 20h14.8a2 2 0 001.7-2.9l-7.4-12.8a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" /></svg>
+                      </span>
+                      <span class="pos-pay-stat__copy">
+                        <small>Pendiente</small>
+                        <strong>{{ saldoPendiente() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                      </span>
+                    </div>
+                    <div class="pos-pay-stat pos-pay-stat--change">
+                      <span class="pos-pay-stat__icon" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5" /><circle cx="16" cy="16" r="3" stroke="currentColor" stroke-width="1.5" /></svg>
+                      </span>
+                      <span class="pos-pay-stat__copy">
+                        <small>Vuelto</small>
+                        <strong>{{ vueltoTotal() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span>Pagado</span>
-                    <strong>{{ totalPagado() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                  <div class="pos-pay-footer__actions">
+                    <button type="button" class="pos-pay-btn pos-pay-btn--ghost pos-focus-ring" (click)="closeModal()">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      </svg>
+                      <span>
+                        <strong>Cancelar</strong>
+                        <small>Descartar cobro actual</small>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="pos-pay-btn pos-pay-btn--primary pos-focus-ring"
+                      [class.pos-pay-btn--disabled]="!canConfirmCobro() || checkoutLoading()"
+                      (click)="tryConfirmarCobro()">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        <rect x="6" y="11" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.6" />
+                      </svg>
+                      <span>
+                        <strong>{{ checkoutLoading() ? 'Registrando…' : 'Confirmar cobro' }}</strong>
+                        <small>Aplicar pagos registrados</small>
+                      </span>
+                    </button>
                   </div>
-                  <div>
-                    <span>Pendiente</span>
-                    <strong>{{ saldoPendiente() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
                   </div>
-                  <div>
-                    <span>Vuelto</span>
-                    <strong>{{ vueltoTotal() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
-                  </div>
-                  <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="closeModal()">Cancelar</button>
-                  <button type="button" class="btn-modal pos-focus-ring" [class.btn-modal--disabled]="!canConfirmCobro() || checkoutLoading()" (click)="tryConfirmarCobro()">
-                    {{ checkoutLoading() ? 'Registrando...' : 'Cobrar' }}
-                  </button>
-                </div>
+                </footer>
               }
             </div>
           }
@@ -2988,47 +3190,426 @@ type ModalState =
       padding: 1.1rem 1.15rem;
     }
     .modal--pay {
-      width: min(96vw, 64rem);
-      max-height: min(88vh, 44rem);
+      width: min(86.4vw, 64.8rem);
+      max-height: min(92vh, 52rem);
       padding: 0;
       overflow: hidden;
     }
     .pos-pay-modal {
-      max-height: min(88vh, 44rem);
+      max-height: min(92vh, 52rem);
       display: flex;
       flex-direction: column;
       min-height: 0;
+      background: var(--pos-elevated);
     }
-    .pos-pay-modal__head {
+    .pos-pay-top {
       flex-shrink: 0;
-      display: grid;
-      grid-template-columns: minmax(10rem, 1fr) minmax(14rem, 1.2fr) auto;
-      align-items: center;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
       gap: 0.75rem;
-      padding: 0.85rem;
+      padding: 0.85rem 1rem;
       border-bottom: 1px solid var(--pos-border);
       background: var(--pos-elevated);
     }
-    .pos-pay-head__meta {
+    .pos-pay-top__main {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem 0.75rem;
+      align-items: flex-start;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+    .pos-pay-top__icon {
+      flex-shrink: 0;
+      width: 2.35rem;
+      height: 2.35rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 28%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent-muted) 55%, var(--pos-elevated));
+      color: var(--pos-accent-hover);
+    }
+    .pos-pay-top__title {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--pos-text);
+    }
+    .pos-pay-top__meta {
+      margin: 0.2rem 0 0;
       color: var(--pos-muted);
       font-size: 0.72rem;
       font-weight: 650;
+    }
+    .pos-pay-top__close {
+      flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      border: 1px solid var(--pos-border);
+      background: var(--pos-surface-2);
+      color: var(--pos-muted);
+      cursor: pointer;
+    }
+    .pos-pay-hero {
+      position: relative;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0.85rem 1rem 0;
+      padding: 1.35rem 1rem;
+      min-height: 6.5rem;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 18%, var(--pos-border));
+      border-radius: 5px;
+      background: linear-gradient(
+        95deg,
+        color-mix(in srgb, var(--pos-accent-muted) 78%, var(--pos-elevated)) 0%,
+        color-mix(in srgb, var(--pos-accent-muted) 42%, var(--pos-elevated)) 48%,
+        var(--pos-elevated) 100%
+      );
+      overflow: hidden;
+    }
+    .pos-pay-hero__copy {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 0 6.5rem;
+    }
+    .pos-pay-hero__label {
+      display: block;
+      margin-bottom: 0.45rem;
+      color: color-mix(in srgb, var(--pos-accent-hover) 72%, var(--pos-muted));
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .pos-pay-hero__amount {
+      display: block;
+      font-family: var(--pos-mono);
+      font-size: clamp(2.35rem, 4.5vw, 3.15rem);
+      line-height: 0.95;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: var(--pos-accent-hover);
+      letter-spacing: -0.02em;
+    }
+    .pos-pay-hero__art {
+      position: absolute;
+      right: 6.35rem;
+      width: 10.25rem;
+      height: calc(100% + 5.1rem);
+      bottom: -25px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .pos-pay-hero__img {
+      width: auto;
+      height: 100%;
+      max-width: none;
+      object-fit: contain;
+      object-position: bottom center;
+      transform: translateY(12%);
+    }
+    .pos-pay-feedback {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, #f59e0b 34%, var(--pos-border));
+      background: color-mix(in srgb, #fff7ed 72%, var(--pos-elevated));
+      color: #9a3412;
+    }
+    html[data-theme='dark'] .pos-pay-feedback {
+      border-color: color-mix(in srgb, #f59e0b 28%, var(--pos-border));
+      background: color-mix(in srgb, #78350f 22%, var(--pos-surface-2));
+      color: #fdba74;
+    }
+    .pos-pay-feedback__icon {
+      flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: color-mix(in srgb, #f59e0b 18%, var(--pos-elevated));
+      color: #c2410c;
+    }
+    html[data-theme='dark'] .pos-pay-feedback__icon {
+      background: color-mix(in srgb, #f59e0b 14%, var(--pos-surface-2));
+      color: #fdba74;
+    }
+    .pos-pay-feedback__copy {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: grid;
+      gap: 0.15rem;
+    }
+    .pos-pay-feedback__copy strong {
+      font-size: 0.74rem;
+      font-weight: 850;
+      letter-spacing: 0.02em;
+    }
+    .pos-pay-feedback__copy p {
+      margin: 0;
+      font-size: 0.72rem;
+      line-height: 1.45;
+      color: inherit;
+      opacity: 0.92;
+      overflow-wrap: anywhere;
+    }
+    .pos-pay-feedback__dismiss {
+      flex-shrink: 0;
+      width: 1.75rem;
+      height: 1.75rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+    .pos-pay-feedback__dismiss:hover {
+      opacity: 1;
+      background: color-mix(in srgb, currentColor 8%, transparent);
+    }
+    .pos-pay-body {
+      padding: 1rem;
     }
     .pos-pay-layout {
       flex: 1 1 auto;
       min-height: 0;
       overflow: auto;
       display: grid;
-      grid-template-columns: minmax(0, 1.45fr) minmax(16rem, 0.55fr);
-      gap: 0.7rem;
-      padding: 0.8rem 0.85rem;
+      grid-template-columns: minmax(0, 1.55fr) minmax(15rem, 0.45fr);
+      gap: 0.75rem;
+      padding: 0.85rem 1rem 1rem;
+      margin-top: 0.15rem;
     }
-    .pos-pay-entry,
-    .pos-pay-summary {
+    .pos-pay-flow,
+    .pos-pay-side {
       min-width: 0;
+    }
+    .pos-pay-step {
+      margin-bottom: 0.7rem;
+    }
+    .pos-pay-step__title {
+      margin: 0 0 0.45rem;
+      color: var(--pos-faint);
+      font-size: 0.64rem;
+      font-weight: 850;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .pos-pay-step__title--inline {
+      margin-bottom: 0;
+    }
+    .pos-pay-methods {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 0.45rem;
+      overflow: visible;
+      padding-top: 0.2rem;
+    }
+    .payment-method-card {
+      position: relative;
+      min-height: 3.35rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-surface-2);
+      color: var(--pos-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+      padding: 0.45rem 0.35rem 0.4rem;
+      font-size: 0.66rem;
+      font-weight: 800;
+      cursor: pointer;
+      overflow: visible;
+    }
+    .payment-method-card__icon {
+      width: 1.55rem;
+      height: 1.55rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      border: 1px solid var(--pos-border);
+      color: var(--pos-muted);
+    }
+    .payment-method-card__glyph {
+      font-size: 0.72rem;
+      line-height: 1;
+    }
+    .payment-method-card__label {
+      text-align: center;
+      line-height: 1.15;
+    }
+    .payment-method-card__check {
+      position: absolute;
+      top: -0.42rem;
+      right: -0.42rem;
+      width: 1.05rem;
+      height: 1.05rem;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 2px solid var(--pos-elevated);
+      background: var(--pos-accent);
+      color: #fff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .payment-method-card--on {
+      border-color: color-mix(in srgb, var(--pos-accent) 45%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent-muted) 48%, var(--pos-surface-2));
+      color: var(--pos-text);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--pos-accent) 18%, transparent);
+    }
+    .payment-method-card--on .payment-method-card__icon {
+      border-color: color-mix(in srgb, var(--pos-accent) 35%, var(--pos-border));
+      color: var(--pos-accent-hover);
+    }
+    .payment-method-card--ready {
+      border-color: var(--pos-status-ok-border);
+    }
+    .payment-method-card--blocked {
+      opacity: 0.62;
+      cursor: not-allowed;
+    }
+    .pos-pay-cash-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(11rem, 0.6fr);
+      gap: 0.65rem;
+      align-items: start;
+    }
+    .pos-pay-cash-side {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      min-width: 0;
+    }
+    .pos-pay-cash-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.4rem;
+    }
+    .pos-pay-cash-actions .btn-modal {
+      width: 100%;
+      min-height: 2.15rem;
+      padding: 0.38rem 0.55rem;
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+    .pos-pay-amount {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.55rem;
+      min-height: 3.85rem;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--pos-border-strong);
+      border-radius: 5px;
+      background: var(--pos-bg);
+    }
+    .pos-pay-amount__prefix {
+      flex-shrink: 0;
+      width: 2.2rem;
+      height: 2.2rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-border) 62%, var(--pos-surface-2));
+      color: color-mix(in srgb, var(--pos-text) 55%, var(--pos-muted));
+      font-size: 1.05rem;
+      font-weight: 850;
+      line-height: 1;
+    }
+    .pos-pay-amount__input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: color-mix(in srgb, var(--pos-text) 92%, #000);
+      font-family: var(--pos-mono);
+      font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+      letter-spacing: -0.02em;
+    }
+    .pos-pay-amount__steppers {
+      display: flex;
+      flex-direction: column;
+      align-self: flex-start;
+      gap: 0.3rem;
+      margin-top: 0.42rem;
+      padding-top: 0.05rem;
+    }
+    .pos-pay-amount__step {
+      width: 1.7rem;
+      height: 1.35rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 32%, var(--pos-border));
+      background: var(--pos-elevated);
+      color: var(--pos-accent-hover);
+      cursor: pointer;
+    }
+    .pos-pay-quick {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-surface-2) 88%, var(--pos-border));
+      font-size: 0.7rem;
+      color: var(--pos-muted);
+    }
+    .pos-pay-quick__row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.45rem;
+      padding: 0.18rem 0;
+    }
+    .pos-pay-quick__row + .pos-pay-quick__row {
+      margin-top: 0.35rem;
+      padding-top: 0.42rem;
+      border-top: 1px solid var(--pos-border);
+    }
+    .pos-pay-quick__row--ok span {
+      font-weight: 800;
+      color: var(--pos-text);
+    }
+    .pos-pay-quick__row strong {
+      font-family: var(--pos-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--pos-text);
+    }
+    .pos-pay-quick__row--ok strong {
+      color: var(--pos-status-ok);
+    }
+    .pos-pay-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.45rem;
+      margin-bottom: 0.45rem;
     }
     .pos-pay-form {
       display: grid;
@@ -3037,7 +3618,7 @@ type ModalState =
       align-items: end;
       padding: 0.55rem;
       border: 1px solid var(--pos-border);
-      border-radius: var(--pos-radius-sm);
+      border-radius: 5px;
       background: var(--pos-surface-2);
       margin-bottom: 0.55rem;
     }
@@ -3112,9 +3693,18 @@ type ModalState =
       background: var(--pos-elevated);
     }
     .pos-pay-table__empty {
-      padding: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 1.1rem 0.8rem;
       color: var(--pos-faint);
       font-size: 0.78rem;
+      text-align: center;
+    }
+    .pos-pay-table__empty-icon {
+      color: var(--pos-border-strong);
     }
     .pos-pay-remove {
       width: 1.75rem;
@@ -3126,20 +3716,35 @@ type ModalState =
       cursor: pointer;
       font-weight: 850;
     }
-    .pos-pay-summary {
+    .pos-pay-side {
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
+      padding: 0.65rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-surface-2);
+      align-self: start;
+      position: sticky;
+      top: 0;
+    }
+    .pos-pay-side__title {
+      margin: 0 0 0.15rem;
+      color: var(--pos-faint);
+      font-size: 0.64rem;
+      font-weight: 850;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
     }
     .pos-pay-summary__row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 0.65rem;
-      padding: 0.55rem 0.6rem;
+      padding: 0.5rem 0.55rem;
       border: 1px solid var(--pos-border);
-      border-radius: var(--pos-radius-sm);
-      background: var(--pos-surface-2);
+      border-radius: 5px;
+      background: var(--pos-elevated);
       color: var(--pos-muted);
       font-size: 0.72rem;
     }
@@ -3153,7 +3758,41 @@ type ModalState =
       color: #b45309;
     }
     .pos-pay-summary__row--ok strong {
-      color: var(--pos-accent-hover);
+      color: var(--pos-status-ok);
+    }
+    .pos-pay-safe {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      margin-top: 0.15rem;
+      padding: 0.6rem 0.65rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, #3b82f6 24%, var(--pos-border));
+      background: color-mix(in srgb, #dbeafe 55%, var(--pos-surface-2));
+      color: #1d4ed8;
+      font-size: 0.72rem;
+    }
+    html[data-theme='dark'] .pos-pay-safe {
+      border-color: color-mix(in srgb, #60a5fa 28%, var(--pos-border));
+      background: color-mix(in srgb, #1e3a8a 22%, var(--pos-surface-2));
+      color: #93c5fd;
+    }
+    .pos-pay-safe__icon {
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+    .pos-pay-safe__copy {
+      display: grid;
+      gap: 0.12rem;
+    }
+    .pos-pay-safe__copy strong {
+      font-size: 0.74rem;
+      font-weight: 850;
+    }
+    .pos-pay-safe__copy small {
+      color: inherit;
+      opacity: 0.85;
+      line-height: 1.35;
     }
     .pos-pay-receipt {
       display: grid;
@@ -3180,23 +3819,142 @@ type ModalState =
     }
     .pos-pay-footer {
       flex-shrink: 0;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(5.6rem, auto)) auto auto;
-      gap: 0.45rem;
-      align-items: center;
-      padding: 0.65rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.65rem;
+      padding: 0.75rem 1rem;
       border-top: 1px solid var(--pos-border);
       background: var(--pos-elevated);
     }
-    .pos-pay-footer div {
+    .pos-pay-footer__bar {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .pos-pay-footer__stats {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.1rem 1.35rem;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .pos-pay-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-width: 0;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+    }
+    .pos-pay-stat__icon {
+      flex-shrink: 0;
+      width: 1.85rem;
+      height: 1.85rem;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: var(--pos-accent-hover);
+      background: color-mix(in srgb, var(--pos-accent-muted) 72%, var(--pos-elevated));
+    }
+    .pos-pay-stat--paid .pos-pay-stat__icon {
+      color: var(--pos-status-ok);
+      background: color-mix(in srgb, #10b981 18%, var(--pos-elevated));
+    }
+    .pos-pay-stat--pending .pos-pay-stat__icon {
+      color: #b45309;
+      background: color-mix(in srgb, #f59e0b 18%, var(--pos-elevated));
+    }
+    .pos-pay-stat--change .pos-pay-stat__icon {
+      color: #2563eb;
+      background: color-mix(in srgb, #3b82f6 16%, var(--pos-elevated));
+    }
+    .pos-pay-stat__copy {
       display: flex;
       flex-direction: column;
-      gap: 0.08rem;
-      color: var(--pos-faint);
-      font-size: 0.62rem;
+      gap: 0.05rem;
+      min-width: 0;
+    }
+    .pos-pay-stat--total .pos-pay-stat__copy small {
+      color: var(--pos-accent-hover);
+    }
+    .pos-pay-stat--paid .pos-pay-stat__copy small {
+      color: var(--pos-status-ok);
+    }
+    .pos-pay-stat--pending .pos-pay-stat__copy small {
+      color: #b45309;
+    }
+    .pos-pay-stat--change .pos-pay-stat__copy small {
+      color: #2563eb;
+    }
+    .pos-pay-stat__copy small {
+      font-size: 0.58rem;
       font-weight: 850;
-      text-transform: uppercase;
       letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .pos-pay-stat__copy strong {
+      font-family: var(--pos-mono);
+      font-size: 0.88rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--pos-text);
+    }
+    .pos-pay-footer__actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.55rem;
+      flex: 0 0 auto;
+      flex-wrap: nowrap;
+    }
+    .pos-pay-btn {
+      min-height: 2.85rem;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.45rem 0.85rem;
+      cursor: pointer;
+      text-align: left;
+    }
+    .pos-pay-btn span {
+      display: grid;
+      gap: 0.05rem;
+    }
+    .pos-pay-btn strong {
+      font-size: 0.78rem;
+      font-weight: 850;
+      line-height: 1.15;
+    }
+    .pos-pay-btn small {
+      font-size: 0.64rem;
+      font-weight: 650;
+      opacity: 0.82;
+      line-height: 1.2;
+    }
+    .pos-pay-btn--ghost {
+      border-color: var(--pos-border-strong);
+      background: var(--pos-elevated);
+      color: var(--pos-muted);
+    }
+    .pos-pay-btn--primary {
+      border-color: var(--pos-accent);
+      background: var(--pos-accent);
+      color: #fff;
+    }
+    .pos-pay-btn--primary small,
+    .pos-pay-btn--primary strong {
+      color: inherit;
+    }
+    .pos-pay-btn--disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
     }
     .modal--pay .modal-actions {
       position: sticky;
@@ -3508,6 +4266,9 @@ type ModalState =
       text-transform: uppercase;
     }
     .cash-denoms__clear {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
       border: none;
       background: transparent;
       color: var(--pos-accent-hover);
@@ -3520,13 +4281,15 @@ type ModalState =
     .cash-denoms__grid,
     .cash-denoms__suggested {
       display: grid;
-      grid-template-columns: 1.25fr repeat(6, minmax(0, 0.75fr));
-      gap: 0.32rem;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.35rem;
     }
-    .cash-denoms__suggested {
-      display: flex;
-      flex-wrap: wrap;
-      margin-top: 0.35rem;
+    .cash-denoms__rows {
+      display: grid;
+      gap: 0.35rem;
+    }
+    .cash-denoms__grid--row {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
     }
     .cash-denom,
     .cash-chip {
@@ -3559,6 +4322,14 @@ type ModalState =
     .cash-denom--exact strong {
       font-family: var(--pos-mono);
       font-size: 0.78rem;
+    }
+    .cash-denom--clear {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      color: var(--pos-accent-hover);
+      font-size: 0.74rem;
     }
     .pay-quick {
       display: flex;
@@ -3599,28 +4370,71 @@ type ModalState =
     }
     @media (max-width: 760px) {
       .modal--pay {
-        width: min(96vw, 34rem);
+        width: min(86.4vw, 30.6rem);
       }
       .pay-status,
       .pay-grid,
       .payment-method-strip,
-      .pos-pay-modal__head,
+      .pos-pay-top,
       .pos-pay-layout,
       .pos-pay-form,
-      .pos-pay-footer,
+      .pos-pay-form-grid,
+      .pos-pay-cash-row,
+      .pos-pay-cash-actions {
+        grid-template-columns: 1fr;
+      }
       .card-pay,
       .card-pay__amount,
       .card-pay__manual,
       .card-pay__channels,
       .card-pay__actions,
-      .cash-denoms__grid {
-        grid-template-columns: 1fr;
+      .pos-pay-methods {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .pos-pay-footer {
+        gap: 0.75rem;
+      }
+      .pos-pay-footer__bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+      }
+      .pos-pay-footer__stats {
+        justify-content: space-between;
+        gap: 0.65rem 0.85rem;
+      }
+      .pos-pay-footer__actions {
+        align-items: stretch;
+        flex-wrap: wrap;
+      }
+      .cash-denoms__grid,
+      .cash-denoms__grid--row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .pos-pay-layout {
         padding: 0.65rem;
       }
-      .pos-pay-footer {
-        align-items: stretch;
+      .pos-pay-hero {
+        min-height: 5.75rem;
+        padding: 1.1rem 0.75rem;
+      }
+      .pos-pay-hero__copy {
+        padding: 0 4.5rem;
+      }
+      .pos-pay-hero__art {
+        right: 0.65rem;
+        width: 6.25rem;
+        height: calc(100% + 0.85rem);
+      }
+      .pos-pay-hero__img {
+        transform: translateY(10%);
+      }
+      .pos-pay-side {
+        position: static;
+      }
+      .pos-pay-btn {
+        width: 100%;
+        justify-content: center;
       }
       .payment-method-chip {
         justify-content: flex-start;
@@ -3847,6 +4661,8 @@ export class PosVentaPage {
   readonly calcBuffer = signal('0');
   readonly calcKeys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫'] as const;
   readonly tenderDenominations = [1, 5, 10, 20, 50, 100] as const;
+  readonly tenderDenominationsRow1 = [1, 5, 10, 20] as const;
+  readonly tenderDenominationsRow2 = [50, 100] as const;
   readonly paymentMethods: PosPaymentMethodOption[] = [
     { code: 'cash', label: 'Efectivo', icon: '$', formaPago: '01', canal: 'CASH', proveedor: null },
     { code: 'card', label: 'Tarjeta', icon: '#', formaPago: '19', canal: 'CARD', proveedor: null },
@@ -3876,6 +4692,15 @@ export class PosVentaPage {
   readonly cardOperationMessage = signal('');
 
   readonly checkoutError = signal<string | null>(null);
+  readonly checkoutErrorTitle = computed(() => {
+    const message = this.checkoutError();
+    if (!message) {
+      return '';
+    }
+    const serverHints = ['sesión', 'servidor', 'autorizada', 'pos-app', 'conexión', 'código 4', 'código 5'];
+    const isServer = serverHints.some((hint) => message.toLowerCase().includes(hint));
+    return isServer ? 'No se pudo confirmar el cobro' : 'Revisa el cobro';
+  });
   readonly checkoutLoading = signal(false);
   readonly saleActionMessage = signal<string | null>(null);
   readonly lastTicketId = signal<string | null>(null);
@@ -3991,20 +4816,20 @@ export class PosVentaPage {
   });
 
   readonly suggestedTenderAmounts = computed(() => {
-    const total = this.saldoPendiente() || this.total();
-    if (total <= 0) {
+    const pending = this.saldoPendiente();
+    if (pending <= 0) {
       return [];
     }
     const fixed = new Set<number>(this.tenderDenominations.map((amount) => Number(amount)));
     const candidates = [
-      Math.ceil(total * 2) / 2,
-      Math.ceil(total),
-      Math.ceil(total / 2) * 2,
-      Math.ceil(total / 5) * 5,
+      Math.ceil(pending * 2) / 2,
+      Math.ceil(pending),
+      Math.ceil(pending / 2) * 2,
+      Math.ceil(pending / 5) * 5,
     ]
       .map((amount) => Math.round(amount * 100) / 100)
-      .filter((amount) => amount > total && !fixed.has(amount));
-    return Array.from(new Set(candidates)).slice(0, 3);
+      .filter((amount) => amount > pending && !fixed.has(amount));
+    return Array.from(new Set(candidates)).slice(0, 2);
   });
 
   readonly cardProviderLabel = computed(() => {
@@ -4581,6 +5406,9 @@ export class PosVentaPage {
     if (this.externalPaymentPending()) {
       return 'Hay una transaccion externa pendiente por confirmar.';
     }
+    if (this.totalPagado() > this.total() + 0.0001) {
+      return 'El total pagado supera el valor del ticket. Revise las líneas de pago.';
+    }
     if (this.totalPagado() + 0.0001 < this.total()) {
       return `Falta cubrir ${this.formatUsd(this.saldoPendiente())}. Agregue una linea de pago.`;
     }
@@ -4607,6 +5435,12 @@ export class PosVentaPage {
   }
 
   selectPaymentMethod(method: PosPaymentMethodCode): void {
+    if (this.hasPaymentFor(method)) {
+      this.checkoutError.set(
+        `Ya registró un pago con ${this.paymentMethodLabel(method)}. Elimínelo para volver a usar esta forma.`,
+      );
+      return;
+    }
     this.selectedPaymentMethod.set(method);
     this.draftReference.set(method === 'cash' ? 'Efectivo' : '');
     this.draftAuthCode.set('');
@@ -4623,7 +5457,26 @@ export class PosVentaPage {
   }
 
   onDraftReceived(ev: Event): void {
-    this.draftReceived.set((ev.target as HTMLInputElement).value);
+    const raw = (ev.target as HTMLInputElement).value;
+    this.draftReceived.set(raw);
+    if (this.selectedPaymentMethod() === 'cash') {
+      this.syncCashDraftAmountFromReceived();
+      if (this.addPaymentLineError() === null) {
+        this.checkoutError.set(null);
+      }
+    }
+  }
+
+  /** En efectivo, el monto a aplicar al ticket puede ser parcial (split payment). */
+  private syncCashDraftAmountFromReceived(): void {
+    const received = this.parseUsd(this.draftReceived());
+    const pending = this.payableBalance();
+    if (received <= 0 || pending <= 0) {
+      this.draftAmount.set('0');
+      return;
+    }
+    const amount = received < pending ? received : pending;
+    this.draftAmount.set(this.formatUsd(this.round2(amount)));
   }
 
   onDraftReference(ev: Event): void {
@@ -4642,8 +5495,12 @@ export class PosVentaPage {
     this.draftExternalStatus.set((ev.target as HTMLSelectElement).value as PosExternalPaymentStatus);
   }
 
+  private payableBalance(): number {
+    return this.saldoPendiente();
+  }
+
   fillDraftPending(): void {
-    const amount = this.formatUsd(this.saldoPendiente() || this.total());
+    const amount = this.formatUsd(this.payableBalance());
     this.draftAmount.set(amount);
     this.draftReceived.set(amount);
   }
@@ -4663,18 +5520,24 @@ export class PosVentaPage {
   }
 
   setDraftCashExact(): void {
-    const amount = this.formatUsd(this.saldoPendiente() || this.total());
+    const amount = this.formatUsd(this.payableBalance());
     this.draftAmount.set(amount);
     this.draftReceived.set(amount);
     this.checkoutError.set(null);
   }
 
   setDraftCashTender(amount: number): void {
-    const payable = this.round2(this.saldoPendiente() || this.total());
-    const received = this.round2(amount);
-    this.draftAmount.set(this.formatUsd(Math.min(payable, received)));
+    const pending = this.round2(this.payableBalance());
+    const received = this.round2(Math.max(0, amount));
+    const applied = pending <= 0 ? 0 : received < pending ? received : pending;
     this.draftReceived.set(this.formatUsd(received));
+    this.draftAmount.set(this.formatUsd(applied));
     this.checkoutError.set(null);
+  }
+
+  bumpDraftReceived(delta: number): void {
+    const received = Math.max(0, this.round2(this.parseUsd(this.draftReceived()) + delta));
+    this.setDraftCashTender(received);
   }
 
   canAddPaymentLine(): boolean {
@@ -4683,12 +5546,23 @@ export class PosVentaPage {
 
   private addPaymentLineError(): string | null {
     const method = this.selectedPaymentMethod();
-    const amount = this.parseUsd(this.draftAmount());
-    const received = method === 'cash' ? this.parseUsd(this.draftReceived()) : amount;
-    if (amount <= 0 || received + 0.0001 < amount) {
-      return method === 'cash'
-        ? 'Ingrese un monto y un recibido mayor o igual al monto a cobrar.'
-        : 'Ingrese un monto mayor a cero para agregar el pago.';
+    const pending = this.payableBalance();
+    const amount = this.round2(this.parseUsd(this.draftAmount()));
+    const received = method === 'cash' ? this.round2(this.parseUsd(this.draftReceived())) : amount;
+    if (pending <= 0) {
+      return 'El ticket ya está cubierto. No puede agregar más pagos.';
+    }
+    if (this.hasPaymentFor(method)) {
+      return `Ya registró un pago con ${this.paymentMethodLabel(method)}. Elimínelo o use otra forma de pago.`;
+    }
+    if (amount <= 0) {
+      return 'Ingrese un monto mayor a cero para agregar el pago.';
+    }
+    if (method === 'cash' && received + 0.0001 < amount) {
+      return 'El monto recibido debe ser mayor o igual al monto a aplicar.';
+    }
+    if (amount > pending + 0.0001) {
+      return `El monto no puede superar el saldo pendiente (${this.formatUsd(pending)}).`;
     }
     if (method === 'card' && !this.draftAuthCode().trim()) {
       return 'Ingrese el codigo de autorizacion de la tarjeta.';
@@ -4713,7 +5587,8 @@ export class PosVentaPage {
       return;
     }
     const method = this.paymentMethod(this.selectedPaymentMethod());
-    const total = this.round2(this.parseUsd(this.draftAmount()));
+    const pending = this.payableBalance();
+    const total = this.round2(Math.min(this.parseUsd(this.draftAmount()), pending));
     const recibido = this.selectedPaymentMethod() === 'cash' ? this.round2(this.parseUsd(this.draftReceived())) : total;
     const line: PosPaymentLineDraft = {
       id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -4732,12 +5607,22 @@ export class PosVentaPage {
     this.paymentLines.update((lines) => [...lines, line]);
     this.paymentCollection.set(null);
     this.checkoutError.set(null);
+    const nextMethod = this.paymentMethods.find((item) => !this.hasPaymentFor(item.code));
+    if (nextMethod && this.payableBalance() > 0) {
+      this.selectedPaymentMethod.set(nextMethod.code);
+      this.draftReference.set(nextMethod.code === 'cash' ? 'Efectivo' : '');
+      this.draftAuthCode.set('');
+      this.draftProviderTransactionId.set('');
+      this.draftExternalStatus.set('idle');
+    }
     this.fillDraftPending();
   }
 
   removePaymentLine(id: string): void {
     this.paymentLines.update((lines) => lines.filter((line) => line.id !== id));
     this.paymentCollection.set(null);
+    this.checkoutError.set(null);
+    this.fillDraftPending();
   }
 
   hasPaymentFor(method: PosPaymentMethodCode): boolean {
@@ -4978,6 +5863,10 @@ export class PosVentaPage {
       });
   }
 
+  dismissCheckoutError(): void {
+    this.checkoutError.set(null);
+  }
+
   tryConfirmarCobro(): void {
     const reason = this.confirmCobroError();
     if (reason) {
@@ -5179,17 +6068,26 @@ export class PosVentaPage {
 
   private httpErrMessage(err: unknown): string {
     if (err instanceof HttpErrorResponse) {
+      if (err.status === 401 || err.status === 403) {
+        return 'Sesión no autorizada. Vuelva a ingresar al POS e intente de nuevo.';
+      }
+      if (err.status === 0) {
+        return 'Sin respuesta del servidor. Verifique que el servicio esté activo.';
+      }
       const b = err.error;
       if (typeof b === 'string' && b.trim()) {
-        return b.length > 280 ? `${b.slice(0, 280)}…` : b;
+        return b.length > 200 ? `${b.slice(0, 200)}…` : b;
       }
       if (b && typeof b === 'object' && 'message' in b) {
         const m = (b as { message: unknown }).message;
-        if (typeof m === 'string') {
+        if (typeof m === 'string' && m.trim()) {
           return m;
         }
       }
-      return err.message || `Error HTTP ${err.status}`;
+      if (err.status >= 500) {
+        return 'El servidor no pudo procesar el cobro. Intente de nuevo en unos momentos.';
+      }
+      return `No se pudo completar el cobro (código ${err.status}).`;
     }
     if (err instanceof Error) {
       return err.message;

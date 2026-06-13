@@ -162,8 +162,66 @@ type CashPanelMode = 'open' | 'close' | 'history';
 
         @if (cajaPanelOpen()) {
           <div class="shell-dim" role="presentation" (click)="closeCajaPanel()"></div>
-          <div class="shell-modal" role="dialog" aria-modal="true" aria-labelledby="caja-panel-title">
-            <div class="shell-modal__header">
+          <div
+            class="shell-modal"
+            [class.shell-modal--close]="cashPanelMode() === 'close'"
+            [class.shell-modal--open]="cashPanelMode() === 'open'"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="caja-panel-title">
+            <div
+              class="shell-modal__header"
+              [class.shell-modal__header--close]="cashPanelMode() === 'close'"
+              [class.shell-modal__header--open]="cashPanelMode() === 'open'">
+              @if (cashPanelMode() === 'close') {
+                <div class="cash-close-top">
+                  <div class="cash-close-top__main">
+                    <span class="cash-close-top__icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <rect x="4" y="8" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M8 8V6a4 4 0 118 0v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        <circle cx="12" cy="14" r="1.5" fill="currentColor" />
+                      </svg>
+                    </span>
+                    <div class="cash-close-top__copy">
+                      <h2 id="caja-panel-title" class="cash-close-top__title">Cierre de caja</h2>
+                      <p class="cash-close-top__sub">Caja y venta del día</p>
+                    </div>
+                  </div>
+                  <div class="cash-close-top__actions">
+                    <span class="cash-close-top__state">● Caja abierta</span>
+                    <button type="button" class="cash-close-top__close pos-focus-ring" aria-label="Cerrar" (click)="closeCajaPanel()">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              } @else if (cashPanelMode() === 'open') {
+                <div class="cash-open-top">
+                  <div class="cash-open-top__main">
+                    <span class="cash-open-top__icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <rect x="4" y="8" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M8 8V6a4 4 0 118 0v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        <path d="M9 13h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    <div class="cash-open-top__copy">
+                      <h2 id="caja-panel-title" class="cash-open-top__title">Apertura de caja</h2>
+                      <p class="cash-open-top__sub">Caja y venta del día</p>
+                    </div>
+                  </div>
+                  <div class="cash-open-top__actions">
+                    <span class="cash-open-top__state">● Cerrada</span>
+                    <button type="button" class="cash-open-top__close pos-focus-ring" aria-label="Cerrar" (click)="closeCajaPanel()">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              } @else {
               <div class="shell-modal__hero">
               <div>
                 <span class="shell-modal__eyebrow">Turno de caja</span>
@@ -173,153 +231,289 @@ type CashPanelMode = 'open' | 'close' | 'history';
                 desk.cajaOpen() ? 'Abierta' : 'Cerrada'
               }}</span>
               </div>
+              }
             </div>
-            <div class="shell-modal__body">
-              <div class="cash-tabs" role="tablist" aria-label="Caja">
-              <button type="button" class="cash-tab pos-focus-ring" [class.cash-tab--on]="cashPanelMode() === 'open'" [disabled]="desk.cajaOpen()" (click)="setCashPanelMode('open')">Apertura</button>
-              <button type="button" class="cash-tab pos-focus-ring" [class.cash-tab--on]="cashPanelMode() === 'close'" [disabled]="!desk.cajaOpen()" (click)="setCashPanelMode('close')">Cierre</button>
-              <button type="button" class="cash-tab pos-focus-ring" [class.cash-tab--on]="cashPanelMode() === 'history'" (click)="setCashPanelMode('history')">Historial</button>
+            <div
+              class="shell-modal__body"
+              [class.shell-modal__body--close]="cashPanelMode() === 'close'"
+              [class.shell-modal__body--open]="cashPanelMode() === 'open'">
+              <div
+                class="cash-tabs"
+                [class.cash-tabs--sheet]="cashPanelMode() === 'close' || cashPanelMode() === 'open'"
+                role="tablist"
+                aria-label="Caja">
+              <button type="button" class="cash-tab pos-focus-ring" [class.cash-tab--on]="cashPanelMode() === 'open'" [disabled]="desk.cajaOpen()" (click)="setCashPanelMode('open')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="4" y="7" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M8 7V5h8v2" stroke="currentColor" stroke-width="1.5" />
+                </svg>
+                <span>Apertura</span>
+              </button>
+              <button type="button" class="cash-tab pos-focus-ring" [class.cash-tab--on]="cashPanelMode() === 'close'" [disabled]="!desk.cajaOpen()" (click)="setCashPanelMode('close')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  <rect x="6" y="11" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.5" />
+                </svg>
+                <span>Cierre</span>
+              </button>
+              <button type="button" class="cash-tab pos-focus-ring" [class.cash-tab--on]="cashPanelMode() === 'history'" (click)="setCashPanelMode('history')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" />
+                  <path d="M12 8v4l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                <span>Historial</span>
+              </button>
               </div>
-              @if (cashActionError()) {
+              @if (cashActionError() && cashPanelMode() === 'history') {
                 <p class="shell-diff shell-diff--bad">{{ cashActionError() }}</p>
               }
               @if (cashPanelMode() === 'open') {
-              <p class="shell-modal__p">La caja está <strong>cerrada</strong>. Indique el fondo inicial para apertura.</p>
-              <label class="shell-field">
-                <span>Fondo de apertura (USD)</span>
-                <input
-                  type="text"
-                  inputmode="decimal"
-                  class="shell-input pos-focus-ring"
-                  [value]="aperturaMonto()"
-                  (input)="onAperturaInput($event)" />
-              </label>
-              <div class="shell-denoms" aria-label="Denominaciones para fondo de apertura">
-                <div class="shell-denoms__head">
-                  <span>Denominacion directa</span>
-                  <button type="button" class="shell-denoms__clear pos-focus-ring" (click)="setAperturaMonto(0)">Limpiar</button>
+              <div class="cash-open">
+                @if (cashActionError()) {
+                  <div class="cash-open-feedback" role="alert" aria-live="polite">
+                    <span class="cash-open-feedback__icon" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 8v5M12 16h.01M10.3 4.3l-7.4 12.8A2 2 0 004.6 20h14.8a2 2 0 001.7-2.9l-7.4-12.8a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <p>{{ cashActionError() }}</p>
+                  </div>
+                }
+                <div class="cash-open-info">
+                  <span class="cash-open-info__icon" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M12 10v5M12 8h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <div class="cash-open-info__copy">
+                    <strong>La caja está cerrada.</strong>
+                    <p>Indique el fondo inicial para abrir la caja y comenzar a operar.</p>
+                  </div>
                 </div>
-                <div class="shell-denoms__grid">
-                  @for (amount of openingDenominations; track amount) {
-                    <button type="button" class="shell-denom pos-focus-ring" (click)="setAperturaMonto(amount)">
-                      {{ amount | currency: 'USD' : 'symbol-narrow' : '1.0-0' }}
+                <label class="cash-open-amount">
+                  <span class="cash-open-amount__label">Fondo de apertura (USD)</span>
+                  <span class="cash-open-amount__field">
+                    <span class="cash-open-amount__prefix" aria-hidden="true">$</span>
+                    <input
+                      #aperturaMontoInput
+                      id="apertura-monto-input"
+                      class="cash-open-amount__input pos-focus-ring"
+                      type="text"
+                      inputmode="decimal"
+                      [value]="aperturaMonto()"
+                      (input)="onAperturaInput($event)" />
+                  </span>
+                </label>
+                <div class="cash-open-denoms" aria-label="Denominaciones para fondo de apertura">
+                  <div class="cash-open-denoms__head">
+                    <span>Denominaciones directas</span>
+                    <button type="button" class="cash-open-denoms__clear pos-focus-ring" (click)="setAperturaMonto(0)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0v12a2 2 0 01-2 2H8a2 2 0 01-2-2V7h12z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      </svg>
+                      Limpiar
                     </button>
-                  }
-                </div>
-                <div class="shell-denoms__grid shell-denoms__grid--compact">
-                  @for (amount of openingCombos; track amount) {
-                    <button type="button" class="shell-chip pos-focus-ring" (click)="setAperturaMonto(amount)">
-                      {{ amount | currency: 'USD' : 'symbol-narrow' : '1.0-0' }}
+                  </div>
+                  <div class="cash-open-denoms__grid">
+                    @for (amount of openingQuickAmounts; track amount) {
+                      <button type="button" class="cash-open-denom pos-focus-ring" (click)="setAperturaMonto(amount)">
+                        {{ amount | currency: 'USD' : 'symbol-narrow' : '1.0-0' }}
+                      </button>
+                    }
+                    <button type="button" class="cash-open-denom cash-open-denom--other pos-focus-ring" (click)="focusAperturaCustom(aperturaMontoInput)">
+                      <span>Otro monto</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      </svg>
                     </button>
-                  }
+                  </div>
                 </div>
-              </div>
-              <div class="shell-modal__actions">
-                <button type="button" class="shell-btn shell-btn--ghost pos-focus-ring" (click)="closeCajaPanel()">
-                  Cancelar
-                </button>
-                <button type="button" class="shell-btn pos-focus-ring" [disabled]="desk.opening() || desk.cajaOpen()" (click)="confirmarApertura()">
-                  {{ desk.opening() ? 'Abriendo...' : 'Abrir caja' }}
-                </button>
               </div>
             } @else if (cashPanelMode() === 'close') {
-              <p class="shell-modal__p">
-                Caja <strong>abierta</strong>. Fondo: {{ desk.openingFloat() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }} ·
-                Ventas acumuladas: {{ desk.todaySalesTotal() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}
-              </p>
-              <div class="cash-user-card" aria-label="Datos del responsable de caja">
-                <span class="cash-user-card__label">Responsable del cierre</span>
-                <div class="cash-user-card__grid">
-                  <span>{{ companyTopline() }}</span>
-                  <span>{{ cashierSubline() }}</span>
-                  <span>Caja: {{ desk.cajaDisplayId() }}</span>
-                  <span>Turno: {{ desk.sessionId() || 'Sin turno remoto' }}</span>
+              @if (cashActionError()) {
+                <div class="cash-close-feedback" role="alert" aria-live="polite">
+                  <span class="cash-close-feedback__icon" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 8v5M12 16h.01M10.3 4.3l-7.4 12.8A2 2 0 004.6 20h14.8a2 2 0 001.7-2.9l-7.4-12.8a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                  <p>{{ cashActionError() }}</p>
                 </div>
-              </div>
-              <div class="shell-breakdown">
-                <div class="shell-row">
-                  <span>Efectivo (cobros)</span>
-                  <strong>{{ desk.todayCash() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
-                </div>
-                <div class="shell-row">
-                  <span>Tarjeta</span>
-                  <strong>{{ desk.todayCard() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
-                </div>
-                <div class="shell-row">
-                  <span>Transferencia</span>
-                  <strong>{{ desk.todayTransfer() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
-                </div>
-                <div class="shell-row shell-row--accent">
-                  <span>Efectivo esperado en cajón</span>
-                  <strong>{{ desk.expectedCashInDrawer() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
-                </div>
-              </div>
-              <label class="shell-field">
-                <span>Efectivo contado al cierre (cuadre)</span>
-                <input
-                  type="text"
-                  inputmode="decimal"
-                  class="shell-input pos-focus-ring"
-                  [value]="cierreContado()"
-                  (input)="onCierreContado($event)" />
-              </label>
-              <div class="cash-count-grid">
-                <label class="shell-field">
-                  <span>Tarjeta contado</span>
-                  <input
-                    type="text"
-                    inputmode="decimal"
-                    class="shell-input pos-focus-ring"
-                    [value]="cierreTarjeta()"
-                    (input)="onCierreTarjeta($event)" />
-                </label>
-                <label class="shell-field">
-                  <span>Transferencia contado</span>
-                  <input
-                    type="text"
-                    inputmode="decimal"
-                    class="shell-input pos-focus-ring"
-                    [value]="cierreTransferencia()"
-                    (input)="onCierreTransferencia($event)" />
-                </label>
-              </div>
-              <div class="cash-denom">
-                <div class="cash-denom__head">
-                  <span>Denominaciones</span>
-                  <strong>{{ countedCashFromDenoms() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
-                </div>
-                <div class="cash-denom__grid">
-                  @for (denom of closeDenominations; track denom) {
-                    <label class="cash-denom__row">
-                      <span>{{ denom | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
-                      <input type="number" min="0" step="1" inputmode="numeric" class="pos-focus-ring" [value]="denomQty(denom)" (input)="onDenomQty(denom, $event)" />
-                      <strong>{{ denomSubtotal(denom) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
-                    </label>
-                  }
-                </div>
-              </div>
-              <label class="shell-field">
-                <span>Notas</span>
-                <textarea class="shell-input shell-input--area pos-focus-ring" [value]="cierreNotas()" (input)="onCierreNotas($event)" placeholder="Observaciones del cierre"></textarea>
-              </label>
-              @if (cierreDiferencia() !== null) {
-                <p class="shell-diff" [class.shell-diff--bad]="(cierreDiferencia() ?? 0) !== 0">
-                  Diferencia vs esperado:
-                  <strong>{{ cierreDiferencia() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
-                  <span class="shell-diff__sep">Total:</span>
-                  <strong>{{ cierreTotalDiferencia() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
-                </p>
               }
-              <p class="shell-modal__hint">
-                Al cerrar se sincroniza el turno con pos-app si la API está disponible; si no, el estado queda solo en este navegador.
-              </p>
-              <div class="shell-modal__actions">
-                <button type="button" class="shell-btn shell-btn--ghost pos-focus-ring" (click)="closeCajaPanel()">
-                  Volver
-                </button>
-                <button type="button" class="shell-btn shell-btn--danger pos-focus-ring" [disabled]="desk.closing() || !desk.cajaOpen()" (click)="confirmarCierre()">
-                  {{ desk.closing() ? 'Cerrando...' : 'Cerrar caja' }}
-                </button>
+              <div class="cash-close">
+                <div class="cash-close__banner">
+                  <span>Fondo de apertura: <strong>{{ desk.openingFloat() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong></span>
+                  <span class="cash-close__banner-sep">•</span>
+                  <span>Ventas acumuladas: <strong>{{ desk.todaySalesTotal() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong></span>
+                </div>
+                <div class="cash-close__layout">
+                  <div class="cash-close__main">
+                    <section class="cash-close__section">
+                      <h3 class="cash-close__section-title">Información del cierre</h3>
+                      <div class="cash-close-info">
+                        <div class="cash-close-info__item">
+                          <span class="cash-close-info__icon" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h16v12H4z" stroke="currentColor" stroke-width="1.5" /><path d="M8 7V5h8v2" stroke="currentColor" stroke-width="1.5" /></svg>
+                          </span>
+                          <span class="cash-close-info__copy">
+                            <small>Empresa</small>
+                            <strong>{{ closeCompanyLabel() }}</strong>
+                          </span>
+                        </div>
+                        <div class="cash-close-info__item">
+                          <span class="cash-close-info__icon" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="1.5" /><path d="M6 19c0-3 2.7-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" /></svg>
+                          </span>
+                          <span class="cash-close-info__copy">
+                            <small>Cajero</small>
+                            <strong>{{ closeCashierLabel() }}</strong>
+                          </span>
+                        </div>
+                        <div class="cash-close-info__item">
+                          <span class="cash-close-info__icon" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5" /></svg>
+                          </span>
+                          <span class="cash-close-info__copy">
+                            <small>Caja</small>
+                            <strong>{{ desk.cajaDisplayId() }}</strong>
+                          </span>
+                        </div>
+                        <div class="cash-close-info__item">
+                          <span class="cash-close-info__icon" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" /><path d="M12 8v4l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+                          </span>
+                          <span class="cash-close-info__copy">
+                            <small>Turno</small>
+                            <strong>{{ closeShiftLabel() }}</strong>
+                          </span>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section class="cash-close__section">
+                      <h3 class="cash-close__section-title">Recuento de efectivo</h3>
+                      <div class="cash-close-count">
+                        <label class="cash-close-amount">
+                          <span class="cash-close-amount__label">Efectivo contado al cierre</span>
+                          <span class="cash-close-amount__field">
+                            <span class="cash-close-amount__prefix" aria-hidden="true">$</span>
+                            <input
+                              class="cash-close-amount__input pos-focus-ring"
+                              type="text"
+                              inputmode="decimal"
+                              [value]="cierreContado()"
+                              (input)="onCierreContado($event)" />
+                            <span class="cash-close-amount__steppers">
+                              <button type="button" class="cash-close-amount__step pos-focus-ring" aria-label="Aumentar efectivo" (click)="bumpCierreContado(1)">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M8 14l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                              </button>
+                              <button type="button" class="cash-close-amount__step pos-focus-ring" aria-label="Disminuir efectivo" (click)="bumpCierreContado(-1)">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M8 10l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                              </button>
+                            </span>
+                          </span>
+                        </label>
+                        <div class="cash-close-count__side">
+                          <div class="cash-close-metric cash-close-metric--ok">
+                            <span>Efectivo esperado en cajón</span>
+                            <strong>{{ desk.expectedCashInDrawer() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                          </div>
+                          <div class="cash-close-metric" [class.cash-close-metric--warn]="(cierreDiferencia() ?? 0) !== 0">
+                            <span>Diferencia</span>
+                            <strong>{{ (cierreDiferencia() ?? 0) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="cash-close-secondary">
+                        <label class="cash-close-secondary__field">
+                          <span>Tarjeta contado</span>
+                          <span class="cash-close-secondary__input">
+                            <span aria-hidden="true">$</span>
+                            <input type="text" inputmode="decimal" class="pos-focus-ring" [value]="cierreTarjeta()" (input)="onCierreTarjeta($event)" />
+                          </span>
+                        </label>
+                        <label class="cash-close-secondary__field">
+                          <span>Transferencia contado</span>
+                          <span class="cash-close-secondary__input">
+                            <span aria-hidden="true">$</span>
+                            <input type="text" inputmode="decimal" class="pos-focus-ring" [value]="cierreTransferencia()" (input)="onCierreTransferencia($event)" />
+                          </span>
+                        </label>
+                      </div>
+                    </section>
+
+                    <section class="cash-close__section">
+                      <div class="cash-close-denoms__head">
+                        <h3 class="cash-close__section-title cash-close__section-title--inline">Denominaciones de efectivo</h3>
+                        <span class="cash-close-denoms__total">
+                          Total efectivo contado
+                          <strong>{{ countedCashFromDenoms() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                        </span>
+                      </div>
+                      <div class="cash-close-denoms">
+                        @for (denom of closeDenominations; track denom) {
+                          <label class="cash-close-denom">
+                            <span class="cash-close-denom__label">{{ denom | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                            <input type="number" min="0" step="1" inputmode="numeric" class="cash-close-denom__qty pos-focus-ring" [value]="denomQty(denom)" (input)="onDenomQty(denom, $event)" />
+                            <span class="cash-close-denom__eq" aria-hidden="true">=</span>
+                            <strong class="cash-close-denom__sub">{{ denomSubtotal(denom) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                          </label>
+                        }
+                      </div>
+                    </section>
+
+                    <label class="cash-close-notes">
+                      <span>Notas del cierre (opcional)</span>
+                      <textarea class="cash-close-notes__input pos-focus-ring" [value]="cierreNotas()" (input)="onCierreNotas($event)" placeholder="Observaciones del cierre de caja..."></textarea>
+                    </label>
+                  </div>
+
+                  <aside class="cash-close__side" aria-label="Resumen del cierre">
+                    <h3 class="cash-close-side__title">Resumen del cierre</h3>
+                    <div class="cash-close-side__row">
+                      <span>Fondo de apertura</span>
+                      <strong>{{ desk.openingFloat() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                    </div>
+                    <div class="cash-close-side__row">
+                      <span>Ventas del día</span>
+                      <strong>{{ desk.todaySalesTotal() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                    </div>
+                    <div class="cash-close-side__row cash-close-side__row--accent">
+                      <span>Total en caja esperado</span>
+                      <strong>{{ desk.expectedCashInDrawer() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                    </div>
+                    <div class="cash-close-side__divider"></div>
+                    <div class="cash-close-side__row">
+                      <span>Efectivo contado</span>
+                      <strong>{{ parseUsdDisplay(cierreContado()) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                    </div>
+                    <div class="cash-close-side__row">
+                      <span>Tarjeta contado</span>
+                      <strong>{{ parseUsdDisplay(cierreTarjeta()) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                    </div>
+                    <div class="cash-close-side__row">
+                      <span>Transferencia contado</span>
+                      <strong>{{ parseUsdDisplay(cierreTransferencia()) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                    </div>
+                    <div class="cash-close-side__diff" [class.cash-close-side__diff--warn]="cierreTotalDiferencia() !== 0">
+                      <span>Diferencia</span>
+                      <strong>{{ cierreTotalDiferencia() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
+                    </div>
+                    <div class="cash-close-sync">
+                      <span class="cash-close-sync__icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M7 7h10v10H7z" stroke="currentColor" stroke-width="1.5" />
+                          <path d="M12 3v4M12 17v4M3 12h4M17 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                      </span>
+                      <span class="cash-close-sync__copy">
+                        <strong>Cierre sincronizado</strong>
+                        <small>Al cerrar, el turno se sincronizará con POS-APP y la API disponible.</small>
+                      </span>
+                    </div>
+                  </aside>
+                </div>
               </div>
             } @else {
               <div class="cash-history">
@@ -371,15 +565,23 @@ type CashPanelMode = 'open' | 'close' | 'history';
                 <button type="button" class="shell-btn shell-btn--ghost pos-focus-ring" (click)="closeCajaPanel()">
                   Cancelar
                 </button>
-                <button type="button" class="shell-btn pos-focus-ring" [disabled]="desk.opening() || desk.cajaOpen()" (click)="confirmarApertura()">
-                  {{ desk.opening() ? 'Abriendo...' : 'Abrir caja' }}
+                <button type="button" class="shell-btn shell-btn--open-caja pos-focus-ring" [disabled]="desk.opening() || desk.cajaOpen()" (click)="confirmarApertura()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    <rect x="6" y="11" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.6" />
+                  </svg>
+                  {{ desk.opening() ? 'Abriendo…' : 'Abrir caja' }}
                 </button>
               } @else if (cashPanelMode() === 'close') {
                 <button type="button" class="shell-btn shell-btn--ghost pos-focus-ring" (click)="closeCajaPanel()">
-                  Volver
+                  Cancelar
                 </button>
-                <button type="button" class="shell-btn shell-btn--danger pos-focus-ring" [disabled]="desk.closing() || !desk.cajaOpen()" (click)="confirmarCierre()">
-                  {{ desk.closing() ? 'Cerrando...' : 'Cerrar caja' }}
+                <button type="button" class="shell-btn shell-btn--close-caja pos-focus-ring" [disabled]="desk.closing() || !desk.cajaOpen()" (click)="confirmarCierre()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8 11V8a4 4 0 118 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    <rect x="6" y="11" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.6" />
+                  </svg>
+                  {{ desk.closing() ? 'Cerrando…' : 'Cerrar caja' }}
                 </button>
               } @else {
                 <button type="button" class="shell-btn shell-btn--ghost pos-focus-ring" (click)="closeCajaPanel()">
@@ -906,6 +1108,764 @@ type CashPanelMode = 'open' | 'close' | 'history';
       color: var(--pos-text);
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
     }
+    .shell-modal--close {
+      width: min(86.4vw, 64.8rem);
+      max-height: min(92vh, 54rem);
+    }
+    .shell-modal--open {
+      width: min(86.4vw, 42rem);
+      max-height: min(90vh, 40rem);
+    }
+    .shell-modal__header--open {
+      padding: 0.85rem 1rem 0;
+      border-bottom: none;
+    }
+    .shell-modal__body--open {
+      padding: 0 1rem 1rem;
+    }
+    .cash-open-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .cash-open-top__main {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+    .cash-open-top__icon {
+      flex-shrink: 0;
+      width: 2.35rem;
+      height: 2.35rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 28%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent-muted) 55%, var(--pos-elevated));
+      color: var(--pos-accent-hover);
+    }
+    .cash-open-top__title {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--pos-text);
+    }
+    .cash-open-top__sub {
+      margin: 0.2rem 0 0;
+      font-size: 0.72rem;
+      color: var(--pos-muted);
+    }
+    .cash-open-top__actions {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-shrink: 0;
+    }
+    .cash-open-top__state {
+      border-radius: 999px;
+      border: 1px solid rgba(217, 119, 6, 0.34);
+      background: rgba(251, 191, 36, 0.12);
+      color: #b45309;
+      padding: 0.22rem 0.55rem;
+      font-size: 0.66rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .cash-open-top__close {
+      width: 2rem;
+      height: 2rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      border: 1px solid var(--pos-border);
+      background: var(--pos-surface-2);
+      color: var(--pos-muted);
+      cursor: pointer;
+    }
+    .cash-tabs--sheet .cash-tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+    }
+    .cash-tabs--sheet .cash-tab--on {
+      background: color-mix(in srgb, var(--pos-accent-muted) 42%, var(--pos-elevated));
+    }
+    .cash-open-feedback {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.7rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, #f59e0b 34%, var(--pos-border));
+      background: color-mix(in srgb, #fff7ed 72%, var(--pos-elevated));
+      color: #9a3412;
+      font-size: 0.74rem;
+      line-height: 1.4;
+    }
+    .cash-open-feedback p {
+      margin: 0;
+    }
+    .cash-open-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      margin-bottom: 0.85rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 22%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent-muted) 48%, var(--pos-elevated));
+      color: var(--pos-accent-hover);
+      font-size: 0.74rem;
+    }
+    .cash-open-info__icon {
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+    .cash-open-info__copy {
+      display: grid;
+      gap: 0.15rem;
+    }
+    .cash-open-info__copy strong {
+      color: var(--pos-text);
+      font-size: 0.76rem;
+    }
+    .cash-open-info__copy p {
+      margin: 0;
+      color: var(--pos-muted);
+      line-height: 1.45;
+    }
+    .cash-open-amount {
+      display: grid;
+      gap: 0.4rem;
+      margin-bottom: 0.85rem;
+    }
+    .cash-open-amount__label {
+      color: var(--pos-faint);
+      font-size: 0.64rem;
+      font-weight: 850;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .cash-open-amount__field {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 0.55rem;
+      min-height: 3.75rem;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 24%, var(--pos-border-strong));
+      border-radius: 5px;
+      background: var(--pos-bg);
+    }
+    .cash-open-amount__prefix {
+      width: 2.15rem;
+      height: 2.15rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-border) 62%, var(--pos-surface-2));
+      color: color-mix(in srgb, var(--pos-text) 55%, var(--pos-muted));
+      font-size: 1.05rem;
+      font-weight: 850;
+    }
+    .cash-open-amount__input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: color-mix(in srgb, var(--pos-text) 92%, #000);
+      font-family: var(--pos-mono);
+      font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+      letter-spacing: -0.02em;
+    }
+    .cash-open-denoms__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-bottom: 0.45rem;
+      color: var(--pos-faint);
+      font-size: 0.64rem;
+      font-weight: 850;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .cash-open-denoms__clear {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      border: none;
+      background: transparent;
+      color: var(--pos-accent-hover);
+      font-size: 0.68rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .cash-open-denoms__grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.4rem;
+    }
+    .cash-open-denom {
+      min-height: 2.45rem;
+      border-radius: 5px;
+      border: 1px solid var(--pos-border-strong);
+      background: var(--pos-elevated);
+      color: var(--pos-text);
+      font-size: 0.88rem;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
+    }
+    .cash-open-denom:hover {
+      border-color: var(--pos-accent);
+      background: var(--pos-accent-muted);
+      color: var(--pos-accent-hover);
+    }
+    .cash-open-denom--other {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      color: var(--pos-muted);
+      font-size: 0.76rem;
+      font-weight: 750;
+    }
+    .shell-btn--open-caja {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-height: 2.45rem;
+      padding: 0.45rem 1rem;
+      background: var(--pos-accent);
+      color: #fff;
+    }
+    .shell-btn--open-caja:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .shell-modal__header--close {
+      padding: 0.85rem 1rem 0;
+      border-bottom: none;
+    }
+    .shell-modal__body--close {
+      padding: 0 1rem 1rem;
+    }
+    .cash-close-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .cash-close-top__main {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+    .cash-close-top__icon {
+      flex-shrink: 0;
+      width: 2.35rem;
+      height: 2.35rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 28%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent-muted) 55%, var(--pos-elevated));
+      color: var(--pos-accent-hover);
+    }
+    .cash-close-top__title {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--pos-text);
+    }
+    .cash-close-top__sub {
+      margin: 0.2rem 0 0;
+      font-size: 0.72rem;
+      color: var(--pos-muted);
+    }
+    .cash-close-top__actions {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-shrink: 0;
+    }
+    .cash-close-top__state {
+      border-radius: 999px;
+      border: 1px solid rgba(20, 184, 166, 0.32);
+      background: rgba(20, 184, 166, 0.12);
+      color: var(--pos-accent-hover);
+      padding: 0.22rem 0.55rem;
+      font-size: 0.66rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .cash-close-top__close {
+      width: 2rem;
+      height: 2rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      border: 1px solid var(--pos-border);
+      background: var(--pos-surface-2);
+      color: var(--pos-muted);
+      cursor: pointer;
+    }
+    .cash-tabs--sheet {
+      margin: 0 -1rem 0.85rem;
+      padding: 0 1rem;
+      border: none;
+      border-bottom: 1px solid var(--pos-border);
+      border-radius: 0;
+      background: transparent;
+      gap: 0;
+    }
+    .cash-tabs--sheet .cash-tab {
+      min-height: 2.45rem;
+      border-radius: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      font-size: 0.74rem;
+    }
+    .cash-tabs--sheet .cash-tab--on {
+      border-color: transparent;
+      border-bottom-color: var(--pos-accent-hover);
+      background: transparent;
+      color: var(--pos-accent-hover);
+      box-shadow: none;
+    }
+    .cash-close-feedback {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.7rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, #f59e0b 34%, var(--pos-border));
+      background: color-mix(in srgb, #fff7ed 72%, var(--pos-elevated));
+      color: #9a3412;
+      font-size: 0.74rem;
+      line-height: 1.4;
+    }
+    .cash-close-feedback p {
+      margin: 0;
+    }
+    .cash-close__banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.45rem 0.65rem;
+      margin-bottom: 0.85rem;
+      padding: 0.65rem 0.8rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 18%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent-muted) 52%, var(--pos-elevated));
+      color: var(--pos-muted);
+      font-size: 0.74rem;
+    }
+    .cash-close__banner strong {
+      color: var(--pos-text);
+      font-variant-numeric: tabular-nums;
+    }
+    .cash-close__banner-sep {
+      color: var(--pos-faint);
+    }
+    .cash-close__layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(14rem, 0.45fr);
+      gap: 0.85rem;
+      align-items: start;
+    }
+    .cash-close__section {
+      margin-bottom: 0.85rem;
+    }
+    .cash-close__section-title {
+      margin: 0 0 0.5rem;
+      color: var(--pos-accent-hover);
+      font-size: 0.68rem;
+      font-weight: 850;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .cash-close__section-title--inline {
+      margin-bottom: 0;
+    }
+    .cash-close-info {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+    .cash-close-info__item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      min-width: 0;
+      padding: 0.5rem 0.55rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-surface-2);
+    }
+    .cash-close-info__icon {
+      flex-shrink: 0;
+      width: 1.65rem;
+      height: 1.65rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-accent-muted) 55%, var(--pos-elevated));
+      color: var(--pos-accent-hover);
+    }
+    .cash-close-info__copy {
+      display: grid;
+      gap: 0.08rem;
+      min-width: 0;
+    }
+    .cash-close-info__copy small {
+      color: var(--pos-faint);
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .cash-close-info__copy strong {
+      color: var(--pos-text);
+      font-size: 0.72rem;
+      font-weight: 750;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cash-close-count {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(10rem, 0.65fr);
+      gap: 0.65rem;
+      align-items: stretch;
+    }
+    .cash-close-amount {
+      display: grid;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+    .cash-close-amount__label {
+      color: var(--pos-muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .cash-close-amount__field {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 3.6rem;
+      padding: 0.45rem 0.55rem;
+      border: 1px solid var(--pos-border-strong);
+      border-radius: 5px;
+      background: var(--pos-bg);
+    }
+    .cash-close-amount__prefix {
+      width: 2rem;
+      height: 2rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-border) 62%, var(--pos-surface-2));
+      color: color-mix(in srgb, var(--pos-text) 55%, var(--pos-muted));
+      font-size: 1rem;
+      font-weight: 850;
+    }
+    .cash-close-amount__input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: color-mix(in srgb, var(--pos-text) 92%, #000);
+      font-family: var(--pos-mono);
+      font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+    }
+    .cash-close-amount__steppers {
+      display: flex;
+      flex-direction: column;
+      align-self: flex-start;
+      gap: 0.28rem;
+      margin-top: 0.38rem;
+    }
+    .cash-close-amount__step {
+      width: 1.65rem;
+      height: 1.3rem;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 32%, var(--pos-border));
+      background: var(--pos-elevated);
+      color: var(--pos-accent-hover);
+      cursor: pointer;
+    }
+    .cash-close-count__side {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .cash-close-metric {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.15rem;
+      min-height: 0;
+      flex: 1 1 auto;
+      padding: 0.5rem 0.6rem;
+      border-radius: 5px;
+      border: 1px solid var(--pos-border);
+      background: var(--pos-surface-2);
+      font-size: 0.68rem;
+      color: var(--pos-muted);
+    }
+    .cash-close-metric strong {
+      font-family: var(--pos-mono);
+      font-size: 0.88rem;
+      color: var(--pos-text);
+      font-variant-numeric: tabular-nums;
+    }
+    .cash-close-metric--ok {
+      border-color: color-mix(in srgb, #10b981 28%, var(--pos-border));
+      background: color-mix(in srgb, #10b981 10%, var(--pos-surface-2));
+    }
+    .cash-close-metric--warn strong {
+      color: #b45309;
+    }
+    .cash-close-secondary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+      margin-top: 0.55rem;
+    }
+    .cash-close-secondary__field {
+      display: grid;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--pos-muted);
+    }
+    .cash-close-secondary__input {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 0.35rem;
+      min-height: 2.35rem;
+      padding: 0 0.5rem;
+      border: 1px solid var(--pos-border-strong);
+      border-radius: 5px;
+      background: var(--pos-bg);
+      color: var(--pos-faint);
+      font-weight: 800;
+    }
+    .cash-close-secondary__input input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--pos-text);
+      font-family: var(--pos-mono);
+      font-size: 0.88rem;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+    }
+    .cash-close-denoms__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      margin-bottom: 0.45rem;
+    }
+    .cash-close-denoms__total {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.05rem;
+      color: var(--pos-faint);
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      text-align: right;
+    }
+    .cash-close-denoms__total strong {
+      color: var(--pos-accent-hover);
+      font-size: 0.82rem;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .cash-close-denoms {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.35rem 0.55rem;
+    }
+    .cash-close-denom {
+      display: grid;
+      grid-template-columns: 4.2rem minmax(2.5rem, 0.7fr) auto 4.5rem;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.28rem 0.35rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-surface-2);
+      font-size: 0.7rem;
+      color: var(--pos-muted);
+    }
+    .cash-close-denom__qty {
+      width: 100%;
+      min-height: 1.85rem;
+      border-radius: 5px;
+      border: 1px solid var(--pos-border-strong);
+      background: var(--pos-bg);
+      color: var(--pos-text);
+      padding: 0.2rem 0.35rem;
+      text-align: center;
+    }
+    .cash-close-denom__eq {
+      color: var(--pos-faint);
+      font-size: 0.68rem;
+    }
+    .cash-close-denom__sub {
+      text-align: right;
+      color: var(--pos-text);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.72rem;
+    }
+    .cash-close-notes {
+      display: grid;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--pos-muted);
+    }
+    .cash-close-notes__input {
+      min-height: 4.5rem;
+      resize: vertical;
+      border-radius: 5px;
+      border: 1px solid var(--pos-border-strong);
+      background: var(--pos-bg);
+      color: var(--pos-text);
+      padding: 0.55rem 0.65rem;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+    .cash-close__side {
+      display: flex;
+      flex-direction: column;
+      gap: 0.42rem;
+      padding: 0.7rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-surface-2);
+      position: sticky;
+      top: 0;
+    }
+    .cash-close-side__title {
+      margin: 0 0 0.15rem;
+      color: var(--pos-accent-hover);
+      font-size: 0.68rem;
+      font-weight: 850;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .cash-close-side__row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.55rem;
+      font-size: 0.72rem;
+      color: var(--pos-muted);
+    }
+    .cash-close-side__row strong {
+      font-family: var(--pos-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--pos-text);
+    }
+    .cash-close-side__row--accent strong {
+      color: var(--pos-accent-hover);
+    }
+    .cash-close-side__divider {
+      height: 1px;
+      margin: 0.15rem 0;
+      background: var(--pos-border);
+    }
+    .cash-close-side__diff {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.55rem;
+      margin-top: 0.15rem;
+      padding: 0.55rem 0.6rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 24%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent-muted) 48%, var(--pos-surface-2));
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: var(--pos-accent-hover);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .cash-close-side__diff strong {
+      font-family: var(--pos-mono);
+      font-size: 0.95rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .cash-close-side__diff--warn {
+      border-color: color-mix(in srgb, #f59e0b 34%, var(--pos-border));
+      background: color-mix(in srgb, #fff7ed 65%, var(--pos-surface-2));
+      color: #b45309;
+    }
+    .cash-close-sync {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      margin-top: 0.35rem;
+      padding: 0.6rem 0.65rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 22%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent-muted) 42%, var(--pos-surface-2));
+      color: var(--pos-accent-hover);
+      font-size: 0.72rem;
+    }
+    .cash-close-sync__copy {
+      display: grid;
+      gap: 0.12rem;
+    }
+    .cash-close-sync__copy strong {
+      font-size: 0.74rem;
+    }
+    .cash-close-sync__copy small {
+      color: inherit;
+      opacity: 0.88;
+      line-height: 1.35;
+    }
+    .shell-btn--close-caja {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-height: 2.45rem;
+      padding: 0.45rem 1rem;
+      background: var(--pos-accent);
+      color: #fff;
+    }
+    .shell-btn--close-caja:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
     .cash-tab:disabled {
       opacity: 0.45;
       cursor: not-allowed;
@@ -1393,8 +2353,25 @@ type CashPanelMode = 'open' | 'close' | 'history';
       .cash-count-grid,
       .cash-user-card__grid,
       .cash-denom__grid,
+      .cash-close__layout,
+      .cash-close-count,
+      .cash-close-info,
+      .cash-close-secondary,
+      .cash-close-denoms,
       .cash-history__body {
         grid-template-columns: 1fr;
+      }
+      .shell-modal--close {
+        width: min(96vw, 34rem);
+      }
+      .shell-modal--open {
+        width: min(96vw, 34rem);
+      }
+      .cash-open-denoms__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .cash-close__side {
+        position: static;
       }
       .cash-history__item summary {
         grid-template-columns: 1fr;
@@ -1432,6 +2409,7 @@ export class PosShellComponent implements OnInit {
   readonly cierreConfirmDifference = signal(false);
   readonly openingDenominations = [1, 5, 10, 20, 50, 100] as const;
   readonly openingCombos = [25, 40, 60, 80] as const;
+  readonly openingQuickAmounts = [1, 5, 10, 20, 50, 100, 25, 40, 60, 80, 120] as const;
   readonly closeDenominations = [100, 50, 20, 10, 5, 1, 0.5, 0.25, 0.1, 0.05, 0.01] as const;
 
   readonly countedCashFromDenoms = computed(() =>
@@ -1453,6 +2431,26 @@ export class PosShellComponent implements OnInit {
     const expected = this.desk.expectedCashInDrawer() + this.desk.todayCard() + this.desk.todayTransfer();
     return Math.round((counted - expected) * 100) / 100;
   });
+
+  readonly closeCompanyLabel = computed(() => {
+    const context = this.auth.sessionContext();
+    if (context.companyName) {
+      return context.companyName;
+    }
+    const session = this.sessionUi();
+    return session.companyName || session.companySlug || session.companyId || '—';
+  });
+
+  readonly closeCashierLabel = computed(() => {
+    const context = this.auth.sessionContext();
+    if (context.cashierName) {
+      return context.cashierName;
+    }
+    const session = this.sessionUi();
+    return session.cashierName || session.cashierEmail || '—';
+  });
+
+  readonly closeShiftLabel = computed(() => this.desk.sessionId() || 'LOCAL');
 
   readonly efactura = environment.efacturaUiOrigin;
   readonly cartera = environment.carteraUiOrigin;
@@ -1689,11 +2687,28 @@ export class PosShellComponent implements OnInit {
 
   setAperturaMonto(amount: number): void {
     this.aperturaMonto.set(this.formatUsd(amount));
+    this.cashActionError.set(null);
+  }
+
+  focusAperturaCustom(input?: HTMLInputElement | null): void {
+    this.cashActionError.set(null);
+    input?.focus();
+    input?.select();
   }
 
   onCierreContado(ev: Event): void {
     this.cierreContado.set((ev.target as HTMLInputElement).value);
     this.cierreConfirmDifference.set(false);
+  }
+
+  bumpCierreContado(delta: number): void {
+    const next = Math.max(0, Math.round((this.parseUsd(this.cierreContado()) + delta) * 100) / 100);
+    this.cierreContado.set(this.formatUsd(next));
+    this.cierreConfirmDifference.set(false);
+  }
+
+  parseUsdDisplay(raw: string): number {
+    return this.parseUsd(raw);
   }
 
   onCierreTarjeta(ev: Event): void {
