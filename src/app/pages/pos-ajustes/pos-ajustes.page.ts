@@ -115,7 +115,62 @@ declare global {
       </aside>
 
       <section class="settings-panel">
-        @if (activeTab() === 'station') {
+        @if (activeTab() === 'business') {
+          <div class="rules-hero">
+            <div class="rules-hero__copy">
+              <span class="eyebrow">Panel de control</span>
+              <h1>Reglas</h1>
+              <p>Configure políticas globales que afectan a todas las cajas: documentos, límites y reglas de venta.</p>
+              <div class="rules-hero__stats">
+                <span class="rules-stat">
+                  <span class="rules-stat__icon rules-stat__icon--purple" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <span class="rules-stat__body">
+                    <span class="rules-stat__value">{{ rulesDocumentStatValue() }}</span>
+                    <span class="rules-stat__label">Documento · {{ rulesDocumentStatHint() }}</span>
+                  </span>
+                </span>
+                <span class="rules-stat">
+                  <span class="rules-stat__icon rules-stat__icon--blue" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M9.5 9.5L14.5 14.5M14.5 9.5L9.5 14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <span class="rules-stat__body">
+                    <span class="rules-stat__value">{{ rulesDiscountStatValue() }}</span>
+                    <span class="rules-stat__label">Descuento máx. · {{ rulesDiscountStatHint() }}</span>
+                  </span>
+                </span>
+                <span class="rules-stat">
+                  <span class="rules-stat__icon rules-stat__icon--green" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                  </span>
+                  <span class="rules-stat__body">
+                    <span class="rules-stat__value">{{ rulesCustomerStatValue() }}</span>
+                    <span class="rules-stat__label">Cliente obligatorio · {{ rulesCustomerStatHint() }}</span>
+                  </span>
+                </span>
+              </div>
+            </div>
+            <span class="rules-hero__badge">Global Policy</span>
+            <div class="rules-hero__art">
+              <img
+                class="rules-hero__img"
+                src="assets/iconos/seguridad_pos_config.png"
+                alt=""
+                loading="lazy"
+                decoding="async" />
+            </div>
+          </div>
+        } @else if (activeTab() === 'station') {
           <div class="station-hero">
             <div class="station-hero__copy">
               <span class="eyebrow">Panel de control</span>
@@ -152,15 +207,198 @@ declare global {
                 decoding="async" />
             </div>
           </div>
-        } @else {
-          <div class="settings-hero">
-            <div>
+        } @else if (activeTab() === 'payments') {
+          <div class="payments-hero">
+            <div class="payments-hero__copy">
               <span class="eyebrow">Panel de control</span>
-              <h1>{{ activeTabMeta().label }}</h1>
-              <p>{{ activeTabMeta().longDesc }}</p>
+              <h1>Cobros</h1>
+              <p>Configure terminales, QR y proveedores de pago para operar de forma segura y centralizada.</p>
+              <div class="payments-hero__stats">
+                <span class="payments-stat">
+                  <span class="payments-stat__icon payments-stat__icon--purple" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" stroke="currentColor" stroke-width="1.6" />
+                    </svg>
+                  </span>
+                  <span class="payments-stat__body">
+                    <span class="payments-stat__value">{{ paymentActiveProvidersCount() }}</span>
+                    <span class="payments-stat__label">Proveedor activo</span>
+                  </span>
+                </span>
+                <span class="payments-stat">
+                  <span class="payments-stat__icon payments-stat__icon--blue" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <rect x="6" y="3" width="12" height="18" rx="2" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M9 7h6M9 10h4M9 14h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <span class="payments-stat__body">
+                    <span class="payments-stat__value">{{ paymentTerminalsCount() }}</span>
+                    <span class="payments-stat__label">Terminales asociadas</span>
+                  </span>
+                </span>
+                <span class="payments-stat">
+                  <span class="payments-stat__icon payments-stat__icon--teal" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M3 10h18" stroke="currentColor" stroke-width="1.6" />
+                    </svg>
+                  </span>
+                  <span class="payments-stat__body">
+                    <span class="payments-stat__value">{{ paymentMethodsCount() }}</span>
+                    <span class="payments-stat__label">Métodos disponibles</span>
+                  </span>
+                </span>
+              </div>
             </div>
-            <div class="settings-hero__badge">
-              <span>{{ activeTabMeta().badge }}</span>
+            <span class="payments-hero__badge">Fintech Ready</span>
+            <div class="payments-hero__art">
+              <img
+                class="payments-hero__img"
+                src="assets/iconos/configuracion03.png"
+                alt=""
+                loading="lazy"
+                decoding="async" />
+            </div>
+          </div>
+        } @else if (activeTab() === 'printing') {
+          <div class="printing-hero">
+            <div class="printing-hero__copy">
+              <span class="eyebrow">Panel de control</span>
+              <h1>Impresión</h1>
+              <p>Asigna impresoras, recibos automáticos, etiquetas y cajón de dinero por terminal.</p>
+              <div class="printing-hero__stats">
+                <span class="printing-stat">
+                  <span class="printing-stat__icon printing-stat__icon--purple" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M7 8V4h10v4M7 17H5a2 2 0 01-2-2v-3a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2h-2" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M7 14h10v6H7z" stroke="currentColor" stroke-width="1.6" />
+                    </svg>
+                  </span>
+                  <span class="printing-stat__body">
+                    <span class="printing-stat__value">{{ printingPrintersStatValue() }}</span>
+                    <span class="printing-stat__label">Impresoras · {{ printingPrintersStatHint() }}</span>
+                  </span>
+                </span>
+                <span class="printing-stat">
+                  <span class="printing-stat__icon printing-stat__icon--blue" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <span class="printing-stat__body">
+                    <span class="printing-stat__value">{{ printingLabelFormatStatValue() }}</span>
+                    <span class="printing-stat__label">Formato de etiqueta · {{ printingLabelFormatStatHint() }}</span>
+                  </span>
+                </span>
+                <span class="printing-stat">
+                  <span class="printing-stat__icon printing-stat__icon--teal" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <rect x="4" y="7" width="16" height="11" rx="1.5" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M8 7V5a1 1 0 011-1h6a1 1 0 011 1v2" stroke="currentColor" stroke-width="1.6" />
+                      <circle cx="12" cy="13" r="1.5" fill="currentColor" />
+                    </svg>
+                  </span>
+                  <span class="printing-stat__body">
+                    <span class="printing-stat__value">{{ printingCashDrawerStatValue() }}</span>
+                    <span class="printing-stat__label">Cajón de dinero · {{ printingCashDrawerStatHint() }}</span>
+                  </span>
+                </span>
+              </div>
+            </div>
+            <span class="printing-hero__badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="5" y="5" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5" />
+                <path d="M9 9h6M9 12h4M9 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+              Hardware
+            </span>
+            <div class="printing-hero__art">
+              <img
+                class="printing-hero__img"
+                src="assets/iconos/configuracion04.png"
+                alt=""
+                loading="lazy"
+                decoding="async" />
+            </div>
+          </div>
+        } @else if (activeTab() === 'interface') {
+          <div class="interface-hero">
+            <div class="interface-hero__copy">
+              <span class="eyebrow">Panel de control</span>
+              <h1>Interfaz</h1>
+              <p>Ajustes de visualización para operación táctil o compacta, tema claro/nocturno y catálogo.</p>
+              <div class="interface-hero__stats">
+                <span class="interface-stat">
+                  <span class="interface-stat__icon interface-stat__icon--purple" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="8" cy="9" r="2.2" stroke="currentColor" stroke-width="1.5" />
+                      <circle cx="14" cy="7.5" r="2.2" stroke="currentColor" stroke-width="1.5" />
+                      <circle cx="17" cy="13" r="2.2" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M8 11.5c1.2 2.2 3.2 3.5 6 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <span class="interface-stat__body">
+                    <span class="interface-stat__value">{{ interfaceThemeStatValue() }}</span>
+                    <span class="interface-stat__label">Tema actual · {{ interfaceThemeStatHint() }}</span>
+                  </span>
+                </span>
+                <span class="interface-stat">
+                  <span class="interface-stat__icon interface-stat__icon--blue" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M8 6l2.5 2.5M8 6l-2.5 2.5M8 6v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      <path d="M4 14c0-2.5 2-4.5 4.5-4.5H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      <circle cx="16.5" cy="14.5" r="2.5" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                  </span>
+                  <span class="interface-stat__body">
+                    <span class="interface-stat__value">{{ interfaceHandednessStatValue() }}</span>
+                    <span class="interface-stat__label">Ergonomía · {{ interfaceHandednessStatHint() }}</span>
+                  </span>
+                </span>
+                <span class="interface-stat">
+                  <span class="interface-stat__icon interface-stat__icon--teal" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <rect x="5" y="5" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                      <rect x="13" y="5" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                      <rect x="5" y="13" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                      <rect x="13" y="13" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                  </span>
+                  <span class="interface-stat__body">
+                    <span class="interface-stat__value">{{ interfaceDensityStatValue() }}</span>
+                    <span class="interface-stat__label">Densidad · {{ interfaceDensityStatHint() }}</span>
+                  </span>
+                </span>
+              </div>
+            </div>
+            <span class="interface-hero__badge">UX</span>
+            <div class="interface-hero__art">
+              <img
+                class="interface-hero__img"
+                src="assets/iconos/configuracion05.png"
+                alt=""
+                loading="lazy"
+                decoding="async" />
+            </div>
+          </div>
+        } @else if (activeTab() === 'about') {
+          <div class="about-hero">
+            <div class="about-hero__copy">
+              <span class="eyebrow">Panel de control</span>
+              <h1>Información</h1>
+              <p>Información de versión, estado de integración y criterios usados para estructurar el POS.</p>
+            </div>
+            <span class="about-hero__badge">Sistema</span>
+            <div class="about-hero__art">
+              <img
+                class="about-hero__img"
+                src="assets/iconos/configuracion06.png"
+                alt=""
+                loading="lazy"
+                decoding="async" />
             </div>
           </div>
         }
@@ -201,15 +439,12 @@ declare global {
               }
             }
 
-            <div class="settings-body settings-body--split">
-              <div class="settings-body__main">
-                <div class="section-head section-head--compact">
-                  <span class="eyebrow">Administración</span>
-                  <p>
-                    Reglas compartidas para todas las cajas. En producción deben persistir en backend y solo un perfil
-                    administrador debería modificarlas.
-                  </p>
-                </div>
+            <div class="rules-board">
+              <section class="rules-config-panel">
+                <header class="rules-config-panel__head">
+                  <h2>Configuración de reglas</h2>
+                  <p>Defina las políticas que se aplicarán en todas las cajas del sistema.</p>
+                </header>
 
                 @if (invoicingProvider() !== 'NONE') {
                   <div class="fiscal-alert">
@@ -247,6 +482,7 @@ declare global {
                         <option value="factura">Factura</option>
                         <option value="preguntar">Preguntar al cobrar</option>
                       </select>
+                      <small class="rule-field-card__hint">Documento emitido por defecto en cada venta.</small>
                     </span>
                   </label>
 
@@ -268,6 +504,7 @@ declare global {
                         <option value="ticket-80">Ticket 80 mm</option>
                         <option value="a4">A4 factura completa</option>
                       </select>
+                      <small class="rule-field-card__hint">Formato del ticket o factura impresa.</small>
                     </span>
                   </label>
 
@@ -283,6 +520,7 @@ declare global {
                         [disabled]="!canManageBusinessRules()"
                         [ngModel]="prefs.maxDiscountPercent()"
                         (ngModelChange)="prefs.setMaxDiscountPercent($event)" />
+                      <small class="rule-field-card__hint">Porcentaje máximo permitido por el cajero.</small>
                     </span>
                   </label>
 
@@ -303,6 +541,7 @@ declare global {
                         [disabled]="!canManageBusinessRules()"
                         [ngModel]="prefs.minInvoiceAmount()"
                         (ngModelChange)="prefs.setMinInvoiceAmount($event)" />
+                      <small class="rule-field-card__hint">Monto mínimo para exigir factura electrónica.</small>
                     </span>
                   </label>
 
@@ -323,33 +562,74 @@ declare global {
                         [disabled]="!canManageBusinessRules()"
                         [ngModel]="prefs.requireCustomerOver()"
                         (ngModelChange)="prefs.setRequireCustomerOver($event)" />
+                      <small class="rule-field-card__hint">Monto a partir del cual se exige cliente.</small>
                     </span>
                   </label>
                 </div>
-              </div>
+              </section>
 
-              <aside class="settings-promo" aria-label="Ayuda sobre reglas">
-                <span class="settings-promo__badge">Global</span>
-                <div class="settings-promo__art">
-                  <img
-                    class="settings-promo__img"
-                    src="assets/iconos/seguridad_pos_config.png"
-                    alt=""
-                    loading="lazy"
-                    decoding="async" />
-                </div>
-                <div class="settings-promo__footer">
-                  <h3 class="settings-promo__title">
-                    <span class="settings-promo__sparkle" aria-hidden="true">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 3l1.4 4.3H18l-3.6 2.6 1.4 4.3L12 11.6 8.2 14.2l1.4-4.3L6 7.3h4.6L12 3z" fill="currentColor" />
+              <aside class="rules-smart-panel" aria-label="Reglas inteligentes">
+                <h3 class="rules-smart-panel__title">
+                  <span class="rules-smart-panel__sparkle" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 3l1.4 4.3H18l-3.6 2.6 1.4 4.3L12 11.6 8.2 14.2l1.4-4.3L6 7.3h4.6L12 3z" fill="currentColor" />
+                    </svg>
+                  </span>
+                  Reglas inteligentes
+                </h3>
+                <p class="rules-smart-panel__text">
+                  Activa controles y validaciones que garantizan el correcto funcionamiento de tu punto de venta.
+                </p>
+                <ul class="rules-smart-panel__list">
+                  <li>
+                    <span class="rules-smart-panel__check" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
                     </span>
-                    Reglas inteligentes
-                  </h3>
-                  <p class="settings-promo__text">
-                    Configura políticas que garantizan el correcto funcionamiento de tu punto de venta.
-                  </p>
+                    Facturación habilitada
+                  </li>
+                  <li>
+                    <span class="rules-smart-panel__check" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    Control de descuentos
+                  </li>
+                  <li>
+                    <span class="rules-smart-panel__check" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    Validación de cliente
+                  </li>
+                  <li>
+                    <span class="rules-smart-panel__check" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    Aplicación global
+                  </li>
+                  <li>
+                    <span class="rules-smart-panel__check" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    Persistencia en backend
+                  </li>
+                </ul>
+                <div class="rules-smart-panel__status">
+                  <span class="rules-smart-panel__status-icon" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 3.5l7 3.2v5.1c0 4.1-2.9 7.9-7 9.2-4.1-1.3-7-5.1-7-9.2V6.7l7-3.2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                      <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                  <span>Estado: <strong>Activo</strong></span>
                 </div>
               </aside>
             </div>
@@ -577,106 +857,264 @@ declare global {
           }
 
           @case ('printing') {
-            <div class="section-head">
-              <span class="eyebrow">Hardware</span>
-              <h1>Impresión y etiquetas</h1>
-              <p>Impresoras por estación para recibos, cajón de dinero y etiquetas de producto.</p>
-            </div>
+            <div class="printing-board">
+              <section class="printing-config-panel">
+                <header class="printing-config-panel__head">
+                  <h2>Impresión y etiquetas</h2>
+                  <p>Configure impresoras, formatos y comportamiento automático para esta estación.</p>
+                </header>
 
-            <div class="card-grid">
-              <label class="field">
-                <span>Impresora de recibos</span>
-                <select
-                  class="input pos-focus-ring"
-                  [ngModel]="prefs.receiptPrinter()"
-                  (ngModelChange)="prefs.setReceiptPrinter($event)">
-                  <option value="">Sin asignar</option>
-                  <option value="epson-tm-t20">Epson TM-T20 / compatible ESC/POS</option>
-                  <option value="star-tsp100">Star TSP100</option>
-                  <option value="browser-default">Impresora del navegador</option>
-                </select>
-              </label>
+                <div class="printing-field-grid">
+                  <label class="rule-field-card">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M7 8V4h10v4M7 17H5a2 2 0 01-2-2v-3a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2h-2" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M7 14h10v6H7z" stroke="currentColor" stroke-width="1.6" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Impresora de recibos</span>
+                      <select
+                        class="rule-field-card__input pos-focus-ring"
+                        [ngModel]="prefs.receiptPrinter()"
+                        (ngModelChange)="prefs.setReceiptPrinter($event)">
+                        <option value="">Sin asignar</option>
+                        <option value="epson-tm-t20">Epson TM-T20 / compatible ESC/POS</option>
+                        <option value="star-tsp100">Star TSP100</option>
+                        <option value="browser-default">Impresora del navegador</option>
+                      </select>
+                      <small class="rule-field-card__hint">Selecciona la impresora para recibos de venta.</small>
+                    </span>
+                  </label>
 
-              <label class="field">
-                <span>Impresora de etiquetas</span>
-                <select
-                  class="input pos-focus-ring"
-                  [ngModel]="prefs.labelPrinter()"
-                  (ngModelChange)="prefs.setLabelPrinter($event)">
-                  <option value="">Sin asignar</option>
-                  <option value="zebra-zd">Zebra ZD / ZPL</option>
-                  <option value="dymo">DYMO LabelWriter</option>
-                  <option value="browser-default">Impresora del navegador</option>
-                </select>
-              </label>
+                  <label class="rule-field-card">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <rect x="5" y="4" width="14" height="16" rx="1.5" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M8 8h8M8 11h6M8 14h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        <path d="M16 4v3h3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Impresora de etiquetas</span>
+                      <select
+                        class="rule-field-card__input pos-focus-ring"
+                        [ngModel]="prefs.labelPrinter()"
+                        (ngModelChange)="prefs.setLabelPrinter($event)">
+                        <option value="">Sin asignar</option>
+                        <option value="zebra-zd">Zebra ZD / ZPL</option>
+                        <option value="dymo">DYMO LabelWriter</option>
+                        <option value="browser-default">Impresora del navegador</option>
+                      </select>
+                      <small class="rule-field-card__hint">Selecciona la impresora para etiquetas de producto.</small>
+                    </span>
+                  </label>
 
-              <label class="field">
-                <span>Formato de etiqueta</span>
-                <select
-                  class="input pos-focus-ring"
-                  [ngModel]="prefs.labelFormat()"
-                  (ngModelChange)="prefs.setLabelFormat($event)">
-                  <option value="58x40">58 x 40 mm precio + barcode</option>
-                  <option value="50x30">50 x 30 mm compacto</option>
-                  <option value="38x25">38 x 25 mm góndola</option>
-                  <option value="custom">Plantilla personalizada</option>
-                </select>
-              </label>
+                  <label class="rule-field-card">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M6 6l12 0 0 12-12 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                        <path d="M9 10h6M9 13h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Formato de etiqueta</span>
+                      <select
+                        class="rule-field-card__input pos-focus-ring"
+                        [ngModel]="prefs.labelFormat()"
+                        (ngModelChange)="prefs.setLabelFormat($event)">
+                        <option value="58x40">58 x 40 mm precio + barcode</option>
+                        <option value="50x30">50 x 30 mm compacto</option>
+                        <option value="38x25">38 x 25 mm góndola</option>
+                        <option value="custom">Plantilla personalizada</option>
+                      </select>
+                      <small class="rule-field-card__hint">Define el formato y contenido de tus etiquetas.</small>
+                    </span>
+                  </label>
 
-              <label class="toggle">
-                <span>
-                  <strong>Imprimir recibo automáticamente</strong>
-                  <small>Tras registrar el pago.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  [checked]="prefs.autoReceipt()"
-                  (change)="prefs.setAutoReceipt(!prefs.autoReceipt())" />
-              </label>
+                  <div class="rule-field-card rule-field-card--toggle">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label-row">
+                        <span class="rule-field-card__label">Imprimir recibo automáticamente</span>
+                        <label class="station-switch">
+                          <input
+                            type="checkbox"
+                            [checked]="prefs.autoReceipt()"
+                            (change)="prefs.setAutoReceipt(!prefs.autoReceipt())" />
+                          <span class="station-switch__ui" aria-hidden="true"></span>
+                        </label>
+                      </span>
+                      <small class="rule-field-card__hint">El recibo se imprimirá automáticamente tras registrar el pago.</small>
+                    </span>
+                  </div>
 
-              <label class="toggle">
-                <span>
-                  <strong>Abrir cajón al pago en efectivo</strong>
-                  <small>Requiere impresora/cajón compatible.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  [checked]="prefs.openDrawerAfterCash()"
-                  (change)="prefs.setOpenDrawerAfterCash(!prefs.openDrawerAfterCash())" />
-              </label>
+                  <div class="rule-field-card rule-field-card--toggle">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <rect x="4" y="7" width="16" height="11" rx="1.5" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M8 7V5a1 1 0 011-1h6a1 1 0 011 1v2" stroke="currentColor" stroke-width="1.6" />
+                        <circle cx="12" cy="13" r="1.5" fill="currentColor" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label-row">
+                        <span class="rule-field-card__label">Abrir cajón al pago en efectivo</span>
+                        <label class="station-switch">
+                          <input
+                            type="checkbox"
+                            [checked]="prefs.openDrawerAfterCash()"
+                            (change)="prefs.setOpenDrawerAfterCash(!prefs.openDrawerAfterCash())" />
+                          <span class="station-switch__ui" aria-hidden="true"></span>
+                        </label>
+                      </span>
+                      <small class="rule-field-card__hint">Requiere impresora/cajón compatible.</small>
+                    </span>
+                  </div>
+
+                  <div class="printing-smart-card">
+                    <div class="printing-smart-card__copy">
+                      <span class="printing-smart-card__icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 3.5l7 3.2v5.1c0 4.1-2.9 7.9-7 9.2-4.1-1.3-7-5.1-7-9.2V6.7l7-3.2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                          <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                      <span class="printing-smart-card__texts">
+                        <strong>Impresión inteligente</strong>
+                        <small>Optimiza la experiencia de impresión asignando los dispositivos correctos para cada tipo de documento.</small>
+                      </span>
+                    </div>
+                    <div class="printing-smart-card__orb" aria-hidden="true">
+                      <span class="printing-smart-card__orb-glow"></span>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3.5l7 3.2v5.1c0 4.1-2.9 7.9-7 9.2-4.1-1.3-7-5.1-7-9.2V6.7l7-3.2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </section>
             </div>
           }
 
           @case ('payments') {
-            <div class="section-head">
-              <span class="eyebrow">Cobros</span>
-              <h1>Tarjetas, QR y terminales</h1>
-              <p>Proveedor y terminal por caja. El POS queda preparado para terminal integrado, link/QR y registro manual.</p>
-            </div>
+            <div class="payments-board">
+              <header class="payments-board__head">
+                <h2>Proveedores de pago</h2>
+                <p>Administra tus proveedores y métodos de cobro disponibles para esta caja.</p>
+              </header>
 
-            <div class="integration-catalog" aria-label="Cat&aacute;logo de integraciones de pago">
-              @for (item of paymentIntegrationCards(); track item.id) {
-                <button
-                  type="button"
-                  class="integration-card pos-focus-ring"
-                  [class.integration-card--on]="selectedPaymentIntegration() === item.id"
-                  (click)="openPaymentIntegration(item.id)">
-                  <span class="integration-card__icon" aria-hidden="true">{{ item.shortName }}</span>
-                  <span class="integration-card__body">
-                    <span class="integration-card__top">
-                      <strong>{{ item.name }}</strong>
-                      <em [class.integration-card__state--ok]="item.state === 'Activo'" [class.integration-card__state--bad]="item.state === 'Error'">{{ item.state }}</em>
+              <div class="payments-catalog" aria-label="Catálogo de integraciones de pago">
+                @for (item of paymentIntegrationCards(); track item.id) {
+                  <button
+                    type="button"
+                    class="payment-provider-card pos-focus-ring"
+                    [class.payment-provider-card--on]="selectedPaymentIntegration() === item.id"
+                    [class.payment-provider-card--disabled]="paymentProviderIsDisabled(item)"
+                    (click)="openPaymentIntegration(item.id)">
+                    <span class="payment-provider-card__top">
+                      <span class="payment-provider-card__icon" aria-hidden="true">{{ item.shortName }}</span>
+                      <span
+                        class="payment-provider-card__badge"
+                        [class.payment-provider-card__badge--base]="item.id === 'terminal'"
+                        [class.payment-provider-card__badge--disabled]="paymentProviderIsDisabled(item)"
+                        [class.payment-provider-card__badge--available]="item.id === 'manual'">
+                        {{ paymentProviderBadge(item) }}
+                      </span>
                     </span>
-                    <small>{{ item.description }}</small>
-                    <span class="integration-card__chips">
+                    <strong class="payment-provider-card__title">{{ item.name }}</strong>
+                    <small class="payment-provider-card__desc">{{ item.description }}</small>
+                    <span class="payment-provider-card__chips">
                       @for (capability of item.capabilities; track capability) {
                         <span>{{ capability }}</span>
                       }
                     </span>
-                    <span class="integration-card__action">Configurar</span>
+                    <span class="payment-provider-card__foot">
+                      <span
+                        class="payment-provider-card__status"
+                        [class.payment-provider-card__status--ok]="paymentProviderStatusTone(item) === 'ok'"
+                        [class.payment-provider-card__status--muted]="paymentProviderStatusTone(item) === 'muted'"
+                        [class.payment-provider-card__status--info]="paymentProviderStatusTone(item) === 'info'">
+                        <span class="payment-provider-card__dot" aria-hidden="true"></span>
+                        Estado: {{ paymentProviderStatusLabel(item) }}
+                      </span>
+                      <span class="payment-provider-card__action">
+                        Configurar
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M10 7l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                    </span>
+                  </button>
+                }
+              </div>
+
+              <div class="payments-config-bar">
+                <div class="payments-config-bar__lead">
+                  <span class="payments-config-bar__icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.6" />
+                      <path
+                        d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.55 1.55M17.85 17.85l1.55 1.55M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.55-1.55M17.85 6.15l1.55-1.55"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linecap="round" />
+                    </svg>
                   </span>
+                  <span class="payments-config-bar__copy">
+                    <strong>Terminales y configuración general</strong>
+                    <small>Asocia terminales, define reglas de cobro y configura el comportamiento de pagos en esta estación.</small>
+                  </span>
+                </div>
+                <div class="payments-config-bar__checks">
+                  <span class="payments-config-bar__check">
+                    <span class="payments-config-bar__check-icon" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span class="payments-config-bar__check-copy">
+                      <strong>QR habilitado</strong>
+                      <small>Escaneo y generación de códigos QR</small>
+                    </span>
+                  </span>
+                  <span class="payments-config-bar__check">
+                    <span class="payments-config-bar__check-icon" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span class="payments-config-bar__check-copy">
+                      <strong>Terminal asociada</strong>
+                      <small>{{ paymentTerminalLinkedLabel() }}</small>
+                    </span>
+                  </span>
+                  <span class="payments-config-bar__check">
+                    <span class="payments-config-bar__check-icon" aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span class="payments-config-bar__check-copy">
+                      <strong>Registro manual</strong>
+                      <small>Autorizaciones manuales activas</small>
+                    </span>
+                  </span>
+                </div>
+                <button type="button" class="payments-config-bar__btn pos-focus-ring" (click)="openPaymentIntegration('terminal')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                  Configurar
                 </button>
-              }
+              </div>
             </div>
 
             @if (paymentIntegrationModalOpen()) {
@@ -1181,305 +1619,378 @@ declare global {
           }
 
           @case ('interface') {
-            <div class="section-head">
-              <span class="eyebrow">Experiencia</span>
-              <h1>Interfaz del cajero</h1>
-              <p>Tema, densidad y comportamiento visual del catálogo.</p>
-            </div>
+            <div class="interface-board">
+              <section class="interface-config-panel">
+                <header class="interface-config-panel__head">
+                  <span class="interface-config-panel__eyebrow">Experiencia del cajero</span>
+                  <p>Personaliza la interfaz para mejorar la eficiencia y comodidad en el punto de venta.</p>
+                </header>
 
-            <div class="card-grid">
-              <div class="field field--wide">
-                <span>Tema</span>
-                <div class="segmented">
-                  <button
-                    type="button"
-                    class="seg pos-focus-ring"
-                    [class.seg--on]="prefs.theme() === 'dark'"
-                    (click)="setTheme('dark')">
-                    Nocturno
-                  </button>
-                  <button
-                    type="button"
-                    class="seg pos-focus-ring"
-                    [class.seg--on]="prefs.theme() === 'light'"
-                    (click)="setTheme('light')">
-                    Claro
-                  </button>
+                <div class="interface-field-grid">
+                  <div class="rule-field-card rule-field-card--segmented">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 4a6 6 0 100 12 6 6 0 000-12z" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Tema de visualización</span>
+                      <div class="interface-segmented">
+                        <button
+                          type="button"
+                          class="interface-seg pos-focus-ring"
+                          [class.interface-seg--on]="prefs.theme() === 'dark'"
+                          (click)="setTheme('dark')">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M12 4a6 6 0 100 12 6 6 0 000-12z" stroke="currentColor" stroke-width="1.6" />
+                          </svg>
+                          Nocturno
+                        </button>
+                        <button
+                          type="button"
+                          class="interface-seg pos-focus-ring"
+                          [class.interface-seg--on]="prefs.theme() === 'light'"
+                          (click)="setTheme('light')">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6" />
+                            <path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                          </svg>
+                          Claro
+                        </button>
+                      </div>
+                      <small class="rule-field-card__hint">Alterna entre modo claro y nocturno para la operación.</small>
+                    </span>
+                  </div>
+
+                  <div class="rule-field-card rule-field-card--segmented">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 6l2.5 2.5M8 6l-2.5 2.5M8 6v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M4 14c0-2.5 2-4.5 4.5-4.5H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <circle cx="16.5" cy="14.5" r="2.5" stroke="currentColor" stroke-width="1.5" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Ergonomía táctil</span>
+                      <div class="interface-segmented">
+                        <button
+                          type="button"
+                          class="interface-seg pos-focus-ring"
+                          [class.interface-seg--on]="prefs.handedness() === 'right'"
+                          (click)="onHandedness('right')">
+                          Diestro
+                        </button>
+                        <button
+                          type="button"
+                          class="interface-seg pos-focus-ring"
+                          [class.interface-seg--on]="prefs.handedness() === 'left'"
+                          (click)="onHandedness('left')">
+                          Zurdo
+                        </button>
+                      </div>
+                      <small class="rule-field-card__hint">El ticket y las acciones principales se muestran al lado dominante del cajero.</small>
+                    </span>
+                  </div>
+
+                  <label class="rule-field-card">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <rect x="5" y="5" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                        <rect x="13" y="5" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                        <rect x="5" y="13" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                        <rect x="13" y="13" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label">Densidad de interfaz</span>
+                      <select
+                        class="rule-field-card__input pos-focus-ring"
+                        [ngModel]="prefs.densitySource()"
+                        (ngModelChange)="onDensitySrc($event)">
+                        <option value="auto">Automática</option>
+                        <option value="manual">Manual</option>
+                      </select>
+                      <small class="rule-field-card__hint">Cantidad de elementos visuales en pantalla.</small>
+                    </span>
+                  </label>
+
+                  @if (prefs.densitySource() === 'manual') {
+                    <label class="rule-field-card">
+                      <span class="rule-field-card__icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <rect x="5" y="5" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                          <rect x="13" y="5" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                          <rect x="5" y="13" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                          <rect x="13" y="13" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                      </span>
+                      <span class="rule-field-card__body">
+                        <span class="rule-field-card__label">Densidad manual</span>
+                        <select
+                          class="rule-field-card__input pos-focus-ring"
+                          [ngModel]="prefs.densityManual()"
+                          (ngModelChange)="onDensityManual($event)">
+                          <option value="touch">Táctil</option>
+                          <option value="comfortable">Cómoda</option>
+                          <option value="compact">Compacta</option>
+                        </select>
+                        <small class="rule-field-card__hint">Espaciado entre elementos y componentes.</small>
+                      </span>
+                    </label>
+                  } @else {
+                    <label class="rule-field-card">
+                      <span class="rule-field-card__icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" stroke="currentColor" stroke-width="1.6" />
+                        </svg>
+                      </span>
+                      <span class="rule-field-card__body">
+                        <span class="rule-field-card__label">Perfil automático</span>
+                        <select
+                          class="rule-field-card__input pos-focus-ring"
+                          [ngModel]="prefs.roleProfile()"
+                          (ngModelChange)="onRole($event)">
+                          <option value="auto">Auto desde JWT</option>
+                          <option value="cajero">Cajero táctil</option>
+                          <option value="mostrador">Mostrador estándar</option>
+                          <option value="supervisor">Supervisor compacto</option>
+                        </select>
+                        <small class="rule-field-card__hint">Perfil sugerido según el rol del usuario.</small>
+                      </span>
+                    </label>
+                  }
+
+                  <div class="rule-field-card rule-field-card--toggle">
+                    <span class="rule-field-card__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.6" />
+                        <circle cx="9" cy="11" r="1.8" stroke="currentColor" stroke-width="1.4" />
+                        <path d="M4 15l4-3 3 2 5-4 4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <span class="rule-field-card__body">
+                      <span class="rule-field-card__label-row">
+                        <span class="rule-field-card__label">Miniatura en productos</span>
+                        <label class="station-switch">
+                          <input
+                            type="checkbox"
+                            [checked]="prefs.showProductImages()"
+                            (change)="prefs.setShowProductImages(!prefs.showProductImages())" />
+                          <span class="station-switch__ui" aria-hidden="true"></span>
+                        </label>
+                      </span>
+                      <small class="rule-field-card__hint">Muestra miniaturas en pantallas táctiles y catálogos visuales.</small>
+                    </span>
+                  </div>
                 </div>
-              </div>
-
-              <div class="field field--wide">
-                <span>Ergonomía táctil</span>
-                <div class="segmented segmented--with-copy">
-                  <button
-                    type="button"
-                    class="seg pos-focus-ring"
-                    [class.seg--on]="prefs.handedness() === 'right'"
-                    (click)="onHandedness('right')">
-                    Diestro
-                  </button>
-                  <button
-                    type="button"
-                    class="seg pos-focus-ring"
-                    [class.seg--on]="prefs.handedness() === 'left'"
-                    (click)="onHandedness('left')">
-                    Zurdo
-                  </button>
-                </div>
-                <small class="field-hint">
-                  En monitor táctil, mueve el ticket y las acciones de cobro al lado dominante del cajero.
-                </small>
-              </div>
-
-              <label class="field">
-                <span>Densidad de interfaz</span>
-                <select
-                  class="input pos-focus-ring"
-                  [ngModel]="prefs.densitySource()"
-                  (ngModelChange)="onDensitySrc($event)">
-                  <option value="auto">Automática</option>
-                  <option value="manual">Manual</option>
-                </select>
-              </label>
-
-              @if (prefs.densitySource() === 'manual') {
-                <label class="field">
-                  <span>Densidad manual</span>
-                  <select
-                    class="input pos-focus-ring"
-                    [ngModel]="prefs.densityManual()"
-                    (ngModelChange)="onDensityManual($event)">
-                    <option value="touch">Táctil</option>
-                    <option value="comfortable">Cómoda</option>
-                    <option value="compact">Compacta</option>
-                  </select>
-                </label>
-              } @else {
-                <label class="field">
-                  <span>Perfil automático</span>
-                  <select
-                    class="input pos-focus-ring"
-                    [ngModel]="prefs.roleProfile()"
-                    (ngModelChange)="onRole($event)">
-                    <option value="auto">Auto desde JWT</option>
-                    <option value="cajero">Cajero táctil</option>
-                    <option value="mostrador">Mostrador estándar</option>
-                    <option value="supervisor">Supervisor compacto</option>
-                  </select>
-                </label>
-              }
-
-              <label class="toggle">
-                <span>
-                  <strong>Miniatura en productos</strong>
-                  <small>Útil para pantallas táctiles y catálogos visuales.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  [checked]="prefs.showProductImages()"
-                  (change)="prefs.setShowProductImages(!prefs.showProductImages())" />
-              </label>
+              </section>
             </div>
           }
 
           @case ('about') {
-            <div class="section-head section-head--compact">
-              <span class="eyebrow">Información del POS</span>
-              <p>Estado de integración, versión y contexto operativo de la terminal.</p>
-            </div>
-
-            <div class="info-grid info-grid--stats">
-              <div class="info-stat">
-                <span class="info-stat__icon" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="5" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6" />
-                    <path d="M8 19h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                  </svg>
-                </span>
-                <div class="info-stat__body">
-                  <span class="info-stat__label">Versión POS UI</span>
-                  <div class="info-stat__row">
-                    <strong>{{ appVersion }}</strong>
-                    <span class="info-stat__badge info-stat__badge--info">Actual</span>
-                  </div>
-                  <small>Interfaz de usuario</small>
-                </div>
-              </div>
-              <div class="info-stat">
-                <span class="info-stat__icon" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M7 8a5 5 0 0110 0v2h1a2 2 0 012 2v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5a2 2 0 012-2h1V8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-                  </svg>
-                </span>
-                <div class="info-stat__body">
-                  <span class="info-stat__label">API POS</span>
-                  <div class="info-stat__row">
-                    <strong>{{ apiVersionLabel() }}</strong>
-                    <span class="info-stat__badge info-stat__badge--ok">{{ apiConnectedLabel() }}</span>
-                  </div>
-                  <small>{{ auth.apiBaseUrl || 'No configurada' }}</small>
-                </div>
-              </div>
-              <div class="info-stat">
-                <span class="info-stat__icon" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <ellipse cx="12" cy="6" rx="7" ry="3" stroke="currentColor" stroke-width="1.6" />
-                    <path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" stroke-width="1.6" />
-                    <path d="M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" stroke="currentColor" stroke-width="1.6" />
-                  </svg>
-                </span>
-                <div class="info-stat__body">
-                  <span class="info-stat__label">Modelo recomendado</span>
-                  <div class="info-stat__row">
-                    <strong>Reglas globales</strong>
-                  </div>
-                  <small>Backend y estación en navegador</small>
-                </div>
-              </div>
-              <div class="info-stat">
-                <span class="info-stat__icon" aria-hidden="true">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 3l7 3v6c0 4.2-2.8 7.4-7 9-4.2-1.6-7-4.8-7-9V6l7-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-                    <path d="M9.5 12.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                </span>
-                <div class="info-stat__body">
-                  <span class="info-stat__label">Estado del sistema</span>
-                  <div class="info-stat__row">
-                    <strong class="info-stat__ok">{{ systemHealthLabel() }}</strong>
-                  </div>
-                  <small>Todos los servicios operativos</small>
-                </div>
-              </div>
-            </div>
-
-            <div class="system-details">
-              <h2 class="system-details__title">Detalles del sistema</h2>
-              <div class="system-details__grid">
-                <div class="system-details__item">
-                  <span class="system-details__ico" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M10 14H6M14 10V6M14 18.5V14M18.5 14H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
-                  </span>
-                  <div>
-                    <span class="system-details__label">eFactura UI</span>
-                    <strong>{{ efacturaUiOrigin }}</strong>
-                  </div>
-                </div>
-                <div class="system-details__item">
-                  <span class="system-details__ico" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                  </span>
-                  <div>
-                    <span class="system-details__label">Último reinicio</span>
-                    <strong>{{ lastRestartLabel() }}</strong>
-                  </div>
-                </div>
-                <div class="system-details__item">
-                  <span class="system-details__ico" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="7" ry="3" stroke="currentColor" stroke-width="1.6"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" stroke-width="1.6"/></svg>
-                  </span>
-                  <div>
-                    <span class="system-details__label">Base de datos</span>
-                    <strong>PostgreSQL 15</strong>
-                  </div>
-                </div>
-                <div class="system-details__item">
-                  <span class="system-details__ico" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4 9h16M8 13h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                  </span>
-                  <div>
-                    <span class="system-details__label">Servidor</span>
-                    <strong>POS-SERVER-01</strong>
-                  </div>
-                </div>
-                <div class="system-details__item">
-                  <span class="system-details__ico" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8 6h8M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
-                  </span>
-                  <div>
-                    <span class="system-details__label">Entorno</span>
-                    <strong>{{ deploymentEnvLabel() }}</strong>
-                  </div>
-                </div>
-                <div class="system-details__item">
-                  <span class="system-details__ico" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M2 12h20M12 4a12 12 0 010 16M12 4a12 12 0 000 16" stroke="currentColor" stroke-width="1.6"/></svg>
-                  </span>
-                  <div>
-                    <span class="system-details__label">Zona horaria</span>
-                    <strong>America/Guayaquil (UTC-5)</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="learned-panel">
-              <div class="learned-panel__content">
-                <h2 class="learned-panel__title">
-                  <span class="learned-panel__title-ico" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
-                      <path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            <div class="about-board">
+              <div class="info-grid info-grid--stats">
+                <div class="info-stat">
+                  <span class="info-stat__icon info-stat__icon--purple" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="5" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M8 19h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
                     </svg>
                   </span>
-                  Ventajas tomadas como referencia
-                </h2>
-                <ul class="learned-panel__list">
-                  <li>
-                    <span class="learned-panel__check" aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    </span>
-                    <span>Permisos por rol para descuentos, configuración e impresión.</span>
-                  </li>
-                  <li>
-                    <span class="learned-panel__check" aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    </span>
-                    <span>Impresoras por estación: recibo, etiquetas y cajón de dinero.</span>
-                  </li>
-                  <li>
-                    <span class="learned-panel__check" aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    </span>
-                    <span>Recibos automáticos u opcionales después del pago.</span>
-                  </li>
-                  <li>
-                    <span class="learned-panel__check" aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    </span>
-                    <span>Plantillas de etiquetas y formatos de ticket configurables.</span>
-                  </li>
-                  <li>
-                    <span class="learned-panel__check" aria-hidden="true">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    </span>
-                    <span>Densidad táctil/compacta según operación y perfil.</span>
-                  </li>
-                </ul>
+                  <div class="info-stat__body">
+                    <span class="info-stat__label">Versión POS UI</span>
+                    <div class="info-stat__row">
+                      <strong>{{ appVersion }}</strong>
+                      <span class="info-stat__badge info-stat__badge--info">Actual</span>
+                    </div>
+                    <small>Interfaz de usuario</small>
+                  </div>
+                </div>
+                <div class="info-stat">
+                  <span class="info-stat__icon info-stat__icon--blue" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M7 8a5 5 0 0110 0v2h1a2 2 0 012 2v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5a2 2 0 012-2h1V8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                  <div class="info-stat__body">
+                    <span class="info-stat__label">API POS</span>
+                    <div class="info-stat__row">
+                      <strong>{{ apiVersionLabel() }}</strong>
+                      <span class="info-stat__badge info-stat__badge--ok">{{ apiConnectedLabel() }}</span>
+                    </div>
+                    <small>{{ auth.apiBaseUrl || 'No configurada' }}</small>
+                  </div>
+                </div>
+                <div class="info-stat">
+                  <span class="info-stat__icon info-stat__icon--teal" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <ellipse cx="12" cy="6" rx="7" ry="3" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M5 11v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" stroke="currentColor" stroke-width="1.6" />
+                    </svg>
+                  </span>
+                  <div class="info-stat__body">
+                    <span class="info-stat__label">Modelo recomendado</span>
+                    <div class="info-stat__row">
+                      <strong>Reglas globales</strong>
+                    </div>
+                    <small>Backend y estación en navegador</small>
+                  </div>
+                </div>
+                <div class="info-stat">
+                  <span class="info-stat__icon info-stat__icon--green" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 3l7 3v6c0 4.2-2.8 7.4-7 9-4.2-1.6-7-4.8-7-9V6l7-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                      <path d="M9.5 12.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                  <div class="info-stat__body">
+                    <span class="info-stat__label">Estado del sistema</span>
+                    <div class="info-stat__row">
+                      <strong class="info-stat__ok">{{ systemHealthLabel() }}</strong>
+                    </div>
+                    <small>Todos los servicios operativos</small>
+                  </div>
+                </div>
               </div>
-              <div class="learned-panel__art">
-                <img
-                  class="learned-panel__img"
-                  src="assets/iconos/configuracion01.png"
-                  alt=""
-                  loading="lazy"
-                  decoding="async" />
+
+              <div class="system-details">
+                <h2 class="system-details__title">Detalles del sistema</h2>
+                <div class="system-details__grid">
+                  <div class="system-details__item">
+                    <span class="system-details__ico" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M10 14H6M14 10V6M14 18.5V14M18.5 14H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+                    </span>
+                    <div>
+                      <span class="system-details__label">eFactura UI</span>
+                      <strong>{{ efacturaUiOrigin }}</strong>
+                    </div>
+                  </div>
+                  <div class="system-details__item">
+                    <span class="system-details__ico" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    </span>
+                    <div>
+                      <span class="system-details__label">Último reinicio</span>
+                      <strong>{{ lastRestartLabel() }}</strong>
+                    </div>
+                  </div>
+                  <div class="system-details__item">
+                    <span class="system-details__ico" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="7" ry="3" stroke="currentColor" stroke-width="1.6"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" stroke-width="1.6"/></svg>
+                    </span>
+                    <div>
+                      <span class="system-details__label">Base de datos</span>
+                      <strong>PostgreSQL 15</strong>
+                    </div>
+                  </div>
+                  <div class="system-details__item">
+                    <span class="system-details__ico" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4 9h16M8 13h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    </span>
+                    <div>
+                      <span class="system-details__label">Servidor</span>
+                      <strong>POS-SERVER-01</strong>
+                    </div>
+                  </div>
+                  <div class="system-details__item">
+                    <span class="system-details__ico" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8 6h8M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+                    </span>
+                    <div>
+                      <span class="system-details__label">Entorno</span>
+                      <strong>{{ deploymentEnvLabel() }}</strong>
+                    </div>
+                  </div>
+                  <div class="system-details__item">
+                    <span class="system-details__ico" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M2 12h20M12 4a12 12 0 010 16M12 4a12 12 0 000 16" stroke="currentColor" stroke-width="1.6"/></svg>
+                    </span>
+                    <div>
+                      <span class="system-details__label">Zona horaria</span>
+                      <strong>America/Guayaquil (UTC-5)</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="learned-panel">
+                <div class="learned-panel__content">
+                  <h2 class="learned-panel__title">
+                    <span class="learned-panel__title-ico" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                    Ventajas tomadas como referencia
+                  </h2>
+                  <ul class="learned-panel__list">
+                    <li>
+                      <span class="learned-panel__check" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                      <span>Permisos por rol para descuentos, configuración e impresión.</span>
+                    </li>
+                    <li>
+                      <span class="learned-panel__check" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                      <span>Impresoras por estación: recibo, etiquetas y cajón de dinero.</span>
+                    </li>
+                    <li>
+                      <span class="learned-panel__check" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                      <span>Recibos automáticos u opcionales después del pago.</span>
+                    </li>
+                    <li>
+                      <span class="learned-panel__check" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                      <span>Plantillas de etiquetas y formatos de ticket configurables.</span>
+                    </li>
+                    <li>
+                      <span class="learned-panel__check" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </span>
+                      <span>Densidad táctil/compacta según operación y perfil.</span>
+                    </li>
+                  </ul>
+                </div>
+                <div class="learned-panel__art">
+                  <img
+                    class="learned-panel__img"
+                    src="assets/iconos/configuracion01.png"
+                    alt=""
+                    loading="lazy"
+                    decoding="async" />
+                </div>
               </div>
             </div>
           }
         }
 
-        <footer class="settings-footer" [class.settings-footer--station]="activeTab() === 'station'">
+        <footer
+          class="settings-footer"
+          [class.settings-footer--station]="activeTab() === 'station'"
+          [class.settings-footer--payments]="activeTab() === 'payments'"
+          [class.settings-footer--rules]="activeTab() === 'business'"
+          [class.settings-footer--printing]="activeTab() === 'printing'"
+          [class.settings-footer--interface]="activeTab() === 'interface'"
+          [class.settings-footer--about]="activeTab() === 'about'">
           @if (settingsSaveMsg()) {
             <p class="settings-footer__msg" role="status">{{ settingsSaveMsg() }}</p>
           }
@@ -1490,7 +2001,7 @@ declare global {
             </svg>
             <span>
               <strong>Restablecer configuración</strong>
-              @if (activeTab() === 'station') {
+              @if (activeTab() === 'station' || activeTab() === 'payments' || activeTab() === 'business' || activeTab() === 'printing' || activeTab() === 'interface' || activeTab() === 'about') {
                 <small>Se perderán los cambios no guardados</small>
               }
             </span>
@@ -1510,13 +2021,13 @@ declare global {
           <button
             type="button"
             class="settings-footer__save pos-focus-ring"
-            [class.settings-footer__save--rich]="activeTab() === 'station'"
+            [class.settings-footer__save--rich]="activeTab() === 'station' || activeTab() === 'payments' || activeTab() === 'business' || activeTab() === 'printing' || activeTab() === 'interface' || activeTab() === 'about'"
             (click)="guardarCambios()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M5 20h14a1 1 0 001-1V8l-4-4H5a1 1 0 00-1 1v14a1 1 0 001 1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
               <path d="M9 4v5h6V4M9 14h6v6H9v-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
             </svg>
-            @if (activeTab() === 'station') {
+            @if (activeTab() === 'station' || activeTab() === 'payments' || activeTab() === 'business' || activeTab() === 'printing' || activeTab() === 'interface' || activeTab() === 'about') {
               <span class="settings-footer__save-copy">
                 <strong>Guardar cambios</strong>
                 <small>Aplicar configuración actual</small>
@@ -1783,6 +2294,910 @@ declare global {
       object-fit: contain;
       object-position: right bottom;
     }
+    .payments-hero {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.25rem;
+      margin-bottom: 0.9rem;
+      padding: 1.2rem 1.15rem 0.65rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: linear-gradient(135deg, var(--pos-elevated), var(--pos-surface-2));
+      box-shadow: var(--pos-shadow-soft);
+      overflow: hidden;
+      min-height: 9.25rem;
+    }
+    .payments-hero__copy {
+      flex: 1;
+      min-width: 0;
+      align-self: flex-start;
+      padding-bottom: 0.55rem;
+    }
+    .payments-hero .eyebrow {
+      margin-bottom: 0.35rem;
+    }
+    .payments-hero h1 {
+      margin: 0.2rem 0 0;
+      font-size: 1.38rem;
+      font-weight: 900;
+      line-height: 1.28;
+      letter-spacing: -0.015em;
+    }
+    .payments-hero p {
+      margin: 0.55rem 0 0;
+      max-width: 34rem;
+      color: var(--pos-muted);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+    .payments-hero__stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-top: 0.9rem;
+    }
+    .payments-stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      min-width: 11.5rem;
+      padding: 0.58rem 0.82rem;
+      border: 1px solid color-mix(in srgb, var(--pos-border) 88%, transparent);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 24px -20px rgba(17, 24, 39, 0.24);
+    }
+    .payments-stat__icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 2.45rem;
+      width: 2.45rem;
+      height: 2.45rem;
+      border-radius: 5px;
+      box-shadow: 0 8px 18px -14px rgba(17, 24, 39, 0.35);
+    }
+    .payments-stat__icon--purple {
+      color: #fff;
+      background: linear-gradient(145deg, #8b5cf6, #6366f1);
+    }
+    .payments-stat__icon--blue {
+      color: #fff;
+      background: linear-gradient(145deg, #60a5fa, #2563eb);
+    }
+    .payments-stat__icon--teal {
+      color: #fff;
+      background: linear-gradient(145deg, #2dd4bf, #0d9488);
+    }
+    .payments-stat__body {
+      display: grid;
+      gap: 0.08rem;
+      min-width: 0;
+    }
+    .payments-stat__value {
+      font-size: 1.28rem;
+      font-weight: 900;
+      color: var(--pos-text);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .payments-stat__label {
+      font-size: 0.7rem;
+      font-weight: 650;
+      color: var(--pos-muted);
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .payments-hero__badge {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      z-index: 1;
+      padding: 0.24rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, #22c55e 34%, var(--pos-border));
+      background: color-mix(in srgb, #22c55e 10%, var(--pos-elevated));
+      color: #15803d;
+      font-size: 0.64rem;
+      font-weight: 850;
+    }
+    .payments-hero__art {
+      flex: 0 0 min(46%, 20rem);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      margin-right: -0.35rem;
+      margin-bottom: -1.65rem;
+      pointer-events: none;
+    }
+    .payments-hero__img {
+      display: block;
+      width: 118%;
+      max-width: 21rem;
+      height: auto;
+      object-fit: contain;
+      object-position: right bottom;
+    }
+    .printing-hero {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.25rem;
+      margin-bottom: 0.9rem;
+      padding: 1.2rem 1.15rem 0.65rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: linear-gradient(135deg, var(--pos-elevated), var(--pos-surface-2));
+      box-shadow: var(--pos-shadow-soft);
+      overflow: hidden;
+      min-height: 9.25rem;
+    }
+    .printing-hero__copy {
+      flex: 1;
+      min-width: 0;
+      align-self: flex-start;
+      padding-bottom: 0.55rem;
+    }
+    .printing-hero .eyebrow {
+      margin-bottom: 0.35rem;
+    }
+    .printing-hero h1 {
+      margin: 0.2rem 0 0;
+      font-size: 1.38rem;
+      font-weight: 900;
+      line-height: 1.28;
+      letter-spacing: -0.015em;
+    }
+    .printing-hero p {
+      margin: 0.55rem 0 0;
+      max-width: 34rem;
+      color: var(--pos-muted);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+    .printing-hero__stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-top: 0.9rem;
+    }
+    .printing-stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      min-width: 11.5rem;
+      padding: 0.58rem 0.82rem;
+      border: 1px solid color-mix(in srgb, var(--pos-border) 88%, transparent);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 24px -20px rgba(17, 24, 39, 0.24);
+    }
+    .printing-stat__icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 2.45rem;
+      width: 2.45rem;
+      height: 2.45rem;
+      border-radius: 5px;
+      box-shadow: 0 8px 18px -14px rgba(17, 24, 39, 0.35);
+    }
+    .printing-stat__icon--purple {
+      color: #fff;
+      background: linear-gradient(145deg, #8b5cf6, #6366f1);
+    }
+    .printing-stat__icon--blue {
+      color: #fff;
+      background: linear-gradient(145deg, #60a5fa, #2563eb);
+    }
+    .printing-stat__icon--teal {
+      color: #fff;
+      background: linear-gradient(145deg, #2dd4bf, #0891b2);
+    }
+    .printing-stat__body {
+      display: grid;
+      gap: 0.08rem;
+      min-width: 0;
+    }
+    .printing-stat__value {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--pos-text);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .printing-stat__label {
+      font-size: 0.66rem;
+      font-weight: 650;
+      color: var(--pos-muted);
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .printing-hero__badge {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+      padding: 0.24rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 34%, var(--pos-border));
+      background: var(--pos-elevated);
+      color: var(--pos-accent-hover);
+      font-size: 0.64rem;
+      font-weight: 850;
+    }
+    .printing-hero__art {
+      flex: 0 0 min(46%, 20rem);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      margin-right: -0.35rem;
+      margin-bottom: -1.65rem;
+      pointer-events: none;
+    }
+    .printing-hero__img {
+      display: block;
+      width: 118%;
+      max-width: 21rem;
+      height: auto;
+      object-fit: contain;
+      object-position: right bottom;
+    }
+    .printing-config-panel {
+      padding: 0.95rem 1rem 1rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 28px -24px rgba(17, 24, 39, 0.24);
+    }
+    .printing-config-panel__head {
+      margin-bottom: 0.85rem;
+    }
+    .printing-config-panel__head h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: var(--pos-text);
+    }
+    .printing-config-panel__head p {
+      margin: 0.28rem 0 0;
+      color: var(--pos-muted);
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
+    .printing-field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem;
+      align-content: start;
+    }
+    .rule-field-card--toggle {
+      cursor: default;
+    }
+    .rule-field-card__label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+    .rule-field-card__label-row .rule-field-card__label {
+      flex: 1;
+      min-width: 0;
+    }
+    .printing-smart-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      min-height: 100%;
+      padding: 0.72rem 0.78rem;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 18%, var(--pos-border));
+      border-radius: 5px;
+      background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--pos-accent) 8%, var(--pos-elevated)) 0%,
+        var(--pos-elevated) 72%
+      );
+      box-shadow: 0 8px 22px -20px rgba(17, 24, 39, 0.22);
+    }
+    .printing-smart-card__copy {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      min-width: 0;
+      flex: 1;
+    }
+    .printing-smart-card__icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 2.35rem;
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 5px;
+      color: var(--pos-accent-hover);
+      background: color-mix(in srgb, var(--pos-accent) 11%, var(--pos-surface));
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 16%, var(--pos-border));
+    }
+    .printing-smart-card__texts {
+      display: grid;
+      gap: 0.2rem;
+      min-width: 0;
+    }
+    .printing-smart-card__texts strong {
+      font-size: 0.74rem;
+      font-weight: 850;
+      color: var(--pos-text);
+      line-height: 1.25;
+    }
+    .printing-smart-card__texts small {
+      color: var(--pos-muted);
+      font-size: 0.64rem;
+      line-height: 1.38;
+    }
+    .printing-smart-card__orb {
+      position: relative;
+      display: grid;
+      place-items: center;
+      flex: 0 0 3.6rem;
+      width: 3.6rem;
+      height: 3.6rem;
+      color: var(--pos-accent-hover);
+    }
+    .printing-smart-card__orb-glow {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        color-mix(in srgb, var(--pos-accent) 28%, transparent) 0%,
+        transparent 72%
+      );
+    }
+    .printing-smart-card__orb svg {
+      position: relative;
+      z-index: 1;
+    }
+    .interface-hero {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.25rem;
+      margin-bottom: 0.9rem;
+      padding: 1.2rem 1.15rem 0.65rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: linear-gradient(135deg, var(--pos-elevated), var(--pos-surface-2));
+      box-shadow: var(--pos-shadow-soft);
+      overflow: hidden;
+      min-height: 9.25rem;
+    }
+    .interface-hero__copy {
+      flex: 1;
+      min-width: 0;
+      align-self: flex-start;
+      padding-bottom: 0.55rem;
+    }
+    .interface-hero .eyebrow {
+      margin-bottom: 0.35rem;
+    }
+    .interface-hero h1 {
+      margin: 0.2rem 0 0;
+      font-size: 1.38rem;
+      font-weight: 900;
+      line-height: 1.28;
+      letter-spacing: -0.015em;
+    }
+    .interface-hero p {
+      margin: 0.55rem 0 0;
+      max-width: 34rem;
+      color: var(--pos-muted);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+    .interface-hero__stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-top: 0.9rem;
+    }
+    .interface-stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      min-width: 11.5rem;
+      padding: 0.58rem 0.82rem;
+      border: 1px solid color-mix(in srgb, var(--pos-border) 88%, transparent);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 24px -20px rgba(17, 24, 39, 0.24);
+    }
+    .interface-stat__icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 2.45rem;
+      width: 2.45rem;
+      height: 2.45rem;
+      border-radius: 5px;
+      box-shadow: 0 8px 18px -14px rgba(17, 24, 39, 0.35);
+    }
+    .interface-stat__icon--purple {
+      color: #fff;
+      background: linear-gradient(145deg, #8b5cf6, #6366f1);
+    }
+    .interface-stat__icon--blue {
+      color: #fff;
+      background: linear-gradient(145deg, #60a5fa, #2563eb);
+    }
+    .interface-stat__icon--teal {
+      color: #fff;
+      background: linear-gradient(145deg, #2dd4bf, #0891b2);
+    }
+    .interface-stat__body {
+      display: grid;
+      gap: 0.08rem;
+      min-width: 0;
+    }
+    .interface-stat__value {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--pos-text);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .interface-stat__label {
+      font-size: 0.66rem;
+      font-weight: 650;
+      color: var(--pos-muted);
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .interface-hero__badge {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.24rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 34%, var(--pos-border));
+      background: var(--pos-elevated);
+      color: var(--pos-accent-hover);
+      font-size: 0.64rem;
+      font-weight: 850;
+    }
+    .interface-hero__art {
+      flex: 0 0 min(46%, 20rem);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      margin-right: -0.35rem;
+      margin-bottom: -1.65rem;
+      pointer-events: none;
+    }
+    .interface-hero__img {
+      display: block;
+      width: 118%;
+      max-width: 21rem;
+      height: auto;
+      object-fit: contain;
+      object-position: right bottom;
+    }
+    .interface-config-panel {
+      padding: 0.95rem 1rem 1rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 28px -24px rgba(17, 24, 39, 0.24);
+    }
+    .interface-config-panel__head {
+      margin-bottom: 0.85rem;
+    }
+    .interface-config-panel__eyebrow {
+      display: block;
+      margin: 0;
+      color: var(--pos-accent-hover);
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+    .interface-config-panel__head p {
+      margin: 0.28rem 0 0;
+      color: var(--pos-muted);
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
+    .interface-field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem;
+      align-content: start;
+    }
+    .rule-field-card--segmented {
+      cursor: default;
+    }
+    .interface-segmented {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.4rem;
+    }
+    .interface-seg {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      min-height: 2.15rem;
+      padding: 0.42rem 0.55rem;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 12%, var(--pos-border));
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-accent) 6%, var(--pos-bg));
+      color: var(--pos-muted);
+      font-size: 0.76rem;
+      font-weight: 750;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .interface-seg--on {
+      border-color: color-mix(in srgb, var(--pos-accent) 45%, var(--pos-border));
+      color: var(--pos-accent-hover);
+      background: color-mix(in srgb, var(--pos-accent) 14%, var(--pos-elevated));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--pos-accent) 10%, transparent);
+    }
+    .about-hero {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.25rem;
+      margin-bottom: 0.9rem;
+      padding: 1.2rem 1.15rem 0.65rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: linear-gradient(135deg, var(--pos-elevated), var(--pos-surface-2));
+      box-shadow: var(--pos-shadow-soft);
+      overflow: hidden;
+      min-height: 8.5rem;
+    }
+    .about-hero__copy {
+      flex: 1;
+      min-width: 0;
+      align-self: flex-start;
+      padding-bottom: 0.55rem;
+    }
+    .about-hero .eyebrow {
+      margin-bottom: 0.35rem;
+    }
+    .about-hero h1 {
+      margin: 0.2rem 0 0;
+      font-size: 1.38rem;
+      font-weight: 900;
+      line-height: 1.28;
+      letter-spacing: -0.015em;
+    }
+    .about-hero p {
+      margin: 0.55rem 0 0;
+      max-width: 34rem;
+      color: var(--pos-muted);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+    .about-hero__badge {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.24rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 34%, var(--pos-border));
+      background: var(--pos-elevated);
+      color: var(--pos-accent-hover);
+      font-size: 0.64rem;
+      font-weight: 850;
+    }
+    .about-hero__art {
+      flex: 0 0 min(46%, 20rem);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      margin-right: -0.35rem;
+      margin-bottom: -1.65rem;
+      pointer-events: none;
+    }
+    .about-hero__img {
+      display: block;
+      width: 118%;
+      max-width: 21rem;
+      height: auto;
+      object-fit: contain;
+      object-position: right bottom;
+    }
+    .about-board {
+      display: grid;
+      gap: 0.85rem;
+    }
+    .payments-board__head {
+      margin-bottom: 0.75rem;
+    }
+    .payments-board__head h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: var(--pos-text);
+    }
+    .payments-board__head p {
+      margin: 0.28rem 0 0;
+      color: var(--pos-muted);
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
+    .payments-catalog {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 0.75rem;
+    }
+    .payment-provider-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-height: 11.5rem;
+      padding: 0.72rem 0.75rem 0.68rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      color: var(--pos-text);
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 8px 22px -20px rgba(17, 24, 39, 0.22);
+      transition:
+        border-color var(--pos-transition),
+        box-shadow var(--pos-transition),
+        transform 0.12s ease;
+    }
+    .payment-provider-card:hover {
+      transform: translateY(-1px);
+      border-color: var(--pos-border-strong);
+    }
+    .payment-provider-card--on {
+      border-color: color-mix(in srgb, var(--pos-accent) 44%, var(--pos-border));
+      background: linear-gradient(180deg, color-mix(in srgb, var(--pos-accent) 8%, var(--pos-elevated)), var(--pos-elevated));
+      box-shadow:
+        inset 0 3px 0 var(--pos-accent),
+        0 12px 28px -22px rgba(17, 24, 39, 0.28);
+    }
+    .payment-provider-card--disabled {
+      opacity: 0.72;
+    }
+    .payment-provider-card__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.35rem;
+    }
+    .payment-provider-card__icon {
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 5px;
+      border: 1px solid var(--pos-border);
+      background: var(--pos-surface-2);
+      color: var(--pos-accent-hover);
+      font-size: 0.68rem;
+      font-weight: 900;
+    }
+    .payment-provider-card__badge {
+      padding: 0.14rem 0.4rem;
+      border-radius: 999px;
+      border: 1px solid var(--pos-border);
+      background: var(--pos-surface-2);
+      color: var(--pos-muted);
+      font-size: 0.56rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .payment-provider-card__badge--base {
+      border-color: color-mix(in srgb, var(--pos-accent) 28%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-accent) 10%, var(--pos-elevated));
+      color: var(--pos-accent-hover);
+    }
+    .payment-provider-card__badge--disabled {
+      border-color: color-mix(in srgb, var(--pos-muted) 24%, var(--pos-border));
+      background: color-mix(in srgb, var(--pos-muted) 8%, var(--pos-elevated));
+      color: var(--pos-muted);
+    }
+    .payment-provider-card__badge--available {
+      border-color: color-mix(in srgb, #3b82f6 28%, var(--pos-border));
+      background: color-mix(in srgb, #3b82f6 10%, var(--pos-elevated));
+      color: #2563eb;
+    }
+    .payment-provider-card__title {
+      font-size: 0.78rem;
+      font-weight: 850;
+      line-height: 1.25;
+    }
+    .payment-provider-card__desc {
+      display: block;
+      color: var(--pos-muted);
+      font-size: 0.66rem;
+      line-height: 1.32;
+    }
+    .payment-provider-card__chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.22rem;
+      margin-top: 0.1rem;
+    }
+    .payment-provider-card__chips span {
+      padding: 0.12rem 0.34rem;
+      border-radius: 999px;
+      border: 1px solid var(--pos-border);
+      color: var(--pos-muted);
+      font-size: 0.56rem;
+      font-weight: 750;
+    }
+    .payment-provider-card__foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.45rem;
+      margin-top: auto;
+      padding-top: 0.35rem;
+    }
+    .payment-provider-card__status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: var(--pos-muted);
+      font-size: 0.62rem;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+    .payment-provider-card__dot {
+      width: 0.42rem;
+      height: 0.42rem;
+      border-radius: 50%;
+      background: var(--pos-muted);
+    }
+    .payment-provider-card__status--ok {
+      color: #15803d;
+    }
+    .payment-provider-card__status--ok .payment-provider-card__dot {
+      background: #22c55e;
+    }
+    .payment-provider-card__status--info {
+      color: #2563eb;
+    }
+    .payment-provider-card__status--info .payment-provider-card__dot {
+      background: #3b82f6;
+    }
+    .payment-provider-card__action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.15rem;
+      color: var(--pos-accent-hover);
+      font-size: 0.6rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .payments-config-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem 1.25rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-accent) 4%, var(--pos-bg));
+      box-shadow: 0 8px 22px -20px rgba(17, 24, 39, 0.18);
+    }
+    .payments-config-bar__lead {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+      flex: 0 1 24rem;
+      min-width: 0;
+    }
+    .payments-config-bar__icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 2.55rem;
+      width: 2.55rem;
+      height: 2.55rem;
+      border-radius: 5px;
+      color: var(--pos-accent-hover);
+      background: color-mix(in srgb, var(--pos-accent) 12%, var(--pos-elevated));
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 18%, var(--pos-border));
+    }
+    .payments-config-bar__copy {
+      display: grid;
+      gap: 0.18rem;
+      min-width: 0;
+    }
+    .payments-config-bar__copy strong {
+      font-size: 0.82rem;
+      font-weight: 850;
+      color: var(--pos-text);
+      line-height: 1.25;
+    }
+    .payments-config-bar__copy small {
+      color: var(--pos-muted);
+      font-size: 0.68rem;
+      line-height: 1.4;
+    }
+    .payments-config-bar__checks {
+      display: flex;
+      flex: 1;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.85rem 1.35rem;
+      min-width: 0;
+    }
+    .payments-config-bar__check {
+      display: inline-flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      min-width: 9.5rem;
+      max-width: 12.5rem;
+    }
+    .payments-config-bar__check-icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 1.35rem;
+      width: 1.35rem;
+      height: 1.35rem;
+      margin-top: 0.08rem;
+      border-radius: 50%;
+      color: var(--pos-accent-hover);
+      background: color-mix(in srgb, var(--pos-accent) 12%, var(--pos-elevated));
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 20%, var(--pos-border));
+    }
+    .payments-config-bar__check-copy {
+      display: grid;
+      gap: 0.06rem;
+      min-width: 0;
+    }
+    .payments-config-bar__check-copy strong {
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: var(--pos-text);
+      line-height: 1.2;
+    }
+    .payments-config-bar__check-copy small {
+      color: var(--pos-muted);
+      font-size: 0.64rem;
+      line-height: 1.32;
+    }
+    .payments-config-bar__btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.38rem;
+      flex-shrink: 0;
+      padding: 0.48rem 0.9rem;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 42%, var(--pos-border));
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      color: var(--pos-accent-hover);
+      font-size: 0.76rem;
+      font-weight: 850;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 1px 0 color-mix(in srgb, var(--pos-accent) 10%, transparent);
+    }
     .station-board {
       display: grid;
       grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(0, 1fr);
@@ -1825,16 +3240,13 @@ declare global {
     }
     .station-card--experience .station-toggle-row {
       flex: 0 0 auto;
-      padding: 0.28rem 0;
+      padding-top: 15px;
+      padding-bottom: 15px;
       border-top: none;
       border-bottom: 1px solid color-mix(in srgb, var(--pos-border) 72%, transparent);
     }
     .station-card--experience .station-toggle-row:last-child {
       border-bottom: none;
-      padding-bottom: 0;
-    }
-    .station-card--experience .station-toggle-row:first-child {
-      padding-top: 0.18rem;
     }
     .station-card--experience .station-toggle-row__copy {
       gap: 0.02rem;
@@ -2018,7 +3430,7 @@ declare global {
     }
     .station-card__body > .station-toggle-row:first-child {
       border-top: none;
-      padding-top: 0;
+      /*padding-top: 0;*/
     }
     .station-toggle-row__copy {
       display: grid;
@@ -2571,6 +3983,246 @@ declare global {
     .section-head--compact p {
       margin-top: 0.15rem;
     }
+    .rules-hero {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.25rem;
+      margin-bottom: 0.9rem;
+      padding: 1.2rem 1.15rem 0.65rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: linear-gradient(135deg, var(--pos-elevated), var(--pos-surface-2));
+      box-shadow: var(--pos-shadow-soft);
+      overflow: hidden;
+      min-height: 9.25rem;
+    }
+    .rules-hero__copy {
+      flex: 1;
+      min-width: 0;
+      align-self: flex-start;
+      padding-bottom: 0.55rem;
+    }
+    .rules-hero .eyebrow {
+      margin-bottom: 0.35rem;
+    }
+    .rules-hero h1 {
+      margin: 0.2rem 0 0;
+      font-size: 1.38rem;
+      font-weight: 900;
+      line-height: 1.28;
+      letter-spacing: -0.015em;
+    }
+    .rules-hero p {
+      margin: 0.55rem 0 0;
+      max-width: 34rem;
+      color: var(--pos-muted);
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+    .rules-hero__stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin-top: 0.9rem;
+    }
+    .rules-stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      min-width: 11.5rem;
+      padding: 0.58rem 0.82rem;
+      border: 1px solid color-mix(in srgb, var(--pos-border) 88%, transparent);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 24px -20px rgba(17, 24, 39, 0.24);
+    }
+    .rules-stat__icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 2.45rem;
+      width: 2.45rem;
+      height: 2.45rem;
+      border-radius: 5px;
+      box-shadow: 0 8px 18px -14px rgba(17, 24, 39, 0.35);
+    }
+    .rules-stat__icon--purple {
+      color: #fff;
+      background: linear-gradient(145deg, #8b5cf6, #6366f1);
+    }
+    .rules-stat__icon--blue {
+      color: #fff;
+      background: linear-gradient(145deg, #60a5fa, #2563eb);
+    }
+    .rules-stat__icon--green {
+      color: #fff;
+      background: linear-gradient(145deg, #4ade80, #16a34a);
+    }
+    .rules-stat__body {
+      display: grid;
+      gap: 0.08rem;
+      min-width: 0;
+    }
+    .rules-stat__value {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--pos-text);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .rules-stat__label {
+      font-size: 0.66rem;
+      font-weight: 650;
+      color: var(--pos-muted);
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .rules-hero__badge {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.24rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 34%, var(--pos-border));
+      background: var(--pos-elevated);
+      color: var(--pos-accent-hover);
+      font-size: 0.64rem;
+      font-weight: 850;
+    }
+    .rules-hero__badge::before {
+      content: '';
+      width: 0.42rem;
+      height: 0.42rem;
+      border-radius: 50%;
+      background: var(--pos-accent);
+    }
+    .rules-hero__art {
+      flex: 0 0 min(46%, 20rem);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      margin-right: -0.35rem;
+      margin-bottom: -1.65rem;
+      pointer-events: none;
+    }
+    .rules-hero__img {
+      display: block;
+      width: 118%;
+      max-width: 21rem;
+      height: auto;
+      object-fit: contain;
+      object-position: right bottom;
+    }
+    .rules-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(15.5rem, 19.5rem);
+      gap: 1.15rem;
+      align-items: start;
+    }
+    .rules-config-panel {
+      padding: 0.95rem 1rem 1rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 28px -24px rgba(17, 24, 39, 0.24);
+    }
+    .rules-config-panel__head {
+      margin-bottom: 0.85rem;
+    }
+    .rules-config-panel__head h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: var(--pos-text);
+    }
+    .rules-config-panel__head p {
+      margin: 0.28rem 0 0;
+      color: var(--pos-muted);
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
+    .rules-smart-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      padding: 0.9rem 0.95rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 28px -24px rgba(17, 24, 39, 0.24);
+    }
+    .rules-smart-panel__title {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 850;
+      color: var(--pos-text);
+    }
+    .rules-smart-panel__sparkle {
+      display: grid;
+      place-items: center;
+      color: var(--pos-accent-hover);
+    }
+    .rules-smart-panel__text {
+      margin: 0;
+      color: var(--pos-muted);
+      font-size: 0.74rem;
+      line-height: 1.45;
+    }
+    .rules-smart-panel__list {
+      margin: 0.15rem 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.42rem;
+    }
+    .rules-smart-panel__list li {
+      display: grid;
+      grid-template-columns: 1.2rem minmax(0, 1fr);
+      gap: 0.45rem;
+      align-items: center;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--pos-text);
+    }
+    .rules-smart-panel__check {
+      display: grid;
+      place-items: center;
+      width: 1.2rem;
+      height: 1.2rem;
+      border-radius: 50%;
+      color: var(--pos-accent-hover);
+      background: color-mix(in srgb, var(--pos-accent) 12%, var(--pos-elevated));
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 20%, var(--pos-border));
+    }
+    .rules-smart-panel__status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-top: 0.35rem;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid color-mix(in srgb, #22c55e 30%, var(--pos-border));
+      border-radius: 5px;
+      background: color-mix(in srgb, #22c55e 10%, var(--pos-elevated));
+      color: #15803d;
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+    .rules-smart-panel__status strong {
+      font-weight: 900;
+    }
+    .rules-smart-panel__status-icon {
+      display: grid;
+      place-items: center;
+      color: #16a34a;
+    }
     .settings-body--split {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(15.5rem, 19.5rem);
@@ -2622,7 +4274,7 @@ declare global {
     }
     .rule-field-card {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 0.65rem;
       margin: 0;
       padding: 0.72rem 0.78rem;
@@ -2654,6 +4306,11 @@ declare global {
       flex-direction: column;
       gap: 0.28rem;
       min-width: 0;
+    }
+    .rule-field-card__hint {
+      color: var(--pos-faint);
+      font-size: 0.64rem;
+      line-height: 1.32;
     }
     .rule-field-card__label {
       font-size: 0.72rem;
@@ -2769,29 +4426,40 @@ declare global {
     }
     .info-grid--stats {
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0.75rem;
-      margin-bottom: 1rem;
+      gap: 0.65rem;
+      margin-bottom: 0;
     }
     .info-stat {
       display: grid;
-      grid-template-columns: 2.35rem minmax(0, 1fr);
-      gap: 0.6rem;
+      grid-template-columns: 2.45rem minmax(0, 1fr);
+      gap: 0.65rem;
       align-items: start;
-      padding: 0.8rem 0.85rem;
+      padding: 0.78rem 0.85rem;
       border: 1px solid var(--pos-border);
-      border-radius: var(--pos-radius-sm);
+      border-radius: 5px;
       background: var(--pos-elevated);
       box-shadow: 0 10px 28px -26px rgba(17, 24, 39, 0.32);
     }
     .info-stat__icon {
       display: grid;
       place-items: center;
-      width: 2.35rem;
-      height: 2.35rem;
-      border-radius: var(--pos-radius-sm);
-      color: var(--pos-accent-hover);
-      background: var(--pos-accent-muted);
-      border: 1px solid color-mix(in srgb, var(--pos-accent) 24%, var(--pos-border));
+      width: 2.45rem;
+      height: 2.45rem;
+      border-radius: 5px;
+      color: #fff;
+      box-shadow: 0 8px 18px -14px rgba(17, 24, 39, 0.35);
+    }
+    .info-stat__icon--purple {
+      background: linear-gradient(145deg, #8b5cf6, #6366f1);
+    }
+    .info-stat__icon--blue {
+      background: linear-gradient(145deg, #60a5fa, #2563eb);
+    }
+    .info-stat__icon--teal {
+      background: linear-gradient(145deg, #2dd4bf, #0891b2);
+    }
+    .info-stat__icon--green {
+      background: linear-gradient(145deg, #4ade80, #16a34a);
     }
     .info-stat__body {
       display: grid;
@@ -2842,19 +4510,19 @@ declare global {
       border: 1px solid var(--pos-status-ok-border);
     }
     .system-details {
-      margin-bottom: 1rem;
-      padding: 0.9rem 1rem;
+      padding: 0.95rem 1rem;
       border: 1px solid var(--pos-border);
-      border-radius: var(--pos-radius-sm);
-      background: var(--pos-surface);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      box-shadow: 0 10px 28px -24px rgba(17, 24, 39, 0.24);
     }
     .system-details__title {
-      margin: 0 0 0.7rem;
+      margin: 0 0 0.75rem;
       font-size: 0.68rem;
-      font-weight: 850;
+      font-weight: 900;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: var(--pos-muted);
+      color: var(--pos-accent-hover);
     }
     .system-details__grid {
       display: grid;
@@ -2890,11 +4558,15 @@ declare global {
       align-items: center;
       justify-content: space-between;
       gap: 1.5rem;
-      margin-top: 0.35rem;
-      padding: 1rem 1.15rem;
-      border: 1px solid color-mix(in srgb, #38bdf8 28%, var(--pos-border));
-      border-radius: var(--pos-radius-sm);
-      background: color-mix(in srgb, #38bdf8 8%, var(--pos-surface));
+      padding: 0.95rem 1rem 0.95rem 1.05rem;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 18%, var(--pos-border));
+      border-radius: 5px;
+      background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--pos-accent) 6%, var(--pos-elevated)) 0%,
+        var(--pos-elevated) 72%
+      );
+      box-shadow: 0 10px 28px -24px rgba(17, 24, 39, 0.24);
       color: var(--pos-text);
     }
     .learned-panel__content {
@@ -2915,7 +4587,7 @@ declare global {
       display: grid;
       place-items: center;
       flex-shrink: 0;
-      color: #0284c7;
+      color: var(--pos-accent-hover);
     }
     .learned-panel__list {
       list-style: none;
@@ -2940,8 +4612,9 @@ declare global {
       height: 1.15rem;
       margin-top: 0.12rem;
       border-radius: 50%;
-      color: #0284c7;
-      background: color-mix(in srgb, #38bdf8 16%, white);
+      color: var(--pos-accent-hover);
+      background: color-mix(in srgb, var(--pos-accent) 12%, var(--pos-elevated));
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 20%, var(--pos-border));
     }
     .learned-panel__art {
       flex: 0 0 auto;
@@ -2998,13 +4671,23 @@ declare global {
       color: #fff;
       margin-left: auto;
     }
-    .settings-footer--station {
+    .settings-footer--station,
+    .settings-footer--payments,
+    .settings-footer--rules,
+    .settings-footer--printing,
+    .settings-footer--interface,
+    .settings-footer--about {
       display: grid;
       grid-template-columns: auto 1fr auto;
       align-items: center;
       gap: 0.75rem 1rem;
     }
-    .settings-footer--station .settings-footer__msg {
+    .settings-footer--station .settings-footer__msg,
+    .settings-footer--payments .settings-footer__msg,
+    .settings-footer--rules .settings-footer__msg,
+    .settings-footer--printing .settings-footer__msg,
+    .settings-footer--interface .settings-footer__msg,
+    .settings-footer--about .settings-footer__msg {
       grid-column: 1 / -1;
     }
     .settings-footer__reset span,
@@ -3073,18 +4756,84 @@ declare global {
         min-width: 12rem;
       }
       .settings-hero,
-      .station-hero {
+      .station-hero,
+      .payments-hero,
+      .rules-hero,
+      .printing-hero,
+      .interface-hero,
+      .about-hero {
         flex-direction: column;
       }
-      .station-hero__art {
+      .station-hero__art,
+      .payments-hero__art,
+      .rules-hero__art,
+      .printing-hero__art,
+      .interface-hero__art,
+      .about-hero__art {
         flex-basis: auto;
         width: 100%;
         margin-bottom: -0.75rem;
         justify-content: center;
       }
-      .station-hero__img {
+      .station-hero__img,
+      .payments-hero__img,
+      .rules-hero__img,
+      .printing-hero__img,
+      .interface-hero__img,
+      .about-hero__img {
         width: 100%;
         max-width: 16rem;
+      }
+      .payments-hero__badge,
+      .rules-hero__badge,
+      .printing-hero__badge,
+      .interface-hero__badge,
+      .about-hero__badge {
+        position: static;
+        align-self: flex-start;
+        margin-top: 0.35rem;
+      }
+      .payments-catalog {
+        grid-template-columns: 1fr;
+      }
+      .payments-config-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .payments-config-bar__lead {
+        flex-basis: auto;
+      }
+      .payments-config-bar__checks {
+        justify-content: flex-start;
+      }
+      .payments-config-bar__check {
+        min-width: 0;
+        max-width: none;
+        width: 100%;
+      }
+      .payments-config-bar__btn {
+        align-self: flex-start;
+      }
+      .settings-footer--station,
+      .settings-footer--payments,
+      .settings-footer--rules,
+      .settings-footer--printing,
+      .settings-footer--interface,
+      .settings-footer--about {
+        grid-template-columns: 1fr;
+      }
+      .settings-footer--station .settings-footer__save,
+      .settings-footer--payments .settings-footer__save,
+      .settings-footer--rules .settings-footer__save,
+      .settings-footer--printing .settings-footer__save,
+      .settings-footer--interface .settings-footer__save,
+      .settings-footer--about .settings-footer__save {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+      }
+      .settings-footer--station .settings-footer__pending {
+        order: 2;
       }
       .station-board {
         grid-template-columns: 1fr;
@@ -3097,17 +4846,6 @@ declare global {
       .station-card--pricing {
         grid-column: auto;
         grid-row: auto;
-      }
-      .settings-footer--station {
-        grid-template-columns: 1fr;
-      }
-      .settings-footer--station .settings-footer__pending {
-        order: 2;
-      }
-      .settings-footer--station .settings-footer__save {
-        order: 3;
-        width: 100%;
-        justify-content: center;
       }
       .integration-catalog {
         grid-template-columns: 1fr;
@@ -3123,8 +4861,12 @@ declare global {
         padding: 0.7rem;
       }
       .card-grid,
-      .info-grid,
-      .info-grid--stats,
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+      .info-grid--stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .stripe-grid,
       .kushki-plan,
       .kushki-hosted-grid,
@@ -3133,10 +4875,13 @@ declare global {
         flex-direction: column;
         align-items: stretch;
       }
-      .settings-body--split {
+      .settings-body--split,
+      .rules-board {
         grid-template-columns: 1fr;
       }
-      .rules-field-grid {
+      .rules-field-grid,
+      .printing-field-grid,
+      .interface-field-grid {
         grid-template-columns: 1fr;
       }
       .learned-panel__art {
@@ -3333,6 +5078,181 @@ export class PosAjustesPage implements OnInit {
       capabilities: ['Voucher', 'Fallback'],
     },
   ]);
+
+  paymentActiveProvidersCount(): number {
+    return this.paymentIntegrationCards().filter((item) => this.paymentProviderStatusLabel(item) === 'Activo').length;
+  }
+
+  paymentTerminalsCount(): number {
+    const terminalLinked = this.prefs.cardTerminalId().trim() ? 1 : 0;
+    const stationLinked = this.prefs.cajaId().trim() ? 1 : 0;
+    return Math.max(1, terminalLinked + stationLinked);
+  }
+
+  paymentTerminalLinkedLabel(): string {
+    const count = this.paymentTerminalsCount();
+    if (count === 1) {
+      return '1 terminal vinculada a esta caja';
+    }
+    return `${count} terminales vinculadas a esta caja`;
+  }
+
+  rulesDocumentStatValue(): string {
+    const doc = this.prefs.defaultDocumentType().trim().toLowerCase();
+    if (doc === 'factura') return 'Factura';
+    if (doc === 'preguntar') return 'Preguntar';
+    return 'Nota de venta';
+  }
+
+  rulesDocumentStatHint(): string {
+    const doc = this.prefs.defaultDocumentType().trim().toLowerCase();
+    if (doc === 'preguntar') return 'Al cobrar';
+    return 'Predeterminado';
+  }
+
+  rulesDiscountStatValue(): string {
+    const raw = this.prefs.maxDiscountPercent().trim();
+    const value = Number(raw);
+    if (!raw || Number.isNaN(value)) return '—';
+    return `${value}%`;
+  }
+
+  rulesDiscountStatHint(): string {
+    const raw = this.prefs.maxDiscountPercent().trim();
+    const value = Number(raw);
+    if (!raw || Number.isNaN(value) || value <= 0) return 'Sin límite';
+    return 'Permitido';
+  }
+
+  rulesCustomerStatValue(): string {
+    const raw = this.prefs.requireCustomerOver().trim();
+    const value = Number(raw);
+    if (!raw || Number.isNaN(value) || value <= 0) return 'No aplica';
+    return `>$${value}`;
+  }
+
+  rulesCustomerStatHint(): string {
+    const raw = this.prefs.requireCustomerOver().trim();
+    const value = Number(raw);
+    if (!raw || Number.isNaN(value) || value <= 0) return 'Sin umbral';
+    return 'Umbral establecido';
+  }
+
+  printingAssignedPrintersCount(): number {
+    let count = 0;
+    if (this.prefs.receiptPrinter().trim()) count++;
+    if (this.prefs.labelPrinter().trim()) count++;
+    return count;
+  }
+
+  printingPrintersStatValue(): string {
+    return String(this.printingAssignedPrintersCount());
+  }
+
+  printingPrintersStatHint(): string {
+    const count = this.printingAssignedPrintersCount();
+    if (count === 0) return 'Sin asignar';
+    if (count === 1) return 'Asignada';
+    return 'Asignadas';
+  }
+
+  printingLabelFormatStatValue(): string {
+    return '1';
+  }
+
+  printingLabelFormatStatHint(): string {
+    return this.prefs.labelFormat().trim() ? 'Activo' : 'Sin formato';
+  }
+
+  printingCashDrawerAssigned(): boolean {
+    return this.prefs.openDrawerAfterCash() && !!this.prefs.receiptPrinter().trim();
+  }
+
+  printingCashDrawerStatValue(): string {
+    return this.printingCashDrawerAssigned() ? '1' : '0';
+  }
+
+  printingCashDrawerStatHint(): string {
+    return this.printingCashDrawerAssigned() ? 'Asignado' : 'Sin asignar';
+  }
+
+  interfaceThemeStatValue(): string {
+    return this.prefs.theme() === 'dark' ? 'Nocturno' : 'Claro';
+  }
+
+  interfaceThemeStatHint(): string {
+    return this.prefs.theme() === 'dark' ? 'Visual oscuro' : 'Visual claro';
+  }
+
+  interfaceHandednessStatValue(): string {
+    return this.prefs.handedness() === 'left' ? 'Zurdo' : 'Diestro';
+  }
+
+  interfaceHandednessStatHint(): string {
+    return 'Orientación activa';
+  }
+
+  interfaceDensityStatValue(): string {
+    const density = this.prefs.resolveEffectiveDensity();
+    if (density === 'touch') return 'Táctil';
+    if (density === 'compact') return 'Compacta';
+    return 'Cómoda';
+  }
+
+  interfaceDensityStatHint(): string {
+    return 'Espaciado óptimo';
+  }
+
+  paymentMethodsCount(): number {
+    return this.paymentIntegrationCards().length;
+  }
+
+  paymentProviderIsDisabled(item: { state: string }): boolean {
+    return item.state === 'Deshabilitado';
+  }
+
+  paymentProviderBadge(item: { id: PaymentIntegrationId; state: string }): string {
+    if (item.id === 'terminal') {
+      return 'Base';
+    }
+    if (item.state === 'Deshabilitado') {
+      return 'Deshabilitado';
+    }
+    if (item.id === 'manual') {
+      return 'Disponible';
+    }
+    if (item.state === 'Activo') {
+      return 'Activo';
+    }
+    return item.state;
+  }
+
+  paymentProviderStatusLabel(item: { id: PaymentIntegrationId; state: string }): string {
+    if (item.id === 'terminal') {
+      return 'Activo';
+    }
+    if (item.state === 'Deshabilitado') {
+      return 'Deshabilitado';
+    }
+    if (item.id === 'manual' || item.state === 'Disponible' || item.state === 'No configurado') {
+      return 'Disponible';
+    }
+    if (item.state === 'Activo') {
+      return 'Activo';
+    }
+    return item.state;
+  }
+
+  paymentProviderStatusTone(item: { id: PaymentIntegrationId; state: string }): 'ok' | 'muted' | 'info' {
+    const label = this.paymentProviderStatusLabel(item);
+    if (label === 'Activo') {
+      return 'ok';
+    }
+    if (label === 'Deshabilitado') {
+      return 'muted';
+    }
+    return 'info';
+  }
 
   readonly canManageBusinessRules = computed(() => {
     const payload = decodeJwtPayload(this.auth.accessToken() ?? '');
