@@ -1,9 +1,9 @@
 import { inject, Injectable, computed, signal } from '@angular/core';
 import { catchError, finalize, map, of, Subscription, tap, throwError } from 'rxjs';
 import { PosBackendApiService } from '../api/pos-backend-api.service';
+import { mapCajaHistorialResponse } from '../api/pos-backend.mappers';
 import type {
   PosCajaCierreRequest,
-  PosCajaHistorialResponse,
   PosCajaHistoryItem,
   PosCajaSnapshotResponse,
 } from '../api/pos-backend.types';
@@ -128,7 +128,7 @@ export class PosDeskSessionService {
     this.api
       .getCajaHistorial()
       .pipe(
-        tap((r: PosCajaHistorialResponse | PosCajaHistoryItem[]) => this.history.set(Array.isArray(r) ? r : (r.items ?? []))),
+        tap((r) => this.history.set(mapCajaHistorialResponse(r))),
         catchError((err: unknown) => {
           this.historyError.set(this.errMsg(err));
           return of(null);

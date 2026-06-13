@@ -105,6 +105,13 @@ export class PosOfflineSyncService {
         }
       }
       this.lastMessage.set(synced ? `${synced} comprobante(s) sincronizado(s).` : 'No se pudo sincronizar la cola offline.');
+      if (synced > 0) {
+        try {
+          await firstValueFrom(this.api.getOfflineSyncStatus(this.deviceId()));
+        } catch {
+          /* estado fiscal opcional */
+        }
+      }
     } finally {
       this.syncing.set(false);
       await this.refreshPendingCount();

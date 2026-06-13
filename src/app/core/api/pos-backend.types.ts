@@ -1,13 +1,32 @@
+export interface PosCajaDenominationDto {
+  denomination: number;
+  quantity: number;
+  total?: number | null;
+}
+
+/** SessionDto devuelto por pos-app en snapshot e historial. */
+export interface PosCajaSessionDto {
+  id: string;
+  status: string;
+  openedAt: string;
+  closedAt?: string | null;
+  openingFloat: number;
+  expectedCash?: number | null;
+  expectedCard?: number | null;
+  expectedTransfer?: number | null;
+  expectedTotal?: number | null;
+  countedCash?: number | null;
+  countedCard?: number | null;
+  countedTransfer?: number | null;
+  cashDifference?: number | null;
+  closeNotes?: string | null;
+  openedByUserId?: string | null;
+  closedByUserId?: string | null;
+  denominations?: PosCajaDenominationDto[] | null;
+}
+
 export interface PosCajaSnapshotResponse {
-  session: null | {
-    id: string;
-    status: string;
-    openedAt: string;
-    closedAt?: string | null;
-    openingFloat: number;
-    openedBy?: string | null;
-    closedBy?: string | null;
-  };
+  session: null | PosCajaSessionDto;
   resumen: {
     tickets: number;
     totalVentas: number;
@@ -56,7 +75,10 @@ export interface PosCajaHistoryItem {
 }
 
 export interface PosCajaHistorialResponse {
-  items: PosCajaHistoryItem[];
+  /** Contrato oficial del backend pos-app. */
+  sessions?: PosCajaSessionDto[];
+  /** Alias legacy en clientes antiguos. */
+  items?: PosCajaHistoryItem[];
 }
 
 export interface PosCheckoutResponse {
@@ -120,8 +142,19 @@ export interface PosPaymentCollectionLine {
 
 export interface PosPaymentCollectionResponse {
   id: string;
+  saleId?: string | null;
+  comprobanteId?: string | null;
+  cashSessionId?: string | null;
   status?: string | null;
   estado?: string | null;
+  amountDue?: number | null;
+  amountPaid?: number | null;
+  changeAmount?: number | null;
+  currency?: string | null;
+  customerIdentificacion?: string | null;
+  customerName?: string | null;
+  createdAt?: string | null;
+  /** Alias legacy */
   total?: number | null;
   totalPagar?: number | null;
   totalPagado?: number | null;
@@ -207,6 +240,15 @@ export interface PosPuntoEmisionOption {
   establecimientoCodigo: string;
   codigo: string;
   nombre: string;
+  local?: boolean;
+  activo?: boolean;
+}
+
+export interface PosPuntoEmisionRequest {
+  establecimientoCodigo: string;
+  codigo: string;
+  nombre: string;
+  activo?: boolean | null;
 }
 
 export interface StripeTenantConfigResponse {
@@ -518,6 +560,25 @@ export interface PosSalesReportResponse {
   totalAmount: number;
   dailyTotals: { date: string; saleCount: number; totalAmount: number }[];
   topProducts: { sku: string; name: string; quantity: number; amount: number }[];
+}
+
+export interface PosSaleListItem {
+  id: string;
+  createdAt: string;
+  cashSessionId?: string | null;
+  invoiceStatus: string;
+  totalAmount: number;
+  paidCash: number;
+  paidCard: number;
+  paidTransfer: number;
+  paymentCollectionId?: string | null;
+  comprobanteLocalId?: string | null;
+  numeroComprobante?: string | null;
+  claveAcceso?: string | null;
+}
+
+export interface PosSaleListResponse {
+  items: PosSaleListItem[];
 }
 
 export interface PosImportLineResult {

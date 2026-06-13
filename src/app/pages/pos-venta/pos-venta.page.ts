@@ -57,6 +57,15 @@ import { PosConfigService } from '../../core/config/pos-config.service';
 import { PosLayoutPreferencesService } from '../../core/layout/pos-layout-preferences.service';
 import { PosOfflineSyncService } from '../../core/offline/pos-offline-sync.service';
 import { PosToastService } from '../../core/ui/pos-toast.service';
+import { PayPhonePaymentWidget } from '../../core/payments/payphone-payment.widget';
+import { PosPaymentWidgetRegistryService } from '../../core/payments/pos-payment-widget-registry.service';
+import type {
+  PaymentCollectionSession,
+  PosExternalPaymentStatus,
+  PosPaymentLineDraft,
+  PosPaymentMethodCode,
+  PosPaymentMethodOption,
+} from '../../core/payments/pos-payment-widget.types';
 import { PosTabulatorLocalGridComponent } from '../../shared/grid/pos-tabulator-local-grid.component';
 import { escapeHtml, tabulatorCellValue, tabulatorTextareaCell } from '../../shared/grid/tabulator-formatters.util';
 
@@ -67,6 +76,8 @@ interface DemoProduct {
   /** Código de barras; si falta, en búsqueda se usa el SKU. */
   barcode?: string;
   price: number;
+  ivaPercent?: number;
+  ivaTaxCode?: string;
   /** Precio por lista (incluye la principal). */
   listPrices: Record<string, number>;
   tag: string;
@@ -108,32 +119,6 @@ interface CartStatusHint {
 
 type CardPaymentChannel = 'terminal' | 'link' | 'manual';
 type CardPaymentStatus = 'idle' | 'pending' | 'approved' | 'rejected';
-type PosPaymentMethodCode = 'cash' | 'card' | 'transfer' | 'stripe' | 'kushki' | 'payphone' | 'other';
-type PosExternalPaymentStatus = 'idle' | 'pending' | 'confirmed' | 'rejected';
-
-interface PosPaymentMethodOption {
-  code: PosPaymentMethodCode;
-  label: string;
-  icon: string;
-  formaPago: string;
-  canal: string;
-  proveedor: string | null;
-}
-
-interface PosPaymentLineDraft {
-  id: string;
-  method: PosPaymentMethodCode;
-  formaPago: string;
-  canal: string;
-  proveedor: string | null;
-  total: number;
-  recibido: number | null;
-  vuelto: number;
-  transaccionProveedorId: string | null;
-  codigoAutorizacion: string | null;
-  referencia: string | null;
-  status: PosExternalPaymentStatus;
-}
 
 const POS_SALE_TABS_STORAGE_KEY = 'pos_ui_pending_sale_tabs_v1';
 
@@ -1081,7 +1066,7 @@ type ModalState =
                     <div class="pos-pay-step">
                       <h4 class="pos-pay-step__title">1. Método de pago</h4>
                       <div class="pos-pay-methods" role="list">
-                        @for (method of paymentMethods; track method.code) {
+                        @for (method of paymentMethods(); track method.code) {
                           <button
                             type="button"
                             class="payment-method-card pos-focus-ring"
@@ -1182,6 +1167,31 @@ type ModalState =
                             </div>
                           </div>
                         </div>
+                      } @else if (selectedPaymentMethod() === 'payphone') {
+                        <div class="pos-pay-form-grid">
+                          <label class="modal-field">
+                            <span>Monto</span>
+                            <input class="modal-input pos-focus-ring" type="text" inputmode="decimal" [value]="draftAmount()" (input)="onDraftAmount($event)" />
+                          </label>
+                          <label class="modal-field">
+                            <span>Telefono</span>
+                            <input class="modal-input pos-focus-ring" type="tel" [value]="payPhonePhoneNumber()" (input)="onPayPhonePhoneNumber($event)" />
+                          </label>
+                          <label class="modal-field">
+                            <span>Codigo pais</span>
+                            <input class="modal-input pos-focus-ring" type="text" [value]="payPhoneCountryCode()" (input)="onPayPhoneCountryCode($event)" />
+                          </label>
+                          <label class="modal-field">
+                            <span>Referencia</span>
+                            <input class="modal-input pos-focus-ring" type="text" [value]="draftReference()" (input)="onDraftReference($event)" />
+                          </label>
+                        </div>
+                        @if (payPhoneWidget.statusMessage()) {
+                          <p class="modal__p" [class.modal__p--warn]="payPhoneWidget.session()?.externalStatus === 'rejected'">
+                            {{ payPhoneWidget.statusMessage() }}
+                          </p>
+                        }
+                        <p class="modal__p modal__p--muted">{{ payPhoneWidget.availabilityHint() }}</p>
                       } @else {
                         <div class="pos-pay-form-grid">
                           <label class="modal-field">
@@ -1194,7 +1204,7 @@ type ModalState =
                               <input class="modal-input pos-focus-ring" type="text" [value]="draftAuthCode()" (input)="onDraftAuthCode($event)" />
                             </label>
                           }
-                          @if (selectedPaymentMethod() === 'stripe' || selectedPaymentMethod() === 'kushki' || selectedPaymentMethod() === 'payphone') {
+                          @if (selectedPaymentMethod() === 'stripe' || selectedPaymentMethod() === 'kushki') {
                             <label class="modal-field">
                               <span>Estado transacción</span>
                               <select class="modal-input pos-focus-ring" [value]="draftExternalStatus()" (change)="onDraftExternalStatus($event)">
@@ -1208,6 +1218,7 @@ type ModalState =
                               <span>ID proveedor</span>
                               <input class="modal-input pos-focus-ring" type="text" [value]="draftProviderTransactionId()" (input)="onDraftProviderTransactionId($event)" />
                             </label>
+                            <p class="modal__p modal__p--muted">{{ externalPaymentHint() }}</p>
                           }
                           @if (selectedPaymentMethod() !== 'cash') {
                             <label class="modal-field">
@@ -1221,10 +1232,31 @@ type ModalState =
                       @if (selectedPaymentMethod() !== 'cash') {
                         <div class="pos-pay-form__actions">
                           <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="fillDraftPending()">Saldo pendiente</button>
-                          @if (selectedPaymentMethod() === 'stripe' || selectedPaymentMethod() === 'kushki' || selectedPaymentMethod() === 'payphone') {
+                          @if (selectedPaymentMethod() === 'payphone') {
+                            <button
+                              type="button"
+                              class="btn-modal pos-focus-ring"
+                              [class.btn-modal--disabled]="!canStartPayPhoneCollection()"
+                              [disabled]="!canStartPayPhoneCollection()"
+                              (click)="startPayPhoneCollection()">
+                              {{ payPhoneWidget.busy() ? 'Procesando PayPhone...' : 'Cobrar con PayPhone' }}
+                            </button>
+                            @if (payPhoneWidget.session()) {
+                              <button
+                                type="button"
+                                class="btn-modal btn-modal--ghost pos-focus-ring"
+                                [disabled]="payPhoneWidget.busy()"
+                                (click)="refreshPayPhoneStatus()">
+                                Consultar estado
+                              </button>
+                            }
+                          }
+                          @if (selectedPaymentMethod() === 'stripe' || selectedPaymentMethod() === 'kushki') {
                             <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="prepareExternalPayment()">Iniciar / confirmar proveedor</button>
                           }
-                          <button type="button" class="btn-modal pos-focus-ring" [class.btn-modal--disabled]="!canAddPaymentLine()" (click)="tryAddPaymentLine()">Agregar pago</button>
+                          @if (selectedPaymentMethod() !== 'payphone') {
+                            <button type="button" class="btn-modal pos-focus-ring" [class.btn-modal--disabled]="!canAddPaymentLine()" (click)="tryAddPaymentLine()">Agregar pago</button>
+                          }
                         </div>
                       }
                     </div>
@@ -4524,8 +4556,11 @@ export class PosVentaPage {
   readonly prefs = inject(PosLayoutPreferencesService);
   readonly offline = inject(PosOfflineSyncService);
   private readonly toast = inject(PosToastService);
+  private readonly paymentWidgets = inject(PosPaymentWidgetRegistryService);
+  readonly payPhoneWidget = inject(PayPhonePaymentWidget);
 
   readonly invoicingEnabled = signal(false);
+  readonly resolvedPuntoEmisionId = signal<string | null>(null);
 
   /** URL de pos-app configurada en environment (no null). */
   posApiConfigured(): boolean {
@@ -4562,12 +4597,12 @@ export class PosVentaPage {
         detail: 'Debe aperturar caja para proceder con la venta.',
       });
     }
-    if (this.invoicingEnabled() && this.posApiConfigured() && !this.prefs.puntoEmisionId().trim()) {
+    if (this.posApiConfigured() && !this.effectivePuntoEmisionId()) {
       hints.push({
         id: 'pe',
         kind: 'warn',
-        label: 'Emisión local',
-        detail: 'Se usará sucursal/emisión local si no hay punto eFactura seleccionado.',
+        label: 'Punto de emisión',
+        detail: 'Configure un punto de emisión en Ajustes para registrar la venta.',
       });
     }
     if (this.saleActionMessage()) {
@@ -4663,15 +4698,7 @@ export class PosVentaPage {
   readonly tenderDenominations = [1, 5, 10, 20, 50, 100] as const;
   readonly tenderDenominationsRow1 = [1, 5, 10, 20] as const;
   readonly tenderDenominationsRow2 = [50, 100] as const;
-  readonly paymentMethods: PosPaymentMethodOption[] = [
-    { code: 'cash', label: 'Efectivo', icon: '$', formaPago: '01', canal: 'CASH', proveedor: null },
-    { code: 'card', label: 'Tarjeta', icon: '#', formaPago: '19', canal: 'CARD', proveedor: null },
-    { code: 'transfer', label: 'Transfer.', icon: '>', formaPago: '20', canal: 'TRANSFER', proveedor: null },
-    { code: 'stripe', label: 'Stripe', icon: 'S', formaPago: '19', canal: 'STRIPE', proveedor: 'STRIPE' },
-    { code: 'kushki', label: 'Kushki', icon: 'K', formaPago: '19', canal: 'KUSHKI', proveedor: 'KUSHKI' },
-    { code: 'payphone', label: 'PayPhone', icon: 'P', formaPago: '19', canal: 'PAYPHONE', proveedor: 'PAYPHONE' },
-    { code: 'other', label: 'Otro', icon: '+', formaPago: '20', canal: 'OTHER', proveedor: null },
-  ];
+  readonly paymentMethods = computed(() => this.paymentWidgets.availablePaymentMethods());
   readonly payCash = signal('0');
   readonly payCard = signal('0');
   readonly payTransfer = signal('0');
@@ -4682,6 +4709,10 @@ export class PosVentaPage {
   readonly draftAuthCode = signal('');
   readonly draftProviderTransactionId = signal('');
   readonly draftExternalStatus = signal<PosExternalPaymentStatus>('idle');
+  readonly payPhonePhoneNumber = signal('');
+  readonly payPhoneCountryCode = signal('593');
+  private payPhonePollTimer: ReturnType<typeof setInterval> | null = null;
+  private payPhonePollStartedAt = 0;
   readonly paymentLines = signal<PosPaymentLineDraft[]>([]);
   readonly paymentCollection = signal<PosPaymentCollectionResponse | null>(null);
   readonly cardChannel = signal<CardPaymentChannel>('terminal');
@@ -4797,6 +4828,10 @@ export class PosVentaPage {
   readonly externalPaymentPending = computed(() =>
     this.paymentLines().some((line) => ['stripe', 'kushki', 'payphone'].includes(line.method) && line.status === 'pending'),
   );
+  readonly externalPaymentHint = computed(() => {
+    const widget = this.paymentWidgets.widgetFor(this.selectedPaymentMethod());
+    return widget?.availabilityHint() ?? '';
+  });
   readonly draftChange = computed(() => {
     if (this.selectedPaymentMethod() !== 'cash') {
       return 0;
@@ -4926,7 +4961,33 @@ export class PosVentaPage {
       error: (err: unknown) => this.error.set(this.connectionErrMessage(err)),
     });
     this.loadCatalog();
-    void this.runtimeConfig.ensureLoaded().then((cfg) => this.invoicingEnabled.set(cfg.invoicingEnabled));
+    void this.runtimeConfig.ensureLoaded().then((cfg) => {
+      this.invoicingEnabled.set(cfg.invoicingEnabled);
+      this.loadPuntoEmision(cfg);
+    });
+  }
+
+  private loadPuntoEmision(cfg: { invoicingEnabled: boolean; invoicingProvider: string }): void {
+    if (!this.posApiConfigured()) {
+      this.resolvedPuntoEmisionId.set(null);
+      return;
+    }
+    if (!cfg.invoicingEnabled || cfg.invoicingProvider === 'NONE') {
+      this.backend.getLocalPuntosEmision().subscribe({
+        next: (list) => {
+          const stored = this.prefs.puntoEmisionId().trim();
+          const match = list.find((p) => p.id === stored);
+          const id = match?.id ?? list[0]?.id ?? null;
+          if (id && !stored) {
+            this.prefs.setPuntoEmisionId(id);
+          }
+          this.resolvedPuntoEmisionId.set(id);
+        },
+        error: () => this.resolvedPuntoEmisionId.set(this.prefs.puntoEmisionId().trim() || null),
+      });
+      return;
+    }
+    this.resolvedPuntoEmisionId.set(this.prefs.puntoEmisionId().trim() || null);
   }
 
   openLastTicket(): void {
@@ -5026,6 +5087,8 @@ export class PosVentaPage {
                 sku: p.sku,
                 barcode: p.barcode ?? undefined,
                 price: primaryPrice,
+                ivaPercent: Number(p.ivaPercent ?? 15),
+                ivaTaxCode: p.ivaTaxCode ?? undefined,
                 listPrices,
                 tag: p.tag || 'Retail',
                 imageUrl: p.imageUrl ?? undefined,
@@ -5429,6 +5492,7 @@ export class PosVentaPage {
     }
     this.clearPayments();
     this.paymentCollection.set(null);
+    this.paymentWidgets.loadAllAvailability();
     this.selectPaymentMethod('cash');
     this.fillDraftPending();
     this.modal.set({ kind: 'cobro' });
@@ -5441,11 +5505,20 @@ export class PosVentaPage {
       );
       return;
     }
+    if (this.selectedPaymentMethod() === 'payphone') {
+      this.stopPayPhonePolling();
+      this.payPhoneWidget.resetSession();
+    }
     this.selectedPaymentMethod.set(method);
-    this.draftReference.set(method === 'cash' ? 'Efectivo' : '');
+    this.draftReference.set(method === 'cash' ? 'Efectivo' : method === 'payphone' ? 'Pago POS PayPhone' : '');
     this.draftAuthCode.set('');
     this.draftProviderTransactionId.set('');
     this.draftExternalStatus.set('idle');
+    if (method === 'payphone') {
+      this.payPhoneWidget.resetSession();
+      this.payPhonePhoneNumber.set(this.defaultPayPhonePhoneNumber());
+      this.payPhoneCountryCode.set('593');
+    }
     this.fillDraftPending();
   }
 
@@ -5506,11 +5579,167 @@ export class PosVentaPage {
   }
 
   prepareExternalPayment(): void {
-    this.draftExternalStatus.set('confirmed');
-    if (!this.draftProviderTransactionId().trim()) {
-      this.draftProviderTransactionId.set(`POS-${Date.now()}`);
+    const method = this.selectedPaymentMethod();
+    const manualWidget = this.paymentWidgets.manualWidgetFor(method);
+    if (manualWidget) {
+      const session = manualWidget.initiateManualCollection(
+        this.draftReference().trim() || manualWidget.methodOption.label,
+      );
+      this.draftExternalStatus.set(session.externalStatus);
+      this.draftProviderTransactionId.set(session.providerTransactionId ?? '');
+      if (!this.draftReference().trim()) {
+        this.draftReference.set(session.message?.trim() || manualWidget.methodOption.label);
+      }
+    } else {
+      this.draftExternalStatus.set('confirmed');
+      if (!this.draftProviderTransactionId().trim()) {
+        this.draftProviderTransactionId.set(`POS-${Date.now()}`);
+      }
     }
     this.checkoutError.set(null);
+  }
+
+  onPayPhonePhoneNumber(ev: Event): void {
+    this.payPhonePhoneNumber.set((ev.target as HTMLInputElement).value.trim());
+  }
+
+  onPayPhoneCountryCode(ev: Event): void {
+    this.payPhoneCountryCode.set((ev.target as HTMLInputElement).value.trim());
+  }
+
+  canStartPayPhoneCollection(): boolean {
+    if (!this.payPhoneWidget.isAvailable() || this.payPhoneWidget.busy()) {
+      return false;
+    }
+    if (this.hasPaymentFor('payphone')) {
+      return false;
+    }
+    const amount = this.round2(this.parseUsd(this.draftAmount()));
+    const pending = this.payableBalance();
+    if (amount <= 0 || amount > pending + 0.0001) {
+      return false;
+    }
+    return !!this.payPhonePhoneNumber().trim() && !!this.payPhoneCountryCode().trim() && !!this.draftReference().trim();
+  }
+
+  startPayPhoneCollection(): void {
+    if (!this.canStartPayPhoneCollection()) {
+      this.checkoutError.set('Complete telefono, codigo de pais y monto valido para PayPhone.');
+      return;
+    }
+    this.checkoutError.set(null);
+    const amount = this.round2(Math.min(this.parseUsd(this.draftAmount()), this.payableBalance()));
+    this.payPhoneWidget
+      .startCollection(
+        {
+          paymentUsd: amount,
+          subtotalUsd: this.subtotal(),
+          taxUsd: this.iva(),
+          ticketTotalUsd: this.total(),
+        },
+        {
+          phoneNumber: this.payPhonePhoneNumber(),
+          countryCode: this.payPhoneCountryCode(),
+          reference: this.draftReference().trim() || 'Pago POS PayPhone',
+        },
+      )
+      .subscribe({
+        next: (session) => this.handlePayPhoneSession(session, amount),
+        error: (err: unknown) => this.checkoutError.set(this.payPhoneErrorMessage(err)),
+      });
+  }
+
+  refreshPayPhoneStatus(): void {
+    const session = this.payPhoneWidget.session();
+    if (!session || this.payPhoneWidget.busy()) {
+      return;
+    }
+    const amount = this.round2(Math.min(this.parseUsd(this.draftAmount()), this.payableBalance()));
+    this.payPhoneWidget.refreshStatus(session).subscribe({
+      next: (next) => this.handlePayPhoneSession(next, amount),
+      error: (err: unknown) => this.checkoutError.set(this.payPhoneErrorMessage(err)),
+    });
+  }
+
+  private handlePayPhoneSession(session: PaymentCollectionSession, amountUsd: number): void {
+    if (session.externalStatus === 'confirmed') {
+      this.stopPayPhonePolling();
+      this.addPayPhonePaymentLine(session, amountUsd);
+      return;
+    }
+    if (session.externalStatus === 'rejected') {
+      this.stopPayPhonePolling();
+      this.checkoutError.set(session.message ?? 'PayPhone rechazo el cobro.');
+      return;
+    }
+    this.startPayPhonePolling(amountUsd);
+  }
+
+  private addPayPhonePaymentLine(session: PaymentCollectionSession, amountUsd: number): void {
+    if (this.hasPaymentFor('payphone')) {
+      return;
+    }
+    const line = this.payPhoneWidget.toPaymentLineDraft(session, amountUsd);
+    this.paymentLines.update((lines) => [...lines, line]);
+    this.paymentCollection.set(null);
+    this.checkoutError.set(null);
+    this.payPhoneWidget.resetSession();
+    const nextMethod = this.paymentMethods().find((item) => !this.hasPaymentFor(item.code));
+    if (nextMethod && this.payableBalance() > 0) {
+      this.selectPaymentMethod(nextMethod.code);
+    }
+    this.fillDraftPending();
+  }
+
+  private startPayPhonePolling(amountUsd: number): void {
+    this.stopPayPhonePolling();
+    this.payPhonePollStartedAt = Date.now();
+    this.payPhonePollTimer = setInterval(() => {
+      const session = this.payPhoneWidget.session();
+      if (!session) {
+        this.stopPayPhonePolling();
+        return;
+      }
+      if (Date.now() - this.payPhonePollStartedAt > 300_000) {
+        this.stopPayPhonePolling();
+        this.checkoutError.set('Tiempo de espera PayPhone agotado. Consulte el estado manualmente.');
+        return;
+      }
+      if (this.payPhoneWidget.busy()) {
+        return;
+      }
+      this.payPhoneWidget.refreshStatus(session).subscribe({
+        next: (next) => this.handlePayPhoneSession(next, amountUsd),
+        error: () => {
+          /* polling tolerante */
+        },
+      });
+    }, 4000);
+  }
+
+  private stopPayPhonePolling(): void {
+    if (this.payPhonePollTimer) {
+      clearInterval(this.payPhonePollTimer);
+      this.payPhonePollTimer = null;
+    }
+  }
+
+  private defaultPayPhonePhoneNumber(): string {
+    return '';
+  }
+
+  private payPhoneErrorMessage(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      const body = err.error as { message?: string } | string | null;
+      if (typeof body === 'string' && body.trim()) {
+        return body;
+      }
+      if (body && typeof body === 'object' && typeof body.message === 'string' && body.message.trim()) {
+        return body.message;
+      }
+      return `PayPhone: error HTTP ${err.status}`;
+    }
+    return err instanceof Error ? err.message : 'No se pudo procesar el cobro PayPhone';
   }
 
   clearDraftCash(): void {
@@ -5567,7 +5796,7 @@ export class PosVentaPage {
     if (method === 'card' && !this.draftAuthCode().trim()) {
       return 'Ingrese el codigo de autorizacion de la tarjeta.';
     }
-    if (['stripe', 'kushki', 'payphone'].includes(method) && this.draftExternalStatus() !== 'confirmed') {
+    if (['stripe', 'kushki'].includes(method) && this.draftExternalStatus() !== 'confirmed') {
       return 'Confirme la transaccion del proveedor antes de agregar el pago.';
     }
     return null;
@@ -5602,12 +5831,12 @@ export class PosVentaPage {
       transaccionProveedorId: this.draftProviderTransactionId().trim() || null,
       codigoAutorizacion: this.draftAuthCode().trim() || null,
       referencia: this.draftReference().trim() || method.label,
-      status: ['stripe', 'kushki', 'payphone'].includes(method.code) ? this.draftExternalStatus() : 'confirmed',
+      status: ['stripe', 'kushki'].includes(method.code) ? this.draftExternalStatus() : 'confirmed',
     };
     this.paymentLines.update((lines) => [...lines, line]);
     this.paymentCollection.set(null);
     this.checkoutError.set(null);
-    const nextMethod = this.paymentMethods.find((item) => !this.hasPaymentFor(item.code));
+    const nextMethod = this.paymentMethods().find((item) => !this.hasPaymentFor(item.code));
     if (nextMethod && this.payableBalance() > 0) {
       this.selectedPaymentMethod.set(nextMethod.code);
       this.draftReference.set(nextMethod.code === 'cash' ? 'Efectivo' : '');
@@ -5634,7 +5863,8 @@ export class PosVentaPage {
   }
 
   private paymentMethod(method: PosPaymentMethodCode): PosPaymentMethodOption {
-    return this.paymentMethods.find((item) => item.code === method) ?? this.paymentMethods[0]!;
+    const methods = this.paymentMethods();
+    return methods.find((item) => item.code === method) ?? this.paymentWidgets.allPaymentMethods()[0]!;
   }
 
   onPayCash(ev: Event): void {
@@ -5652,6 +5882,8 @@ export class PosVentaPage {
   }
 
   clearPayments(): void {
+    this.stopPayPhonePolling();
+    this.payPhoneWidget.resetSession();
     this.payCash.set('0');
     this.payCard.set('0');
     this.payTransfer.set('0');
@@ -5663,6 +5895,8 @@ export class PosVentaPage {
     this.draftAuthCode.set('');
     this.draftProviderTransactionId.set('');
     this.draftExternalStatus.set('idle');
+    this.payPhonePhoneNumber.set('');
+    this.payPhoneCountryCode.set('593');
     this.resetCardOperation();
   }
 
@@ -5835,6 +6069,8 @@ export class PosVentaPage {
             this.saleActionMessage.set(`Estado SRI: ${response.estadoSri}`);
           } else if (response.invoiceStatus === 'SKIPPED') {
             this.saleActionMessage.set('Venta registrada (ticket local).');
+          } else if (response.invoiceStatus === 'PENDING') {
+            this.saleActionMessage.set('Venta registrada. Emisión fiscal pendiente.');
           }
           const cid = response.comprobanteLocalId?.trim();
           if (cid) {
@@ -5884,7 +6120,7 @@ export class PosVentaPage {
   }
 
   private effectivePuntoEmisionId(): string {
-    return this.prefs.puntoEmisionId().trim() || this.prefs.localPuntoEmisionId();
+    return (this.resolvedPuntoEmisionId() ?? this.prefs.puntoEmisionId().trim()).trim();
   }
 
   private paymentAmounts(): { cash: number; card: number; transfer: number } {
@@ -5928,8 +6164,8 @@ export class PosVentaPage {
         cantidad: line.qty,
         precioUnitario: line.product.price,
         descuento: line.discountAmount > 0 ? line.discountAmount : null,
-        ivaPorcentaje: 15,
-        ivaCodigoPorcentaje: null,
+        ivaPorcentaje: line.product.ivaPercent ?? 15,
+        ivaCodigoPorcentaje: line.product.ivaTaxCode ?? null,
       })),
       pagos,
     };
@@ -6439,6 +6675,8 @@ export class PosVentaPage {
   }
 
   closeModal(): void {
+    this.stopPayPhonePolling();
+    this.payPhoneWidget.resetSession();
     this.calcBuffer.set('0');
     this.payCash.set('0');
     this.payCard.set('0');

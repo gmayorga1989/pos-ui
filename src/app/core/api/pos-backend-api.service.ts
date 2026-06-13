@@ -1,12 +1,13 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { PosAuthService } from '../auth/pos-auth.service';
 import type {
   PosCajaSnapshotResponse,
   PosCajaAperturaRequest,
   PosCajaCierreRequest,
   PosCajaHistorialResponse,
+  PosCajaHistoryItem,
   PosCheckoutRequestBody,
   PosCheckoutResponse,
   PosPaymentCollectionResponse,
@@ -14,6 +15,7 @@ import type {
   PosOfflineComprobanteSyncRequest,
   PosOfflineSyncStatusResponse,
   PosPuntoEmisionOption,
+  PosPuntoEmisionRequest,
   KushkiSubscriptionCreateRequest,
   KushkiSubscriptionCreateResponse,
   KushkiTenantConfigRequest,
@@ -44,11 +46,13 @@ import type {
   PosProductRequest,
   PosProductResponse,
   PosSalesReportResponse,
+  PosSaleListResponse,
   StripeSubscriptionCheckoutRequest,
   StripeSubscriptionCheckoutResponse,
   StripeTenantConfigRequest,
   StripeTenantConfigResponse,
 } from './pos-backend.types';
+import { mapCajaHistorialResponse, normalizePaymentCollection } from './pos-backend.mappers';
 
 @Injectable({ providedIn: 'root' })
 export class PosBackendApiService {
@@ -85,12 +89,30 @@ export class PosBackendApiService {
     return this.http.post<PosCajaSnapshotResponse>(`${root}/caja/cierre`, body ?? {});
   }
 
-  getCajaHistorial(): Observable<PosCajaHistorialResponse> {
+  getCajaHistorial(): Observable<PosCajaHistoryItem[]> {
     const root = this.apiRoot();
     if (!root) {
       throw new Error('posApiOrigin no configurado');
     }
-    return this.http.get<PosCajaHistorialResponse>(`${root}/caja/historial`);
+    return this.http
+      .get<PosCajaHistorialResponse>(`${root}/caja/historial`)
+      .pipe(map((response) => mapCajaHistorialResponse(response)));
+  }
+
+  getLocalPuntosEmision(): Observable<PosPuntoEmisionOption[]> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PosPuntoEmisionOption[]>(`${root}/puntos-emision`);
+  }
+
+  postLocalPuntoEmision(body: PosPuntoEmisionRequest): Observable<PosPuntoEmisionOption> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<PosPuntoEmisionOption>(`${root}/puntos-emision`, body);
   }
 
   getPuntosEmision(): Observable<PosPuntoEmisionOption[]> {
@@ -115,7 +137,21 @@ export class PosBackendApiService {
     if (!root) {
       throw new Error('posApiOrigin no configurado');
     }
-    return this.http.get<PosPaymentCollectionResponse>(`${root}/cobros/${encodeURIComponent(collectionId)}`);
+    return this.http
+      .get<PosPaymentCollectionResponse>(`${root}/cobros/${encodeURIComponent(collectionId)}`)
+      .pipe(map((response) => normalizePaymentCollection(response)!));
+  }
+
+  listSales(from: string, to: string, cashSessionId?: string | null): Observable<PosSaleListResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    let url = `${root}/sales?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+    if (cashSessionId?.trim()) {
+      url += `&cashSessionId=${encodeURIComponent(cashSessionId.trim())}`;
+    }
+    return this.http.get<PosSaleListResponse>(url);
   }
 
   postOfflineComprobanteSync(body: PosOfflineComprobanteSyncRequest): Observable<PosComprobanteResponse> {

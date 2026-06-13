@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
+import { mapCajaHistorialResponse } from '../../core/api/pos-backend.mappers';
 import type { PosCajaHistoryItem } from '../../core/api/pos-backend.types';
 
 type ReportRow = PosCajaHistoryItem;
@@ -416,7 +417,7 @@ export class PosHistorialPage implements OnInit {
     this.error.set(null);
     try {
       const response = await firstValueFrom(this.api.getCajaHistorial());
-      const rows = response.items ?? [];
+      const rows = mapCajaHistorialResponse(response);
       this.rows.set(rows);
       this.selected.set(rows[0] ?? null);
     } catch (err) {

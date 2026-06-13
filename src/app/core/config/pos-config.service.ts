@@ -42,4 +42,32 @@ export class PosConfigService {
   isInvoicingEnabled(): boolean {
     return !!this.config()?.invoicingEnabled;
   }
+
+  deploymentMode(): string {
+    return this.config()?.deploymentMode ?? 'STANDALONE';
+  }
+
+  invoicingProvider(): string {
+    return this.config()?.invoicingProvider ?? 'NONE';
+  }
+
+  isStandalone(): boolean {
+    return this.deploymentMode() === 'STANDALONE';
+  }
+
+  isLuxora(): boolean {
+    return this.deploymentMode() === 'LUXORA';
+  }
+
+  isIntegrated(): boolean {
+    return this.deploymentMode() === 'INTEGRATED';
+  }
+
+  usesLocalPuntoEmision(): boolean {
+    return this.invoicingProvider() === 'NONE';
+  }
+
+  requiresEfacturaPuntoEmision(): boolean {
+    return this.invoicingProvider() === 'EFACTURA';
+  }
 }

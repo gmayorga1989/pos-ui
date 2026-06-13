@@ -6,14 +6,13 @@ import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
 import type {
   KushkiSubscriptionPlan,
   KushkiTenantConfigResponse,
-  PayPhoneSaleResponse,
-  PayPhoneSaleStatusResponse,
-  PayPhoneTenantConfigResponse,
   PosPuntoEmisionOption,
   StripeTenantConfigResponse,
 } from '../../core/api/pos-backend.types';
 import { PosAuthService } from '../../core/auth/pos-auth.service';
 import { PosConfigService } from '../../core/config/pos-config.service';
+import { PayPhonePaymentWidget } from '../../core/payments/payphone-payment.widget';
+import type { PayPhoneTestSaleInput } from '../../core/payments/pos-payment-widget.types';
 import { environment } from '../../../environments/environment';
 import type { PosInvoicingConfigRequest } from '../../core/api/pos-backend.types';
 import { decodeJwtPayload } from '../../core/layout/pos-jwt-hint.util';
@@ -1540,12 +1539,12 @@ declare global {
                 <div class="stripe-box__head">
                   <div>
                     <span>PayPhone por empresa</span>
-                    <small>{{ payPhoneConfigLabel() }}</small>
+                    <small>{{ payPhoneWidget.configLabel() }}</small>
                   </div>
-                  <button type="button" class="mini-btn pos-focus-ring" [disabled]="payPhoneLoading()" (click)="loadPayPhoneConfig()">Recargar</button>
+                  <button type="button" class="mini-btn pos-focus-ring" [disabled]="payPhoneWidget.configLoading()" (click)="loadPayPhoneConfig()">Recargar</button>
                 </div>
-                @if (payPhoneStatus()) {
-                  <p class="stripe-status" [class.stripe-status--ok]="payPhoneConfigured()" [class.stripe-status--warn]="!payPhoneConfigured()">{{ payPhoneStatus() }}</p>
+                @if (payPhoneWidget.configStatus()) {
+                  <p class="stripe-status" [class.stripe-status--ok]="payPhoneWidget.configured()" [class.stripe-status--warn]="!payPhoneWidget.configured()">{{ payPhoneWidget.configStatus() }}</p>
                 }
                 <div class="stripe-grid">
                   <label class="toggle">
@@ -1553,39 +1552,39 @@ declare global {
                       <strong>Habilitar PayPhone</strong>
                       <small>Usa token y tienda de esta empresa.</small>
                     </span>
-                    <input type="checkbox" [checked]="payPhoneEnabled()" (change)="payPhoneEnabled.set(!payPhoneEnabled())" />
+                    <input type="checkbox" [checked]="payPhoneWidget.configEnabled()" (change)="payPhoneWidget.configEnabled.set(!payPhoneWidget.configEnabled())" />
                   </label>
                   <label class="field">
                     <span>Token PayPhone</span>
-                    <input type="password" class="input pos-focus-ring" autocomplete="new-password" [placeholder]="payPhoneTokenConfigured() ? 'Guardado; ingrese uno nuevo para reemplazar' : 'Token PayPhone'" [ngModel]="payPhoneToken()" (ngModelChange)="payPhoneToken.set($event)" />
+                    <input type="password" class="input pos-focus-ring" autocomplete="new-password" [placeholder]="payPhoneWidget.configTokenConfigured() ? 'Guardado; ingrese uno nuevo para reemplazar' : 'Token PayPhone'" [ngModel]="payPhoneWidget.configToken()" (ngModelChange)="payPhoneWidget.configToken.set($event)" />
                   </label>
                   <label class="field">
                     <span>Store ID</span>
-                    <input class="input pos-focus-ring" type="text" [ngModel]="payPhoneStoreId()" (ngModelChange)="payPhoneStoreId.set($event)" />
+                    <input class="input pos-focus-ring" type="text" [ngModel]="payPhoneWidget.configStoreId()" (ngModelChange)="payPhoneWidget.configStoreId.set($event)" />
                   </label>
                   <label class="field">
                     <span>Base URL</span>
-                    <input class="input pos-focus-ring" type="url" placeholder="https://pay.payphonetodoesposible.com" [ngModel]="payPhoneBaseUrl()" (ngModelChange)="payPhoneBaseUrl.set($event)" />
+                    <input class="input pos-focus-ring" type="url" placeholder="https://pay.payphonetodoesposible.com" [ngModel]="payPhoneWidget.configBaseUrl()" (ngModelChange)="payPhoneWidget.configBaseUrl.set($event)" />
                   </label>
                   <label class="field">
                     <span>Moneda</span>
-                    <input class="input pos-focus-ring" type="text" maxlength="3" [ngModel]="payPhoneCurrency()" (ngModelChange)="payPhoneCurrency.set($event)" />
+                    <input class="input pos-focus-ring" type="text" maxlength="3" [ngModel]="payPhoneWidget.configCurrency()" (ngModelChange)="payPhoneWidget.configCurrency.set($event)" />
                   </label>
                   <label class="field">
                     <span>Zona horaria</span>
-                    <input class="input pos-focus-ring" type="text" placeholder="America/Guayaquil" [ngModel]="payPhoneTimeZone()" (ngModelChange)="payPhoneTimeZone.set($event)" />
+                    <input class="input pos-focus-ring" type="text" placeholder="America/Guayaquil" [ngModel]="payPhoneWidget.configTimeZone()" (ngModelChange)="payPhoneWidget.configTimeZone.set($event)" />
                   </label>
                   <label class="field field--wide">
                     <span>Response URL</span>
-                    <input class="input pos-focus-ring" type="url" [ngModel]="payPhoneResponseUrl()" (ngModelChange)="payPhoneResponseUrl.set($event)" />
+                    <input class="input pos-focus-ring" type="url" [ngModel]="payPhoneWidget.configResponseUrl()" (ngModelChange)="payPhoneWidget.configResponseUrl.set($event)" />
                   </label>
                 </div>
                 <div class="stripe-actions">
-                  <button type="button" class="primary-btn pos-focus-ring" [disabled]="payPhoneSaving()" (click)="savePayPhoneConfig()">{{ payPhoneSaving() ? 'Guardando...' : 'Guardar PayPhone' }}</button>
+                  <button type="button" class="primary-btn pos-focus-ring" [disabled]="payPhoneWidget.configSaving()" (click)="savePayPhoneConfig()">{{ payPhoneWidget.configSaving() ? 'Guardando...' : 'Guardar PayPhone' }}</button>
                 </div>
               </div>
 
-              <div class="field field--wide stripe-box integration-panel--hidden">
+              <div class="field field--wide stripe-box" [class.integration-panel--hidden]="selectedPaymentIntegration() !== 'payphone'">
                 <div class="stripe-box__head">
                   <div>
                     <span>Cobro PayPhone</span>
@@ -1609,8 +1608,8 @@ declare global {
                   <label class="field"><span>Opcional 3</span><input class="input pos-focus-ring" type="text" [ngModel]="payPhoneOptional3()" (ngModelChange)="payPhoneOptional3.set($event)" /></label>
                 </div>
                 <div class="stripe-actions">
-                  <button type="button" class="primary-btn primary-btn--soft pos-focus-ring" [disabled]="!canCreatePayPhoneSale()" (click)="createPayPhoneSale()">{{ payPhoneCreatingSale() ? 'Creando cobro...' : 'Crear cobro PayPhone' }}</button>
-                  <button type="button" class="mini-btn pos-focus-ring" [disabled]="!canCheckPayPhoneStatus()" (click)="checkPayPhoneStatus()">{{ payPhoneCheckingStatus() ? 'Consultando...' : 'Consultar estado' }}</button>
+                  <button type="button" class="primary-btn primary-btn--soft pos-focus-ring" [disabled]="!canCreatePayPhoneSale()" (click)="createPayPhoneSale()">{{ payPhoneWidget.busy() ? 'Creando cobro...' : 'Crear cobro PayPhone' }}</button>
+                  <button type="button" class="mini-btn pos-focus-ring" [disabled]="!canCheckPayPhoneStatus()" (click)="checkPayPhoneStatus()">{{ payPhoneWidget.testCheckingStatus() ? 'Consultando...' : 'Consultar estado' }}</button>
                 </div>
               </div>
                 </div>
@@ -4912,6 +4911,7 @@ export class PosAjustesPage implements OnInit {
   private readonly api = inject(PosBackendApiService);
   readonly auth = inject(PosAuthService);
   private readonly runtimeConfig = inject(PosConfigService);
+  readonly payPhoneWidget = inject(PayPhonePaymentWidget);
 
   readonly invoicingProvider = signal('NONE');
   readonly invoicingPending = signal(0);
@@ -4970,20 +4970,6 @@ export class PosAjustesPage implements OnInit {
   readonly kushkiPhone = signal('');
   private kushkiHostedCard: any = null;
   private kushkiSubscriptionSubmitted = false;
-  readonly payPhoneLoading = signal(false);
-  readonly payPhoneSaving = signal(false);
-  readonly payPhoneCreatingSale = signal(false);
-  readonly payPhoneCheckingStatus = signal(false);
-  readonly payPhoneStatus = signal('');
-  readonly payPhoneEnabled = signal(false);
-  readonly payPhoneToken = signal('');
-  readonly payPhoneTokenConfigured = signal(false);
-  readonly payPhoneStoreId = signal('');
-  readonly payPhoneBaseUrl = signal('');
-  readonly payPhoneCurrency = signal('USD');
-  readonly payPhoneTimeZone = signal('America/Guayaquil');
-  readonly payPhoneResponseUrl = signal('');
-  readonly payPhoneConfigured = signal(false);
   readonly payPhonePhoneNumber = signal('');
   readonly payPhoneCountryCode = signal('593');
   readonly payPhoneAmountWithoutTax = signal('0');
@@ -4997,8 +4983,6 @@ export class PosAjustesPage implements OnInit {
   readonly payPhoneOptional1 = signal('');
   readonly payPhoneOptional2 = signal('');
   readonly payPhoneOptional3 = signal('');
-  readonly payPhoneTransactionId = signal('');
-  private payPhoneLastStatusCheckAt = 0;
 
   readonly stripeConfigLabel = computed(() => {
     if (this.stripeLoading()) {
@@ -5020,17 +5004,7 @@ export class PosAjustesPage implements OnInit {
     return this.kushkiConfigured() ? 'Configurado' : 'No configurado';
   });
 
-  readonly payPhoneConfigLabel = computed(() => {
-    if (this.payPhoneLoading()) {
-      return 'Cargando configuracion...';
-    }
-    if (!this.payPhoneEnabled()) {
-      return 'PayPhone deshabilitado';
-    }
-    return this.payPhoneConfigured() ? 'Configurado' : 'No configurado';
-  });
-
-  readonly payPhoneAmountView = computed(() => this.centsToUsd(this.payPhoneAmountCents()));
+  readonly payPhoneAmountView = computed(() => this.payPhoneWidget.testAmountView(this.payPhoneTestInput()));
   readonly selectedPaymentIntegrationCard = computed(() => {
     const cards = this.paymentIntegrationCards();
     return cards.find((item) => item.id === this.selectedPaymentIntegration()) ?? cards[0];
@@ -5066,7 +5040,11 @@ export class PosAjustesPage implements OnInit {
       name: 'PayPhone',
       shortName: 'PF',
       description: 'API Sale, cobro por telefono y consulta de estado.',
-      state: this.integrationState(this.payPhoneEnabled(), this.payPhoneConfigured(), this.payPhoneStatus()),
+      state: this.integrationState(
+        this.payPhoneWidget.configEnabled(),
+        this.payPhoneWidget.configured(),
+        this.payPhoneWidget.configStatus(),
+      ),
       capabilities: ['Sale API', 'Movil', 'Estado'],
     },
     {
@@ -5469,7 +5447,22 @@ export class PosAjustesPage implements OnInit {
           },
           error: () => {
             this.puntos.set([]);
-            this.puntosError.set('No se pudieron cargar los puntos de eFactura. Puede operar con sucursal/emision local.');
+            this.puntosError.set('No se pudieron cargar los puntos de eFactura.');
+          },
+        });
+      } else if (this.auth.apiBaseUrl?.trim()) {
+        this.api.getLocalPuntosEmision().subscribe({
+          next: (list) => {
+            this.puntos.set(list ?? []);
+            this.puntosError.set(null);
+            const stored = this.prefs.puntoEmisionId().trim();
+            if (!stored && list.length) {
+              this.prefs.setPuntoEmisionId(list[0].id);
+            }
+          },
+          error: () => {
+            this.puntos.set([]);
+            this.puntosError.set('No se pudieron cargar los puntos de emisión locales.');
           },
         });
       }
@@ -5707,119 +5700,60 @@ export class PosAjustesPage implements OnInit {
   }
 
   loadPayPhoneConfig(): void {
-    if (!this.auth.apiBaseUrl.trim()) {
-      this.payPhoneStatus.set('API POS no configurada.');
-      return;
-    }
-    this.payPhoneLoading.set(true);
-    this.api
-      .getPayPhoneConfig()
-      .pipe(finalize(() => this.payPhoneLoading.set(false)))
-      .subscribe({
-        next: (cfg) => {
-          this.applyPayPhoneConfig(cfg);
-          this.payPhoneStatus.set(cfg.configured ? 'Configuracion PayPhone cargada.' : 'PayPhone no configurado para esta empresa.');
-        },
-        error: (err: unknown) => this.payPhoneStatus.set(this.errorMessage(err, 'PayPhone')),
-      });
+    this.payPhoneWidget.loadConfig();
   }
 
   savePayPhoneConfig(): void {
-    this.payPhoneSaving.set(true);
-    this.api
-      .putPayPhoneConfig({
-        enabled: this.payPhoneEnabled(),
-        token: this.payPhoneToken().trim() || null,
-        storeId: this.payPhoneStoreId().trim() || null,
-        baseUrl: this.payPhoneBaseUrl().trim() || null,
-        currency: this.payPhoneCurrency().trim().toUpperCase() || 'USD',
-        timeZone: this.payPhoneTimeZone().trim() || 'America/Guayaquil',
-        responseUrl: this.payPhoneResponseUrl().trim() || null,
-      })
-      .pipe(finalize(() => this.payPhoneSaving.set(false)))
-      .subscribe({
-        next: (cfg) => {
-          this.payPhoneToken.set('');
-          this.applyPayPhoneConfig(cfg);
-          this.payPhoneStatus.set(
-            cfg.configured
-              ? 'PayPhone configurado correctamente.'
-              : 'Configuracion guardada, pero faltan datos para operar.',
-          );
-        },
-        error: (err: unknown) => this.payPhoneStatus.set(this.errorMessage(err, 'PayPhone')),
-      });
+    this.payPhoneWidget.saveConfig(this.payPhoneWidget.configFormState()).subscribe({
+      error: (err: unknown) => this.payPhoneWidget.configStatus.set(this.errorMessage(err, 'PayPhone')),
+    });
+  }
+
+  private payPhoneTestInput(): PayPhoneTestSaleInput {
+    return {
+      phoneNumber: this.payPhonePhoneNumber(),
+      countryCode: this.payPhoneCountryCode(),
+      amountWithoutTax: this.payPhoneAmountWithoutTax(),
+      amountWithTax: this.payPhoneAmountWithTax(),
+      tax: this.payPhoneTax(),
+      service: this.payPhoneService(),
+      tip: this.payPhoneTip(),
+      reference: this.payPhoneReference(),
+      clientTransactionId: this.payPhoneClientTransactionId(),
+      clientUserId: this.payPhoneClientUserId(),
+      optionalParameter1: this.payPhoneOptional1(),
+      optionalParameter2: this.payPhoneOptional2(),
+      optionalParameter3: this.payPhoneOptional3(),
+    };
   }
 
   canCreatePayPhoneSale(): boolean {
-    return (
-      this.payPhoneConfigured() &&
-      !this.payPhoneCreatingSale() &&
-      !!this.payPhonePhoneNumber().trim() &&
-      !!this.payPhoneCountryCode().trim() &&
-      !!this.payPhoneReference().trim() &&
-      this.payPhoneAmountCents() > 0
-    );
+    return this.payPhoneWidget.canCreateTestSale(this.payPhoneTestInput());
   }
 
   createPayPhoneSale(): void {
     if (!this.canCreatePayPhoneSale()) {
       return;
     }
-    this.payPhoneCreatingSale.set(true);
-    this.payPhoneStatus.set('Creando cobro PayPhone...');
-    this.api
-      .postPayPhoneSale(
-        {
-          phoneNumber: this.payPhonePhoneNumber().trim(),
-          countryCode: this.payPhoneCountryCode().trim(),
-          amount: this.payPhoneAmountCents(),
-          amountWithoutTax: this.usdInputToCents(this.payPhoneAmountWithoutTax()),
-          amountWithTax: this.usdInputToCents(this.payPhoneAmountWithTax()),
-          tax: this.usdInputToCents(this.payPhoneTax()),
-          service: this.usdInputToCents(this.payPhoneService()),
-          tip: this.usdInputToCents(this.payPhoneTip()),
-          reference: this.payPhoneReference().trim(),
-          clientTransactionId: this.payPhoneClientTransactionId().trim() || null,
-          clientUserId: this.payPhoneClientUserId().trim() || null,
-          optionalParameter1: this.payPhoneOptional1().trim() || null,
-          optionalParameter2: this.payPhoneOptional2().trim() || null,
-          optionalParameter3: this.payPhoneOptional3().trim() || null,
-        },
-        this.idempotencyKey(),
-      )
-      .pipe(finalize(() => this.payPhoneCreatingSale.set(false)))
-      .subscribe({
-        next: (r) => {
-          this.applyPayPhoneSaleResponse(r);
-          this.payPhoneStatus.set(`Cobro creado${r.status ? `: ${r.status}` : ''}.`);
-        },
-        error: (err: unknown) => this.payPhoneStatus.set(this.errorMessage(err, 'PayPhone')),
-      });
+    this.payPhoneWidget.startTestSale(this.payPhoneTestInput(), this.idempotencyKey()).subscribe({
+      next: (session) => {
+        this.payPhoneClientTransactionId.set(session.clientTransactionId);
+      },
+      error: (err: unknown) => this.payPhoneWidget.configStatus.set(this.errorMessage(err, 'PayPhone')),
+    });
   }
 
   canCheckPayPhoneStatus(): boolean {
-    const hasId = !!this.payPhoneTransactionId().trim() || !!this.payPhoneClientTransactionId().trim();
-    return hasId && !this.payPhoneCheckingStatus() && Date.now() - this.payPhoneLastStatusCheckAt >= 10_000;
+    return this.payPhoneWidget.canCheckTestStatus();
   }
 
   checkPayPhoneStatus(): void {
     if (!this.canCheckPayPhoneStatus()) {
-      this.payPhoneStatus.set('Espere unos segundos antes de consultar nuevamente.');
+      this.payPhoneWidget.configStatus.set('Espere unos segundos antes de consultar nuevamente.');
       return;
     }
-    this.payPhoneLastStatusCheckAt = Date.now();
-    this.payPhoneCheckingStatus.set(true);
-    const transactionId = this.payPhoneTransactionId().trim();
-    const req = transactionId
-      ? this.api.getPayPhoneSaleStatus(transactionId)
-      : this.api.getPayPhoneSaleStatusByClientTransactionId(this.payPhoneClientTransactionId().trim());
-    req.pipe(finalize(() => this.payPhoneCheckingStatus.set(false))).subscribe({
-      next: (r) => {
-        this.applyPayPhoneStatusResponse(r);
-        this.payPhoneStatus.set(`Estado PayPhone${r.status ? `: ${r.status}` : ' recibido'}.`);
-      },
-      error: (err: unknown) => this.payPhoneStatus.set(this.errorMessage(err, 'PayPhone')),
+    this.payPhoneWidget.checkTestStatus().subscribe({
+      error: (err: unknown) => this.payPhoneWidget.configStatus.set(this.errorMessage(err, 'PayPhone')),
     });
   }
 
@@ -5918,40 +5852,6 @@ export class PosAjustesPage implements OnInit {
     const selected = this.kushkiSubscriptionPlanCode().trim();
     if (!selected || !plans.some((p) => p.planCode === selected)) {
       this.kushkiSubscriptionPlanCode.set(plans[0]?.planCode || 'starter');
-    }
-  }
-
-  private applyPayPhoneConfig(cfg: PayPhoneTenantConfigResponse): void {
-    this.payPhoneEnabled.set(cfg.enabled);
-    this.payPhoneToken.set('');
-    this.payPhoneTokenConfigured.set(cfg.tokenConfigured);
-    this.payPhoneStoreId.set(cfg.storeId ?? '');
-    this.payPhoneBaseUrl.set(cfg.baseUrl ?? '');
-    this.payPhoneCurrency.set((cfg.currency ?? 'USD').trim().toUpperCase() || 'USD');
-    this.payPhoneTimeZone.set(cfg.timeZone ?? 'America/Guayaquil');
-    this.payPhoneResponseUrl.set(cfg.responseUrl ?? '');
-    this.payPhoneConfigured.set(cfg.configured);
-  }
-
-  private applyPayPhoneSaleResponse(r: PayPhoneSaleResponse): void {
-    const tx = this.stringFromUnknown(r.transactionId ?? r['transactionId'] ?? r['id']);
-    const clientTx = this.stringFromUnknown(r.clientTransactionId ?? r['clientTransactionId']);
-    if (tx) {
-      this.payPhoneTransactionId.set(tx);
-    }
-    if (clientTx) {
-      this.payPhoneClientTransactionId.set(clientTx);
-    }
-  }
-
-  private applyPayPhoneStatusResponse(r: PayPhoneSaleStatusResponse): void {
-    const tx = this.stringFromUnknown(r.transactionId ?? r['transactionId'] ?? r['id']);
-    const clientTx = this.stringFromUnknown(r.clientTransactionId ?? r['clientTransactionId']);
-    if (tx) {
-      this.payPhoneTransactionId.set(tx);
-    }
-    if (clientTx) {
-      this.payPhoneClientTransactionId.set(clientTx);
     }
   }
 
@@ -6136,16 +6036,6 @@ export class PosAjustesPage implements OnInit {
   private numberValue(value: string | number): number {
     const n = typeof value === 'number' ? value : Number.parseFloat(String(value).replace(',', '.'));
     return Number.isFinite(n) ? Math.max(0, Math.round(n * 100) / 100) : 0;
-  }
-
-  private payPhoneAmountCents(): number {
-    return (
-      this.usdInputToCents(this.payPhoneAmountWithoutTax()) +
-      this.usdInputToCents(this.payPhoneAmountWithTax()) +
-      this.usdInputToCents(this.payPhoneTax()) +
-      this.usdInputToCents(this.payPhoneService()) +
-      this.usdInputToCents(this.payPhoneTip())
-    );
   }
 
   private usdInputToCents(value: string): number {
