@@ -72,7 +72,6 @@ export interface PayPhoneConfigFormState {
   baseUrl: string;
   currency: string;
   timeZone: string;
-  responseUrl: string;
 }
 
 export interface PaymentCollectionSession {

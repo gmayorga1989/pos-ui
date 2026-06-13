@@ -345,6 +345,7 @@ export interface PayPhoneTenantConfigResponse {
   currency?: string | null;
   timeZone?: string | null;
   responseUrl?: string | null;
+  responseUrlAutoManaged?: boolean;
   configured: boolean;
 }
 
@@ -390,6 +391,26 @@ export interface PayPhoneSaleStatusResponse {
   status?: string | null;
   message?: string | null;
   [key: string]: unknown;
+}
+
+export interface PayPhoneIntentResponse {
+  clientTransactionId: string;
+  providerTransactionId?: string | null;
+  status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'EXPIRED';
+  externalStatus: 'idle' | 'pending' | 'confirmed' | 'rejected';
+  amountCents: number;
+  amountUsd: number;
+  phoneNumber?: string | null;
+  reference?: string | null;
+  providerStatus?: string | null;
+  message?: string | null;
+  recovered: boolean;
+  intentContext: string;
+  updatedAt: string;
+}
+
+export interface PayPhoneRecoverableIntentsResponse {
+  items: PayPhoneIntentResponse[];
 }
 
 export type PosCatalogSource = 'POS' | 'EFACTURA' | 'EXTERNAL';

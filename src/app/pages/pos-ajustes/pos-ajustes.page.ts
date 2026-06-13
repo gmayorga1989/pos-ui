@@ -1575,8 +1575,9 @@ declare global {
                     <input class="input pos-focus-ring" type="text" placeholder="America/Guayaquil" [ngModel]="payPhoneWidget.configTimeZone()" (ngModelChange)="payPhoneWidget.configTimeZone.set($event)" />
                   </label>
                   <label class="field field--wide">
-                    <span>Response URL</span>
-                    <input class="input pos-focus-ring" type="url" [ngModel]="payPhoneWidget.configResponseUrl()" (ngModelChange)="payPhoneWidget.configResponseUrl.set($event)" />
+                    <span>URL de respuesta (generada)</span>
+                    <input class="input pos-focus-ring" type="url" readonly [ngModel]="payPhoneWidget.configResponseUrl()" />
+                    <small>El sistema la envia a PayPhone por empresa; no requiere configuracion manual.</small>
                   </label>
                 </div>
                 <div class="stripe-actions">

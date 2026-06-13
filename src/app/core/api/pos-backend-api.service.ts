@@ -23,6 +23,8 @@ import type {
   PayPhoneSaleRequest,
   PayPhoneSaleResponse,
   PayPhoneSaleStatusResponse,
+  PayPhoneIntentResponse,
+  PayPhoneRecoverableIntentsResponse,
   PayPhoneTenantConfigRequest,
   PayPhoneTenantConfigResponse,
   PosCedulaConsultaResponse,
@@ -250,13 +252,50 @@ export class PosBackendApiService {
     return this.http.put<PayPhoneTenantConfigResponse>(`${root}/payments/payphone/config`, body);
   }
 
-  postPayPhoneSale(body: PayPhoneSaleRequest, idempotencyKey: string): Observable<PayPhoneSaleResponse> {
+  postPayPhoneSale(
+    body: PayPhoneSaleRequest,
+    idempotencyKey: string,
+    context: 'CHECKOUT' | 'TEST' = 'CHECKOUT',
+  ): Observable<PayPhoneSaleResponse> {
     const root = this.apiRoot();
     if (!root) {
       throw new Error('posApiOrigin no configurado');
     }
-    const headers = new HttpHeaders({ 'Idempotency-Key': idempotencyKey });
+    const headers = new HttpHeaders({
+      'Idempotency-Key': idempotencyKey,
+      'X-Pos-Payphone-Context': context,
+    });
     return this.http.post<PayPhoneSaleResponse>(`${root}/payments/payphone/sales`, body, { headers });
+  }
+
+  getPayPhoneIntent(clientTransactionId: string, refresh = true): Observable<PayPhoneIntentResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    const q = refresh ? '?refresh=true' : '?refresh=false';
+    return this.http.get<PayPhoneIntentResponse>(
+      `${root}/payments/payphone/intents/${encodeURIComponent(clientTransactionId)}${q}`,
+    );
+  }
+
+  getRecoverablePayPhoneIntents(): Observable<PayPhoneRecoverableIntentsResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PayPhoneRecoverableIntentsResponse>(`${root}/payments/payphone/intents/recoverable`);
+  }
+
+  consumePayPhoneIntent(clientTransactionId: string): Observable<PayPhoneIntentResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.post<PayPhoneIntentResponse>(
+      `${root}/payments/payphone/intents/${encodeURIComponent(clientTransactionId)}/consume`,
+      {},
+    );
   }
 
   getPayPhoneSaleStatus(transactionId: string): Observable<PayPhoneSaleStatusResponse> {

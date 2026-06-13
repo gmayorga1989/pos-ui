@@ -19,6 +19,7 @@ import type {
   PosCheckoutPago,
   PosCheckoutRequestBody,
   PosCustomerResponse,
+  PayPhoneIntentResponse,
   PosOfflineComprobanteSyncRequest,
   PosPaymentCollectionResponse,
   PosPriceListResponse,
@@ -121,6 +122,7 @@ type CardPaymentChannel = 'terminal' | 'link' | 'manual';
 type CardPaymentStatus = 'idle' | 'pending' | 'approved' | 'rejected';
 
 const POS_SALE_TABS_STORAGE_KEY = 'pos_ui_pending_sale_tabs_v1';
+const POS_PAYPHONE_CHECKOUT_INTENT_KEY = 'pos_payphone_checkout_intent_v1';
 
 type ModalState =
   | { kind: 'stock'; product: DemoProduct }
@@ -1061,6 +1063,26 @@ type ModalState =
                   <button type="button" class="btn-modal pos-focus-ring" (click)="closeModal()">Entendido</button>
                 </div>
               } @else {
+                @if (recoverablePayPhoneIntents().length) {
+                  <div class="pos-pay-recovery">
+                    @for (intent of recoverablePayPhoneIntents(); track intent.clientTransactionId) {
+                      <div class="pos-pay-recovery__item">
+                        <div>
+                          <strong>PayPhone {{ intent.status === 'CONFIRMED' ? 'confirmado' : 'pendiente' }}</strong>
+                          <p>{{ intent.amountUsd | currency: 'USD' : 'symbol-narrow' : '1.2-2' }} · {{ intent.reference || intent.clientTransactionId }}</p>
+                        </div>
+                        @if (intent.status === 'CONFIRMED') {
+                          <button type="button" class="btn-modal pos-focus-ring" (click)="applyRecoverablePayPhoneIntent(intent)">Aplicar pago</button>
+                        } @else {
+                          <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="resumeRecoverablePayPhoneIntent(intent)">Reanudar seguimiento</button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+                @if (payPhoneRecoveryMessage()) {
+                  <p class="modal__p modal__p--muted">{{ payPhoneRecoveryMessage() }}</p>
+                }
                 <div class="pos-pay-layout">
                   <section class="pos-pay-flow" aria-label="Captura de pagos">
                     <div class="pos-pay-step">
@@ -3418,6 +3440,26 @@ type ModalState =
     .pos-pay-body {
       padding: 1rem;
     }
+    .pos-pay-recovery {
+      display: grid;
+      gap: 0.5rem;
+      margin: 0.75rem 1rem 0;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid color-mix(in srgb, var(--pos-accent) 28%, transparent);
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-accent) 6%, transparent);
+    }
+    .pos-pay-recovery__item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .pos-pay-recovery__item p {
+      margin: 0.15rem 0 0;
+      color: var(--pos-faint);
+      font-size: 0.82rem;
+    }
     .pos-pay-layout {
       flex: 1 1 auto;
       min-height: 0;
@@ -4711,6 +4753,8 @@ export class PosVentaPage {
   readonly draftExternalStatus = signal<PosExternalPaymentStatus>('idle');
   readonly payPhonePhoneNumber = signal('');
   readonly payPhoneCountryCode = signal('593');
+  readonly recoverablePayPhoneIntents = signal<PayPhoneIntentResponse[]>([]);
+  readonly payPhoneRecoveryMessage = signal('');
   private payPhonePollTimer: ReturnType<typeof setInterval> | null = null;
   private payPhonePollStartedAt = 0;
   readonly paymentLines = signal<PosPaymentLineDraft[]>([]);
@@ -4941,6 +4985,7 @@ export class PosVentaPage {
     afterNextRender(() => {
       this.focusCatalogSearch();
       void this.offline.refreshPendingCount();
+      this.handlePayphoneReturnFromCallback();
       if (this.posApiConfigured() && navigator.onLine) {
         void this.offline.syncPending();
       }
@@ -5493,6 +5538,7 @@ export class PosVentaPage {
     this.clearPayments();
     this.paymentCollection.set(null);
     this.paymentWidgets.loadAllAvailability();
+    this.loadRecoverablePayPhoneIntents();
     this.selectPaymentMethod('cash');
     this.fillDraftPending();
     this.modal.set({ kind: 'cobro' });
@@ -5655,13 +5701,14 @@ export class PosVentaPage {
       return;
     }
     const amount = this.round2(Math.min(this.parseUsd(this.draftAmount()), this.payableBalance()));
-    this.payPhoneWidget.refreshStatus(session).subscribe({
+    this.payPhoneWidget.refreshIntent(session.clientTransactionId).subscribe({
       next: (next) => this.handlePayPhoneSession(next, amount),
       error: (err: unknown) => this.checkoutError.set(this.payPhoneErrorMessage(err)),
     });
   }
 
   private handlePayPhoneSession(session: PaymentCollectionSession, amountUsd: number): void {
+    this.persistPayPhoneCheckoutIntent(session.clientTransactionId, amountUsd);
     if (session.externalStatus === 'confirmed') {
       this.stopPayPhonePolling();
       this.addPayPhonePaymentLine(session, amountUsd);
@@ -5672,7 +5719,7 @@ export class PosVentaPage {
       this.checkoutError.set(session.message ?? 'PayPhone rechazo el cobro.');
       return;
     }
-    this.startPayPhonePolling(amountUsd);
+    this.startPayPhonePolling(amountUsd, session.clientTransactionId);
   }
 
   private addPayPhonePaymentLine(session: PaymentCollectionSession, amountUsd: number): void {
@@ -5683,6 +5730,12 @@ export class PosVentaPage {
     this.paymentLines.update((lines) => [...lines, line]);
     this.paymentCollection.set(null);
     this.checkoutError.set(null);
+    this.clearPayPhoneCheckoutIntentStorage();
+    this.backend.consumePayPhoneIntent(session.clientTransactionId).subscribe({
+      error: () => {
+        /* consumo best-effort */
+      },
+    });
     this.payPhoneWidget.resetSession();
     const nextMethod = this.paymentMethods().find((item) => !this.hasPaymentFor(item.code));
     if (nextMethod && this.payableBalance() > 0) {
@@ -5691,30 +5744,142 @@ export class PosVentaPage {
     this.fillDraftPending();
   }
 
-  private startPayPhonePolling(amountUsd: number): void {
+  private startPayPhonePolling(amountUsd: number, clientTransactionId: string): void {
     this.stopPayPhonePolling();
     this.payPhonePollStartedAt = Date.now();
     this.payPhonePollTimer = setInterval(() => {
-      const session = this.payPhoneWidget.session();
-      if (!session) {
-        this.stopPayPhonePolling();
-        return;
-      }
       if (Date.now() - this.payPhonePollStartedAt > 300_000) {
         this.stopPayPhonePolling();
-        this.checkoutError.set('Tiempo de espera PayPhone agotado. Consulte el estado manualmente.');
+        this.checkoutError.set('Tiempo de espera PayPhone agotado. Puede recuperar el pago al reabrir cobro.');
         return;
       }
       if (this.payPhoneWidget.busy()) {
         return;
       }
-      this.payPhoneWidget.refreshStatus(session).subscribe({
+      this.payPhoneWidget.refreshIntent(clientTransactionId).subscribe({
         next: (next) => this.handlePayPhoneSession(next, amountUsd),
         error: () => {
           /* polling tolerante */
         },
       });
     }, 4000);
+  }
+
+  loadRecoverablePayPhoneIntents(): void {
+    if (!this.posApiConfigured()) {
+      this.recoverablePayPhoneIntents.set([]);
+      return;
+    }
+    this.backend.getRecoverablePayPhoneIntents().subscribe({
+      next: (response) => {
+        const items = (response.items ?? []).filter((item) => item.intentContext === 'CHECKOUT' && !item.recovered);
+        this.recoverablePayPhoneIntents.set(items);
+        const stored = this.readPayPhoneCheckoutIntentStorage();
+        if (stored && !items.some((item) => item.clientTransactionId === stored.clientTransactionId)) {
+          this.backend.getPayPhoneIntent(stored.clientTransactionId, true).subscribe({
+            next: (intent) => {
+              if (!intent.recovered && intent.intentContext === 'CHECKOUT') {
+                this.recoverablePayPhoneIntents.update((current) => [intent, ...current]);
+              }
+            },
+          });
+        }
+      },
+      error: () => this.recoverablePayPhoneIntents.set([]),
+    });
+  }
+
+  applyRecoverablePayPhoneIntent(intent: PayPhoneIntentResponse): void {
+    if (intent.status !== 'CONFIRMED' || this.hasPaymentFor('payphone')) {
+      return;
+    }
+    const amountUsd = this.round2(intent.amountUsd);
+    if (amountUsd > this.payableBalance() + 0.0001) {
+      this.checkoutError.set('El monto recuperado supera el saldo pendiente del ticket.');
+      return;
+    }
+    const session = this.payPhoneWidget.sessionFromIntent(intent);
+    this.addPayPhonePaymentLine(session, amountUsd);
+    this.recoverablePayPhoneIntents.update((items) =>
+      items.filter((item) => item.clientTransactionId !== intent.clientTransactionId),
+    );
+    this.payPhoneRecoveryMessage.set('Pago PayPhone recuperado y aplicado al ticket.');
+  }
+
+  resumeRecoverablePayPhoneIntent(intent: PayPhoneIntentResponse): void {
+    this.selectPaymentMethod('payphone');
+    const amountUsd = this.round2(intent.amountUsd);
+    this.draftAmount.set(this.formatUsd(amountUsd));
+    if (intent.phoneNumber) {
+      this.payPhonePhoneNumber.set(intent.phoneNumber);
+    }
+    const session = this.payPhoneWidget.sessionFromIntent(intent);
+    this.payPhoneWidget.session.set(session);
+    this.payPhoneWidget.statusMessage.set('Reanudando seguimiento del cobro PayPhone...');
+    this.handlePayPhoneSession(session, amountUsd);
+  }
+
+  private handlePayphoneReturnFromCallback(): void {
+    const params = new URL(window.location.href).searchParams;
+    const clientTransactionId = params.get('payphoneIntent')?.trim();
+    if (!clientTransactionId) {
+      return;
+    }
+    const status = params.get('payphoneStatus')?.trim() ?? 'pending';
+    this.payPhoneRecoveryMessage.set(
+      status === 'confirmed'
+        ? 'PayPhone confirmo el pago. Abra cobro para aplicarlo al ticket.'
+        : 'PayPhone reporto un cobro pendiente. Abra cobro para reanudar el seguimiento.',
+    );
+    this.persistPayPhoneCheckoutIntent(clientTransactionId, 0);
+    window.history.replaceState({}, '', window.location.pathname);
+    if (this.lineCount() > 0 && this.desk.cajaOpen()) {
+      this.openCobro();
+    }
+  }
+
+  private persistPayPhoneCheckoutIntent(clientTransactionId: string, amountUsd: number): void {
+    try {
+      sessionStorage.setItem(
+        POS_PAYPHONE_CHECKOUT_INTENT_KEY,
+        JSON.stringify({
+          clientTransactionId,
+          amountUsd,
+          tabId: this.activeTabId(),
+          savedAt: new Date().toISOString(),
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private readPayPhoneCheckoutIntentStorage(): { clientTransactionId: string; amountUsd: number } | null {
+    try {
+      const raw = sessionStorage.getItem(POS_PAYPHONE_CHECKOUT_INTENT_KEY);
+      if (!raw) {
+        return null;
+      }
+      const parsed = JSON.parse(raw) as { clientTransactionId?: string; amountUsd?: number; tabId?: string };
+      if (!parsed.clientTransactionId?.trim() || parsed.tabId !== this.activeTabId()) {
+        return null;
+      }
+      return {
+        clientTransactionId: parsed.clientTransactionId.trim(),
+        amountUsd: this.round2(Number(parsed.amountUsd ?? 0)),
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private clearPayPhoneCheckoutIntentStorage(): void {
+    try {
+      sessionStorage.removeItem(POS_PAYPHONE_CHECKOUT_INTENT_KEY);
+    } catch {
+      /* ignore */
+    }
+    this.recoverablePayPhoneIntents.set([]);
   }
 
   private stopPayPhonePolling(): void {
@@ -5884,6 +6049,7 @@ export class PosVentaPage {
   clearPayments(): void {
     this.stopPayPhonePolling();
     this.payPhoneWidget.resetSession();
+    this.payPhoneRecoveryMessage.set('');
     this.payCash.set('0');
     this.payCard.set('0');
     this.payTransfer.set('0');

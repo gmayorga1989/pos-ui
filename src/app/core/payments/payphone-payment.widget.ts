@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, finalize, map, tap } from 'rxjs';
 import { PosBackendApiService } from '../api/pos-backend-api.service';
 import { PosAuthService } from '../auth/pos-auth.service';
-import type { PayPhoneSaleRequest, PayPhoneSaleResponse, PayPhoneSaleStatusResponse, PayPhoneTenantConfigResponse } from '../api/pos-backend.types';
+import type { PayPhoneIntentResponse, PayPhoneSaleRequest, PayPhoneSaleResponse, PayPhoneSaleStatusResponse, PayPhoneTenantConfigResponse } from '../api/pos-backend.types';
 import { centsToUsd, payPhoneAmountCents, roundUsd, usdInputToCents } from './payment-money.util';
 import type {
   PayPhoneConfigFormState,
@@ -48,6 +48,7 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
   readonly configCurrency = signal('USD');
   readonly configTimeZone = signal('America/Guayaquil');
   readonly configResponseUrl = signal('');
+  readonly configResponseUrlAutoManaged = signal(true);
   readonly configured = signal(false);
   readonly testCheckingStatus = signal(false);
 
@@ -106,7 +107,6 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
         baseUrl: form.baseUrl.trim() || null,
         currency: form.currency.trim().toUpperCase() || 'USD',
         timeZone: form.timeZone.trim() || 'America/Guayaquil',
-        responseUrl: form.responseUrl.trim() || null,
       })
       .pipe(
         tap((cfg) => {
@@ -135,7 +135,6 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
       baseUrl: this.configBaseUrl(),
       currency: this.configCurrency(),
       timeZone: this.configTimeZone(),
-      responseUrl: this.configResponseUrl(),
     };
   }
 
@@ -170,11 +169,10 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
 
   startTestSale(input: PayPhoneTestSaleInput, idempotencyKey: string): Observable<PaymentCollectionSession> {
     const body = this.buildTestSaleRequest(input);
-    const clientTransactionId = body.clientTransactionId?.trim() || idempotencyKey;
     this.busy.set(true);
     this.configStatus.set('Creando cobro PayPhone...');
-    return this.api.postPayPhoneSale(body, idempotencyKey).pipe(
-      map((response) => this.toSession(response, clientTransactionId)),
+    return this.api.postPayPhoneSale(body, idempotencyKey, 'TEST').pipe(
+      map((response) => this.toSession(response, this.resolveClientTransactionId(response, idempotencyKey))),
       tap((next) => {
         this.session.set(next);
         this.configStatus.set(`Cobro creado${next.providerStatus ? `: ${next.providerStatus}` : ''}.`);
@@ -196,7 +194,7 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
     }
     this.lastStatusCheckAt = Date.now();
     this.testCheckingStatus.set(true);
-    return this.refreshStatus(session).pipe(
+    return this.refreshIntent(session.clientTransactionId).pipe(
       tap((next) => {
         this.configStatus.set(`Estado PayPhone${next.providerStatus ? `: ${next.providerStatus}` : ' recibido'}.`);
       }),
@@ -217,12 +215,12 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
     if (!input.phoneNumber?.trim() || !input.countryCode?.trim()) {
       throw new Error('Telefono y codigo de pais son requeridos para PayPhone');
     }
-    const clientTransactionId = this.newClientTransactionId();
-    const body = this.buildSaleRequest(amounts, input, clientTransactionId);
+    const idempotencyKey = this.newIdempotencyKey();
+    const body = this.buildSaleRequest(amounts, input);
     this.busy.set(true);
     this.statusMessage.set('Creando cobro PayPhone...');
-    return this.api.postPayPhoneSale(body, clientTransactionId).pipe(
-      map((response) => this.toSession(response, clientTransactionId)),
+    return this.api.postPayPhoneSale(body, idempotencyKey, 'CHECKOUT').pipe(
+      map((response) => this.toSession(response, this.resolveClientTransactionId(response, idempotencyKey))),
       tap((next) => {
         this.session.set(next);
         this.statusMessage.set(this.describeSession(next));
@@ -232,19 +230,23 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
   }
 
   refreshStatus(session: PaymentCollectionSession): Observable<PaymentCollectionSession> {
-    const transactionId = session.providerTransactionId?.trim();
-    const req = transactionId
-      ? this.api.getPayPhoneSaleStatus(transactionId)
-      : this.api.getPayPhoneSaleStatusByClientTransactionId(session.clientTransactionId);
+    return this.refreshIntent(session.clientTransactionId);
+  }
+
+  refreshIntent(clientTransactionId: string): Observable<PaymentCollectionSession> {
     this.busy.set(true);
-    return req.pipe(
-      map((response) => this.toSessionFromStatus(response, session.clientTransactionId, session.providerTransactionId)),
+    return this.api.getPayPhoneIntent(clientTransactionId, true).pipe(
+      map((intent) => this.toSessionFromIntent(intent)),
       tap((next) => {
         this.session.set(next);
         this.statusMessage.set(this.describeSession(next));
       }),
       finalize(() => this.busy.set(false)),
     );
+  }
+
+  sessionFromIntent(intent: PayPhoneIntentResponse): PaymentCollectionSession {
+    return this.toSessionFromIntent(intent);
   }
 
   mapProviderStatus(status: string | null | undefined): PosExternalPaymentStatus {
@@ -288,11 +290,7 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
     };
   }
 
-  buildSaleRequest(
-    amounts: PaymentWidgetAmountContext,
-    input: PaymentCollectionStartInput,
-    clientTransactionId: string,
-  ): PayPhoneSaleRequest {
+  buildSaleRequest(amounts: PaymentWidgetAmountContext, input: PaymentCollectionStartInput): PayPhoneSaleRequest {
     const breakdown = this.buildAmountBreakdown(amounts);
     return {
       phoneNumber: input.phoneNumber!.trim(),
@@ -304,7 +302,6 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
       service: 0,
       tip: 0,
       reference: input.reference.trim(),
-      clientTransactionId,
     };
   }
 
@@ -354,7 +351,26 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
     this.configCurrency.set((cfg.currency ?? 'USD').trim().toUpperCase() || 'USD');
     this.configTimeZone.set(cfg.timeZone ?? 'America/Guayaquil');
     this.configResponseUrl.set(cfg.responseUrl ?? '');
+    this.configResponseUrlAutoManaged.set(cfg.responseUrlAutoManaged ?? true);
     this.configured.set(cfg.configured);
+  }
+
+  private toSessionFromIntent(intent: PayPhoneIntentResponse): PaymentCollectionSession {
+    return {
+      providerTransactionId: intent.providerTransactionId ?? null,
+      clientTransactionId: intent.clientTransactionId,
+      externalStatus: intent.externalStatus === 'idle' ? 'pending' : intent.externalStatus,
+      providerStatus: intent.providerStatus ?? intent.status,
+      message: intent.message ?? null,
+    };
+  }
+
+  private resolveClientTransactionId(response: PayPhoneSaleResponse, fallback: string): string {
+    return this.stringFromUnknown(response.clientTransactionId) || fallback;
+  }
+
+  private newIdempotencyKey(): string {
+    return `POS-PAYPHONE-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
   private applyAvailability(available: boolean, hint: string): void {
@@ -423,10 +439,6 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
       return status ? `Cobro rechazado (${status})` : 'Cobro rechazado';
     }
     return status ? `Cobro pendiente (${status})` : 'Cobro pendiente; espere confirmacion en el telefono';
-  }
-
-  private newClientTransactionId(): string {
-    return `POS-PAYPHONE-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
   private stringFromUnknown(value: unknown): string | null {
