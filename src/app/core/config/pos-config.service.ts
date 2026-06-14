@@ -67,11 +67,52 @@ export class PosConfigService {
   }
 
   usesLocalPuntoEmision(): boolean {
-    return this.invoicingProvider() === 'NONE';
+    const provider = this.invoicingProvider();
+    // Perfil A (standalone) y C (terceros): puntos en pos-app.
+    return provider === 'NONE' || provider === 'CUSTOM';
   }
 
   requiresEfacturaPuntoEmision(): boolean {
+    // Perfil B (Luxora + eFactura): puntos desde efactura-app.
     return this.invoicingProvider() === 'EFACTURA';
+  }
+
+  isCustomInvoicing(): boolean {
+    return this.invoicingProvider() === 'CUSTOM';
+  }
+
+  /** Mensaje de configuración según perfil de facturación activo. */
+  puntoEmisionSetupHint(): string {
+    if (this.requiresEfacturaPuntoEmision()) {
+      return 'Seleccione un punto de emisión de eFactura en Ajustes → Estación.';
+    }
+    if (this.isCustomInvoicing()) {
+      return 'Configure el punto de emisión local en Ajustes → Estación (se envía al facturador externo).';
+    }
+    return 'Elija un punto de emisión en Ajustes → Estación.';
+  }
+
+  puntoEmisionFieldLabel(): string {
+    if (this.requiresEfacturaPuntoEmision()) {
+      return 'Punto de emisión (eFactura)';
+    }
+    if (this.isCustomInvoicing()) {
+      return 'Punto de emisión (local / tercero)';
+    }
+    return 'Punto de emisión (POS)';
+  }
+
+  deploymentProfileLabel(): string {
+    if (this.isStandalone() && this.usesLocalPuntoEmision() && !this.isInvoicingEnabled()) {
+      return 'POS standalone';
+    }
+    if (this.requiresEfacturaPuntoEmision()) {
+      return 'Luxora + eFactura';
+    }
+    if (this.isCustomInvoicing()) {
+      return 'Integración terceros';
+    }
+    return this.deploymentMode();
   }
 
   ephemeralPersistence(): boolean {

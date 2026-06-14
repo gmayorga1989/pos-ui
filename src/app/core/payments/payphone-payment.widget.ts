@@ -243,14 +243,18 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
     if (/(cancel|reject|fail|declin|deneg|anul)/i.test(normalized)) {
       return 'rejected';
     }
-    if (/(pending|wait|process|progress|enviad)/i.test(normalized)) {
+    if (/(pending|wait|process|progress|enviad|pendiente)/i.test(normalized)) {
       return 'pending';
     }
-    if (normalized === '2' || normalized === 'approved') {
+    // PayPhone numérico: 1=pendiente, 2=cancelado, 3=aprobado
+    if (normalized === '3') {
       return 'confirmed';
     }
-    if (normalized === '3' || normalized === '4') {
+    if (normalized === '2' || normalized === '4') {
       return 'rejected';
+    }
+    if (normalized === '1') {
+      return 'pending';
     }
     return 'pending';
   }
@@ -382,6 +386,8 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
       previousTransactionId;
     const providerStatus =
       this.stringFromUnknown(response.status) ??
+      this.stringFromUnknown(nested['transactionStatus']) ??
+      this.stringFromUnknown(nested['TransactionStatus']) ??
       this.stringFromUnknown(nested['status']) ??
       this.stringFromUnknown(nested['statusCode']);
     const resolvedClientTx =

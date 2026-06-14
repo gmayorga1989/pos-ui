@@ -665,7 +665,7 @@ declare global {
                   }
                   @if (puntos().length > 0) {
                     <label class="station-field">
-                      <span class="station-field__label">Punto de emisión (eFactura)</span>
+                      <span class="station-field__label">{{ puntoEmisionFieldLabel() }}</span>
                       <select
                         class="station-field__input pos-focus-ring"
                         [ngModel]="prefs.puntoEmisionId()"
@@ -703,6 +703,7 @@ declare global {
                 </div>
               </article>
 
+              @if (invoicingProvider() === 'EFACTURA' || invoicingProvider() === 'CUSTOM') {
               <article
                 class="station-card station-card--efactura"
                 [class.station-card--efactura-pending]="!efacturaIntegrationReady()">
@@ -714,7 +715,9 @@ declare global {
                         <path d="M12 9.5v4M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
                       </svg>
                     </span>
-                    <strong class="station-card__title-plain">Integración eFactura</strong>
+                    <strong class="station-card__title-plain">
+                      {{ invoicingProvider() === 'CUSTOM' ? 'Integración facturación externa' : 'Integración eFactura' }}
+                    </strong>
                   </span>
                   <span class="station-card__badge" [class.station-card__badge--ok]="efacturaIntegrationReady()">
                     {{ efacturaIntegrationReady() ? 'Lista' : 'Pendiente' }}
@@ -722,7 +725,13 @@ declare global {
                 </header>
                 <div class="station-card__body station-card__body--center">
                   @if (efacturaIntegrationReady()) {
-                    <p class="station-card__copy">Punto de emisión disponible para operación fiscal en esta estación.</p>
+                    <p class="station-card__copy">
+                      @if (invoicingProvider() === 'CUSTOM') {
+                        Punto de emisión local listo; las ventas se envían al facturador configurado.
+                      } @else {
+                        Punto de emisión disponible para operación fiscal en esta estación.
+                      }
+                    </p>
                   } @else {
                     <p class="station-card__copy">
                       No se encontraron puntos de emisión configurados para esta estación.
@@ -733,6 +742,7 @@ declare global {
                   }
                 </div>
               </article>
+              }
 
               <article class="station-card station-card--experience">
                 <header class="station-card__head">
@@ -6087,33 +6097,7 @@ export class PosAjustesPage implements OnInit {
           });
         }
       }
-      if (cfg.invoicingEnabled) {
-        this.api.getPuntosEmision().subscribe({
-          next: (list) => {
-            this.puntos.set(list ?? []);
-            this.puntosError.set(null);
-          },
-          error: () => {
-            this.puntos.set([]);
-            this.puntosError.set('No se pudieron cargar los puntos de eFactura.');
-          },
-        });
-      } else if (this.auth.apiBaseUrl?.trim()) {
-        this.api.getLocalPuntosEmision().subscribe({
-          next: (list) => {
-            this.puntos.set(list ?? []);
-            this.puntosError.set(null);
-            const stored = this.prefs.puntoEmisionId().trim();
-            if (!stored && list.length) {
-              this.prefs.setPuntoEmisionId(list[0].id);
-            }
-          },
-          error: () => {
-            this.puntos.set([]);
-            this.puntosError.set('No se pudieron cargar los puntos de emisión locales.');
-          },
-        });
-      }
+      this.loadStationPuntosEmision();
     });
     this.loadStripeConfig();
     this.loadKushkiConfig();
@@ -6421,6 +6405,41 @@ export class PosAjustesPage implements OnInit {
   onPuntoEmision(v: string): void {
     this.prefs.setPuntoEmisionId(v);
     this.markStationDirty();
+  }
+
+  puntoEmisionFieldLabel(): string {
+    return this.runtimeConfig.puntoEmisionFieldLabel();
+  }
+
+  private loadStationPuntosEmision(): void {
+    if (!this.auth.apiBaseUrl?.trim()) {
+      return;
+    }
+    const applyList = (list: PosPuntoEmisionOption[]) => {
+      this.puntos.set(list ?? []);
+      this.puntosError.set(null);
+      const stored = this.prefs.puntoEmisionId().trim();
+      if (!stored && list.length) {
+        this.prefs.setPuntoEmisionId(list[0].id);
+      }
+    };
+    if (this.runtimeConfig.requiresEfacturaPuntoEmision()) {
+      this.api.getPuntosEmision().subscribe({
+        next: (list) => applyList(list),
+        error: () => {
+          this.puntos.set([]);
+          this.puntosError.set('No se pudieron cargar los puntos de eFactura.');
+        },
+      });
+      return;
+    }
+    this.api.getLocalPuntosEmision().subscribe({
+      next: (list) => applyList(list),
+      error: () => {
+        this.puntos.set([]);
+        this.puntosError.set('No se pudieron cargar los puntos de emisión del POS.');
+      },
+    });
   }
 
   onLocalBranch(v: string): void {

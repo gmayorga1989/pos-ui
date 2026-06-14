@@ -4675,7 +4675,7 @@ export class PosVentaPage {
         id: 'pe',
         kind: 'warn',
         label: 'Punto de emisión',
-        detail: 'Configure un punto de emisión en Ajustes para registrar la venta.',
+        detail: this.puntoEmisionSetupMessage(),
       });
     }
     if (this.saleActionMessage()) {
@@ -5048,31 +5048,30 @@ export class PosVentaPage {
     this.loadCatalog();
     void this.runtimeConfig.ensureLoaded().then((cfg) => {
       this.invoicingEnabled.set(cfg.invoicingEnabled);
-      this.loadPuntoEmision(cfg);
+      this.loadPuntoEmision();
     });
   }
 
-  private loadPuntoEmision(cfg: { invoicingEnabled: boolean; invoicingProvider: string }): void {
+  private loadPuntoEmision(): void {
     if (!this.posApiConfigured()) {
       this.resolvedPuntoEmisionId.set(null);
       return;
     }
-    if (!cfg.invoicingEnabled || cfg.invoicingProvider === 'NONE') {
-      this.backend.getLocalPuntosEmision().subscribe({
-        next: (list) => {
-          const stored = this.prefs.puntoEmisionId().trim();
-          const match = list.find((p) => p.id === stored);
-          const id = match?.id ?? list[0]?.id ?? null;
-          if (id && !stored) {
-            this.prefs.setPuntoEmisionId(id);
-          }
-          this.resolvedPuntoEmisionId.set(id);
-        },
-        error: () => this.resolvedPuntoEmisionId.set(this.prefs.puntoEmisionId().trim() || null),
-      });
-      return;
-    }
-    this.resolvedPuntoEmisionId.set(this.prefs.puntoEmisionId().trim() || null);
+    const source$ = this.runtimeConfig.requiresEfacturaPuntoEmision()
+      ? this.backend.getPuntosEmision()
+      : this.backend.getLocalPuntosEmision();
+    source$.subscribe({
+      next: (list) => {
+        const stored = this.prefs.puntoEmisionId().trim();
+        const match = list.find((p) => p.id === stored);
+        const id = match?.id ?? list[0]?.id ?? null;
+        if (id && !stored) {
+          this.prefs.setPuntoEmisionId(id);
+        }
+        this.resolvedPuntoEmisionId.set(id);
+      },
+      error: () => this.resolvedPuntoEmisionId.set(this.prefs.puntoEmisionId().trim() || null),
+    });
   }
 
   openLastTicket(): void {
@@ -5549,7 +5548,7 @@ export class PosVentaPage {
       return 'Agregue productos antes de cobrar.';
     }
     if (!puntoOk) {
-      return 'Elija un punto de emision en Ajustes.';
+      return this.puntoEmisionSetupMessage();
     }
     if (this.externalPaymentPending()) {
       return 'Hay una transaccion externa pendiente por confirmar.';
@@ -5582,6 +5581,10 @@ export class PosVentaPage {
     this.selectPaymentMethod('cash');
     this.fillDraftPending();
     this.modal.set({ kind: 'cobro' });
+    const puntoMsg = this.missingPuntoEmisionMessage();
+    if (puntoMsg) {
+      this.checkoutError.set(puntoMsg);
+    }
   }
 
   selectPaymentMethod(method: PosPaymentMethodCode): void {
@@ -6280,7 +6283,7 @@ export class PosVentaPage {
     }
     const pid = this.effectivePuntoEmisionId();
     if (!pid) {
-      this.checkoutError.set('Elija un punto de emisión en Ajustes.');
+      this.checkoutError.set(this.puntoEmisionSetupMessage());
       return;
     }
     this.checkoutError.set(null);
@@ -6351,6 +6354,17 @@ export class PosVentaPage {
 
   private effectivePuntoEmisionId(): string {
     return (this.resolvedPuntoEmisionId() ?? this.prefs.puntoEmisionId().trim()).trim();
+  }
+
+  private missingPuntoEmisionMessage(): string | null {
+    if (!this.posApiConfigured() || this.effectivePuntoEmisionId()) {
+      return null;
+    }
+    return this.puntoEmisionSetupMessage();
+  }
+
+  private puntoEmisionSetupMessage(): string {
+    return this.runtimeConfig.puntoEmisionSetupHint();
   }
 
   private paymentAmounts(): { cash: number; card: number; transfer: number } {
