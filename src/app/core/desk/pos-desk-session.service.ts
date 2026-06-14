@@ -1,6 +1,8 @@
 import { inject, Injectable, computed, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, finalize, map, of, Subscription, tap, throwError } from 'rxjs';
 import { PosBackendApiService } from '../api/pos-backend-api.service';
+import { extractApiErrorMessage } from '../http-error.util';
 import { mapCajaHistorialResponse } from '../api/pos-backend.mappers';
 import type {
   PosCajaCierreRequest,
@@ -73,6 +75,11 @@ export class PosDeskSessionService {
         tap((s) => this.applyServerSnapshot(s)),
         catchError((err: unknown) => {
           this.deskLoadError.set(this.errMsg(err));
+          if (!this.shouldUseLocalFallback(err)) {
+            this.cajaOpen.set(false);
+            this.sessionId.set(null);
+            return of(null);
+          }
           this.hydrateLocalFallback();
           return of(null);
         }),
@@ -220,9 +227,29 @@ export class PosDeskSessionService {
   }
 
   private errMsg(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      if (err.status === 401 || err.status === 403) {
+        return 'Sesión no autorizada. Vuelva a ingresar al POS.';
+      }
+      if (err.status === 0) {
+        return 'Sin respuesta de pos-app. Verifique que el backend esté activo en el puerto 8094.';
+      }
+      const fromApi = extractApiErrorMessage(err, '');
+      if (fromApi) {
+        return fromApi;
+      }
+      return `Error del servidor (HTTP ${err.status}).`;
+    }
     if (err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string') {
       return (err as { message: string }).message;
     }
     return 'No se pudo cargar la caja desde el servidor';
+  }
+
+  private shouldUseLocalFallback(err: unknown): boolean {
+    if (!(err instanceof HttpErrorResponse)) {
+      return true;
+    }
+    return err.status === 0;
   }
 }

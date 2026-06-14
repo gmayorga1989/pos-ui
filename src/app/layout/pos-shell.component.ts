@@ -157,6 +157,20 @@ type CashPanelMode = 'open' | 'close' | 'history';
         </header>
 
         <main class="content">
+          @if (runtimeConfig.ephemeralPersistence()) {
+            <div class="persist-alert" role="alert">
+              <strong>Base de datos efímera (H2 en memoria).</strong>
+              Caja, PayPhone y catálogo se pierden al reiniciar pos-app.
+              Configure PostgreSQL con <code>POS_DATASOURCE_URL</code> o use la Run Configuration
+              <em>PosApplication (PostgreSQL)</em>.
+              <span class="persist-alert__meta">{{ runtimeConfig.persistenceLabel() }}</span>
+            </div>
+          } @else if (desk.deskLoadError()) {
+            <div class="persist-alert persist-alert--warn" role="alert">
+              <strong>No se pudo sincronizar la caja con el servidor.</strong>
+              {{ desk.deskLoadError() }}
+            </div>
+          }
           <router-outlet />
         </main>
 
@@ -2318,6 +2332,39 @@ type CashPanelMode = 'open' | 'close' | 'history';
       display: flex;
       flex-direction: column;
       padding: var(--pos-content-pad-y) var(--pos-content-pad-x);
+      gap: 0.55rem;
+    }
+    .persist-alert {
+      flex-shrink: 0;
+      padding: 0.55rem 0.75rem;
+      border-radius: 5px;
+      border: 1px solid color-mix(in srgb, #f59e0b 40%, var(--pos-border));
+      background: color-mix(in srgb, #fff7ed 72%, var(--pos-elevated));
+      color: #9a3412;
+      font-size: 0.74rem;
+      line-height: 1.45;
+    }
+    .persist-alert--warn {
+      border-color: color-mix(in srgb, #ef4444 34%, var(--pos-border));
+      background: color-mix(in srgb, #fef2f2 72%, var(--pos-elevated));
+      color: #b91c1c;
+    }
+    html[data-theme='dark'] .persist-alert {
+      background: color-mix(in srgb, #78350f 22%, var(--pos-surface-2));
+      color: #fdba74;
+      border-color: color-mix(in srgb, #f59e0b 28%, var(--pos-border));
+    }
+    html[data-theme='dark'] .persist-alert--warn {
+      background: color-mix(in srgb, #7f1d1d 24%, var(--pos-surface-2));
+      color: #fca5a5;
+      border-color: color-mix(in srgb, #ef4444 28%, var(--pos-border));
+    }
+    .persist-alert__meta {
+      display: block;
+      margin-top: 0.15rem;
+      opacity: 0.85;
+      font-family: var(--pos-mono);
+      font-size: 0.68rem;
     }
     .content > router-outlet + * {
       flex: 1;
@@ -2389,7 +2436,7 @@ export class PosShellComponent implements OnInit {
   readonly prefs = inject(PosLayoutPreferencesService);
   private readonly auth = inject(PosAuthService);
   private readonly ssoHandoff = inject(PosSsoHandoffService);
-  private readonly runtimeConfig = inject(PosConfigService);
+  readonly runtimeConfig = inject(PosConfigService);
   readonly desk = inject(PosDeskSessionService);
   readonly offline = inject(PosOfflineSyncService);
 

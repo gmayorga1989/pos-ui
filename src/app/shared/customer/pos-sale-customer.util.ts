@@ -7,8 +7,13 @@ export interface SaleCustomer {
   doc: string;
   tipoIdentificacion: string;
   email?: string | null;
+  phone?: string | null;
+  razonSocial?: string;
+  nombreComercial?: string | null;
+  direccion?: string | null;
   priceListId?: string | null;
   priceListName?: string | null;
+  active?: boolean;
   isConsumidorFinal?: boolean;
 }
 
@@ -28,8 +33,13 @@ export function customerResponseToSale(c: PosCustomerResponse): SaleCustomer {
     doc: c.identificacion,
     tipoIdentificacion: c.tipoIdentificacion,
     email: c.email ?? null,
+    phone: c.phone ?? null,
+    razonSocial: c.razonSocial,
+    nombreComercial: c.nombreComercial ?? null,
+    direccion: c.direccion ?? null,
     priceListId: c.priceListId ?? null,
     priceListName: c.priceListName ?? null,
+    active: c.active ?? true,
     isConsumidorFinal: c.tipoIdentificacion === '07' || c.identificacion === CONSUMIDOR_FINAL_ID,
   };
 }

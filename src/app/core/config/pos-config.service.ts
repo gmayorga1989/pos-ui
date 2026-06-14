@@ -11,6 +11,9 @@ export interface PosRuntimeConfig {
   carteraEnabled: boolean;
   carteraBaseUrl: string;
   invoicingEnabled: boolean;
+  persistenceEngine?: string;
+  persistenceDatabase?: string;
+  ephemeralPersistence?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -69,5 +72,18 @@ export class PosConfigService {
 
   requiresEfacturaPuntoEmision(): boolean {
     return this.invoicingProvider() === 'EFACTURA';
+  }
+
+  ephemeralPersistence(): boolean {
+    return !!this.config()?.ephemeralPersistence;
+  }
+
+  persistenceLabel(): string {
+    const cfg = this.config();
+    if (!cfg?.persistenceEngine) {
+      return '';
+    }
+    const db = cfg.persistenceDatabase?.trim();
+    return db ? `${cfg.persistenceEngine} · ${db}` : cfg.persistenceEngine;
   }
 }

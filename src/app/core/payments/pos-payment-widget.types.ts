@@ -49,22 +49,6 @@ export interface PaymentCollectionStartInput {
   reference: string;
 }
 
-export interface PayPhoneTestSaleInput {
-  phoneNumber: string;
-  countryCode: string;
-  amountWithoutTax: string;
-  amountWithTax: string;
-  tax: string;
-  service: string;
-  tip: string;
-  reference: string;
-  clientTransactionId?: string;
-  clientUserId?: string;
-  optionalParameter1?: string;
-  optionalParameter2?: string;
-  optionalParameter3?: string;
-}
-
 export interface PayPhoneConfigFormState {
   enabled: boolean;
   token: string;
@@ -72,6 +56,7 @@ export interface PayPhoneConfigFormState {
   baseUrl: string;
   currency: string;
   timeZone: string;
+  defaultCountryCode: string;
 }
 
 export interface PaymentCollectionSession {

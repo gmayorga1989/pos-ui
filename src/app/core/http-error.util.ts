@@ -146,3 +146,96 @@ function pickNonEmptyString(value: unknown): string | null {
   const t = value.trim();
   return t.length > 0 ? t : null;
 }
+
+/** Mensaje legible para fallos de cobro PayPhone (pos-app → PayPhone). */
+export function formatPayPhoneApiError(
+  err: unknown,
+  fallback = 'No se pudo procesar el cobro PayPhone',
+): string {
+  const raw = extractApiErrorMessage(err, '');
+  if (!raw) {
+    if (err instanceof HttpErrorResponse) {
+      return `PayPhone: error HTTP ${err.status}`;
+    }
+    return fallback;
+  }
+  return enrichPayPhoneDetail(raw, err instanceof HttpErrorResponse ? err.status : null);
+}
+
+function enrichPayPhoneDetail(detail: string, httpStatus: number | null): string {
+  const gatewayMatch = detail.match(/^PayPhone rechaz[oó] la solicitud \(HTTP (\d+)\):\s*(.*)$/is);
+  if (gatewayMatch) {
+    const providerCode = gatewayMatch[1];
+    const providerBody = gatewayMatch[2]?.trim() ?? '';
+    const providerMsg = parsePayPhoneProviderPayload(providerBody);
+    const parts = [`PayPhone respondió con error HTTP ${providerCode}.`];
+    if (providerMsg) {
+      parts.push(providerMsg);
+    } else if (providerBody) {
+      parts.push(truncateErrorText(providerBody, 420));
+    }
+    return parts.join(' ');
+  }
+
+  if (/^No se pudo llamar a PayPhone$/i.test(detail.trim())) {
+    const suffix = httpStatus ? ` (HTTP ${httpStatus})` : '';
+    return `No se pudo conectar con PayPhone${suffix}. Verifique token, URL base y que el servidor POS tenga salida a internet.`;
+  }
+
+  return truncateErrorText(detail, 640);
+}
+
+function parsePayPhoneProviderPayload(raw: string): string | null {
+  if (!raw) {
+    return null;
+  }
+  try {
+    return extractProviderMessage(JSON.parse(raw) as unknown);
+  } catch {
+    return raw.length <= 420 ? raw.trim() : null;
+  }
+}
+
+function extractProviderMessage(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  for (const key of ['message', 'errorMessage', 'error', 'description', 'detail', 'Message', 'Error', 'title']) {
+    const msg = pickNonEmptyString(record[key]);
+    if (msg) {
+      return msg;
+    }
+  }
+  const errors = record['errors'];
+  if (Array.isArray(errors) && errors.length > 0) {
+    const parts = errors
+      .map((entry) => {
+        if (typeof entry === 'string') {
+          return entry.trim();
+        }
+        if (entry && typeof entry === 'object') {
+          const row = entry as Record<string, unknown>;
+          return pickNonEmptyString(row['message']) ?? pickNonEmptyString(row['description']);
+        }
+        return '';
+      })
+      .filter((part): part is string => !!part);
+    if (parts.length) {
+      return parts.join('; ');
+    }
+  }
+  return null;
+}
+
+function truncateErrorText(text: string, max: number): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, max)}…`;
+}

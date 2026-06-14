@@ -343,7 +343,8 @@ export interface PayPhoneTenantConfigResponse {
   storeId?: string | null;
   baseUrl?: string | null;
   currency?: string | null;
-  timeZone?: string | null;
+  timeZone?: number | null;
+  defaultCountryCode?: string | null;
   responseUrl?: string | null;
   responseUrlAutoManaged?: boolean;
   configured: boolean;
@@ -355,7 +356,8 @@ export interface PayPhoneTenantConfigRequest {
   storeId?: string | null;
   baseUrl?: string | null;
   currency?: string | null;
-  timeZone?: string | null;
+  timeZone?: number | null;
+  defaultCountryCode?: string | null;
   responseUrl?: string | null;
 }
 

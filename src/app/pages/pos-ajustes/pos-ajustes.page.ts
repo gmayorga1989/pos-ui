@@ -12,7 +12,7 @@ import type {
 import { PosAuthService } from '../../core/auth/pos-auth.service';
 import { PosConfigService } from '../../core/config/pos-config.service';
 import { PayPhonePaymentWidget } from '../../core/payments/payphone-payment.widget';
-import type { PayPhoneTestSaleInput } from '../../core/payments/pos-payment-widget.types';
+import { PAYPHONE_COUNTRY_OPTIONS } from '../../core/payments/payphone-countries.util';
 import { environment } from '../../../environments/environment';
 import type { PosInvoicingConfigRequest } from '../../core/api/pos-backend.types';
 import { decodeJwtPayload } from '../../core/layout/pos-jwt-hint.util';
@@ -1118,17 +1118,26 @@ declare global {
 
             @if (paymentIntegrationModalOpen()) {
               <div class="integration-modal-dim" role="presentation" (click)="closePaymentIntegrationModal()"></div>
-              <section class="integration-modal" role="dialog" aria-modal="true" aria-labelledby="payment-integration-title">
+              <section
+                class="integration-modal"
+                [class.integration-modal--payphone]="selectedPaymentIntegration() === 'payphone'"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="payment-integration-title">
                 <div class="integration-modal__head">
                   <div>
                     <span class="eyebrow">Integraci&oacute;n de pago</span>
                     <h2 id="payment-integration-title">{{ selectedPaymentIntegrationCard().name }}</h2>
                     <p>{{ selectedPaymentIntegrationCard().description }}</p>
                   </div>
-                  <button type="button" class="mini-btn pos-focus-ring" (click)="closePaymentIntegrationModal()">Cerrar</button>
+                  <button type="button" class="integration-modal__close pos-focus-ring" aria-label="Cerrar" (click)="closePaymentIntegrationModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
+                  </button>
                 </div>
 
-                <div class="card-grid integration-modal__body">
+                <div class="card-grid integration-modal__body" [class.integration-modal__body--payphone]="selectedPaymentIntegration() === 'payphone'">
               <label class="field" [class.integration-panel--hidden]="selectedPaymentIntegration() !== 'terminal'">
                 <span>Proveedor principal de tarjeta</span>
                 <select
@@ -1535,85 +1544,216 @@ declare global {
                   </button>
                 </div>
               </div>
-              <div class="field field--wide stripe-box" [class.integration-panel--hidden]="selectedPaymentIntegration() !== 'payphone'">
-                <div class="stripe-box__head">
-                  <div>
-                    <span>PayPhone por empresa</span>
-                    <small>{{ payPhoneWidget.configLabel() }}</small>
+              <div class="payphone-config field--wide" [class.integration-panel--hidden]="selectedPaymentIntegration() !== 'payphone'">
+                <div class="payphone-config__status-card">
+                  <div class="payphone-config__brand">
+                    <span class="payphone-config__logo" aria-hidden="true">P</span>
+                    <div class="payphone-config__brand-copy">
+                      <div class="payphone-config__brand-row">
+                        <strong>PayPhone por empresa</strong>
+                        <span
+                          class="payphone-config__badge"
+                          [class.payphone-config__badge--on]="payPhoneWidget.configEnabled() && payPhoneWidget.configured()"
+                          [class.payphone-config__badge--ready]="payPhoneWidget.configEnabled() && !payPhoneWidget.configured()">
+                          {{ payPhoneIntegrationBadge() }}
+                        </span>
+                      </div>
+                      <small>Estado actual de la integraci&oacute;n</small>
+                    </div>
                   </div>
-                  <button type="button" class="mini-btn pos-focus-ring" [disabled]="payPhoneWidget.configLoading()" (click)="loadPayPhoneConfig()">Recargar</button>
+                  <button
+                    type="button"
+                    class="payphone-config__reload pos-focus-ring"
+                    [disabled]="payPhoneWidget.configLoading()"
+                    (click)="loadPayPhoneConfig()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M20 12a8 8 0 10-2.34 5.66" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                      <path d="M20 12v4h-4M4 12a8 8 0 102.34-5.66" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                      <path d="M4 12V8h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                    </svg>
+                    {{ payPhoneWidget.configLoading() ? 'Cargando...' : 'Recargar' }}
+                  </button>
                 </div>
-                @if (payPhoneWidget.configStatus()) {
-                  <p class="stripe-status" [class.stripe-status--ok]="payPhoneWidget.configured()" [class.stripe-status--warn]="!payPhoneWidget.configured()">{{ payPhoneWidget.configStatus() }}</p>
-                }
-                <div class="stripe-grid">
-                  <label class="toggle">
-                    <span>
-                      <strong>Habilitar PayPhone</strong>
-                      <small>Usa token y tienda de esta empresa.</small>
+
+                @if (payPhoneShowConfigAlert()) {
+                  <div class="payphone-config__alert" role="status">
+                    <span class="payphone-config__alert-icon" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M12 8v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                        <circle cx="12" cy="16.2" r="1" fill="currentColor" />
+                      </svg>
                     </span>
-                    <input type="checkbox" [checked]="payPhoneWidget.configEnabled()" (change)="payPhoneWidget.configEnabled.set(!payPhoneWidget.configEnabled())" />
-                  </label>
-                  <label class="field">
-                    <span>Token PayPhone</span>
-                    <input type="password" class="input pos-focus-ring" autocomplete="new-password" [placeholder]="payPhoneWidget.configTokenConfigured() ? 'Guardado; ingrese uno nuevo para reemplazar' : 'Token PayPhone'" [ngModel]="payPhoneWidget.configToken()" (ngModelChange)="payPhoneWidget.configToken.set($event)" />
-                  </label>
-                  <label class="field">
-                    <span>Store ID</span>
-                    <input class="input pos-focus-ring" type="text" [ngModel]="payPhoneWidget.configStoreId()" (ngModelChange)="payPhoneWidget.configStoreId.set($event)" />
-                  </label>
-                  <label class="field">
-                    <span>Base URL</span>
-                    <input class="input pos-focus-ring" type="url" placeholder="https://pay.payphonetodoesposible.com" [ngModel]="payPhoneWidget.configBaseUrl()" (ngModelChange)="payPhoneWidget.configBaseUrl.set($event)" />
-                  </label>
-                  <label class="field">
-                    <span>Moneda</span>
-                    <input class="input pos-focus-ring" type="text" maxlength="3" [ngModel]="payPhoneWidget.configCurrency()" (ngModelChange)="payPhoneWidget.configCurrency.set($event)" />
-                  </label>
-                  <label class="field">
-                    <span>Zona horaria</span>
-                    <input class="input pos-focus-ring" type="text" placeholder="America/Guayaquil" [ngModel]="payPhoneWidget.configTimeZone()" (ngModelChange)="payPhoneWidget.configTimeZone.set($event)" />
-                  </label>
-                  <label class="field field--wide">
-                    <span>URL de respuesta (generada)</span>
-                    <input class="input pos-focus-ring" type="url" readonly [ngModel]="payPhoneWidget.configResponseUrl()" />
-                    <small>El sistema la envia a PayPhone por empresa; no requiere configuracion manual.</small>
-                  </label>
-                </div>
-                <div class="stripe-actions">
-                  <button type="button" class="primary-btn pos-focus-ring" [disabled]="payPhoneWidget.configSaving()" (click)="savePayPhoneConfig()">{{ payPhoneWidget.configSaving() ? 'Guardando...' : 'Guardar PayPhone' }}</button>
+                    <span>{{ payPhoneWidget.configStatus() || 'PayPhone no configurado para esta empresa.' }}</span>
+                  </div>
+                }
+
+                <div class="payphone-config__form-panel">
+                  <div class="payphone-config__grid">
+                    <div class="payphone-config__field payphone-config__field--toggle">
+                      <span class="payphone-config__label">Habilitar PayPhone</span>
+                      <div class="payphone-config__toggle-row">
+                        <small>Usa token y tienda de esta empresa.</small>
+                        <button
+                          type="button"
+                          class="payphone-config__switch pos-focus-ring"
+                          role="switch"
+                          [attr.aria-checked]="payPhoneWidget.configEnabled()"
+                          [attr.aria-label]="payPhoneWidget.configEnabled() ? 'Deshabilitar PayPhone' : 'Habilitar PayPhone'"
+                          [class.payphone-config__switch--on]="payPhoneWidget.configEnabled()"
+                          (click)="payPhoneWidget.configEnabled.set(!payPhoneWidget.configEnabled())">
+                          <span class="payphone-config__switch-thumb" aria-hidden="true"></span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <label class="payphone-config__field">
+                      <span class="payphone-config__label">Store ID</span>
+                      <input
+                        class="payphone-config__input pos-focus-ring"
+                        type="text"
+                        placeholder="Store ID"
+                        [ngModel]="payPhoneWidget.configStoreId()"
+                        (ngModelChange)="payPhoneWidget.configStoreId.set($event)" />
+                    </label>
+
+                    <label class="payphone-config__field">
+                      <span class="payphone-config__label">Moneda</span>
+                      <div class="payphone-config__select-wrap">
+                        <select
+                          class="payphone-config__input payphone-config__input--select pos-focus-ring"
+                          [ngModel]="payPhoneWidget.configCurrency()"
+                          (ngModelChange)="payPhoneWidget.configCurrency.set($event)">
+                          <option value="USD">USD</option>
+                          <option value="EUR">EUR</option>
+                        </select>
+                        <svg class="payphone-config__select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </div>
+                    </label>
+
+                    <label class="payphone-config__field">
+                      <span class="payphone-config__label">País (código PayPhone)</span>
+                      <div class="payphone-config__select-wrap">
+                        <select
+                          class="payphone-config__input payphone-config__input--select pos-focus-ring"
+                          [ngModel]="payPhoneWidget.configDefaultCountryCode()"
+                          (ngModelChange)="payPhoneWidget.configDefaultCountryCode.set($event)">
+                          @for (country of payPhoneCountryOptions; track country.code) {
+                            <option [value]="country.code">{{ country.label }}</option>
+                          }
+                        </select>
+                        <svg class="payphone-config__select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </div>
+                    </label>
+
+                    <label class="payphone-config__field">
+                      <span class="payphone-config__label">Zona horaria</span>
+                      <div class="payphone-config__select-wrap">
+                        <select
+                          class="payphone-config__input payphone-config__input--select pos-focus-ring"
+                          [ngModel]="payPhoneWidget.configTimeZone()"
+                          (ngModelChange)="payPhoneWidget.configTimeZone.set($event)">
+                          @for (tz of payPhoneTimeZoneOptions; track tz.value) {
+                            <option [value]="tz.value">{{ tz.label }}</option>
+                          }
+                        </select>
+                        <svg class="payphone-config__select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="payphone-config__url">
+                    <span class="payphone-config__label">Token PayPhone</span>
+                    <div class="payphone-config__url-row">
+                      <input
+                        type="text"
+                        class="payphone-config__url-value payphone-config__url-value--edit pos-focus-ring"
+                        autocomplete="off"
+                        spellcheck="false"
+                        [placeholder]="payPhoneWidget.tokenDisplayPlaceholder()"
+                        [ngModel]="payPhoneWidget.configToken()"
+                        (ngModelChange)="payPhoneWidget.configToken.set($event)" />
+                    </div>
+                    @if (payPhoneWidget.configTokenConfigured()) {
+                      <small class="payphone-config__url-note">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" />
+                          <path d="M12 10v6M12 7h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                        </svg>
+                        El token se almacena cifrado. Solo ingrese uno nuevo para reemplazarlo.
+                      </small>
+                    }
+                  </div>
+
+                  <div class="payphone-config__url">
+                    <span class="payphone-config__label">Base URL (endpoint PayPhone)</span>
+                    <div class="payphone-config__url-row">
+                      <output class="payphone-config__url-value" aria-live="polite">{{ payPhoneWidget.apiBaseUrlForDisplay() }}</output>
+                    </div>
+                    <small class="payphone-config__url-note">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M12 10v6M12 7h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                      </svg>
+                      Endpoint oficial de PayPhone; no requiere configuraci&oacute;n manual.
+                    </small>
+                  </div>
+
+                  <div class="payphone-config__url">
+                    <span class="payphone-config__label">URL de respuesta (generada)</span>
+                    <div class="payphone-config__url-row">
+                      <output class="payphone-config__url-value" aria-live="polite">{{ payPhoneWidget.responseUrlForDisplay() }}</output>
+                      <button
+                        type="button"
+                        class="payphone-config__copy pos-focus-ring"
+                        [disabled]="payPhoneWidget.responseUrlForDisplay() === '—'"
+                        [attr.aria-label]="payPhoneResponseUrlCopied() ? 'URL copiada' : 'Copiar URL de respuesta'"
+                        (click)="copyPayPhoneResponseUrl()">
+                        @if (payPhoneResponseUrlCopied()) {
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        } @else {
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.6" />
+                            <path d="M6 16H5a2 2 0 01-2-2V5a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="1.6" />
+                          </svg>
+                        }
+                      </button>
+                    </div>
+                    <small class="payphone-config__url-note">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M12 10v6M12 7h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                      </svg>
+                      El sistema la env&iacute;a a PayPhone por empresa; no requiere configuraci&oacute;n manual.
+                    </small>
+                  </div>
                 </div>
               </div>
 
-              <div class="field field--wide stripe-box" [class.integration-panel--hidden]="selectedPaymentIntegration() !== 'payphone'">
-                <div class="stripe-box__head">
-                  <div>
-                    <span>Cobro PayPhone</span>
-                    <small>Sale API con consulta manual de estado para respetar limites.</small>
-                  </div>
-                  <strong class="amount-pill">{{ payPhoneAmountView() | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</strong>
                 </div>
-                <div class="stripe-grid">
-                  <label class="field"><span>Telefono</span><input class="input pos-focus-ring" type="tel" [ngModel]="payPhonePhoneNumber()" (ngModelChange)="payPhonePhoneNumber.set($event)" /></label>
-                  <label class="field"><span>Codigo pais</span><input class="input pos-focus-ring" type="text" [ngModel]="payPhoneCountryCode()" (ngModelChange)="payPhoneCountryCode.set($event)" /></label>
-                  <label class="field"><span>Sin impuestos</span><input class="input pos-focus-ring" type="number" min="0" step="0.01" [ngModel]="payPhoneAmountWithoutTax()" (ngModelChange)="payPhoneAmountWithoutTax.set($event)" /></label>
-                  <label class="field"><span>Con impuestos</span><input class="input pos-focus-ring" type="number" min="0" step="0.01" [ngModel]="payPhoneAmountWithTax()" (ngModelChange)="payPhoneAmountWithTax.set($event)" /></label>
-                  <label class="field"><span>Tax</span><input class="input pos-focus-ring" type="number" min="0" step="0.01" [ngModel]="payPhoneTax()" (ngModelChange)="payPhoneTax.set($event)" /></label>
-                  <label class="field"><span>Servicio</span><input class="input pos-focus-ring" type="number" min="0" step="0.01" [ngModel]="payPhoneService()" (ngModelChange)="payPhoneService.set($event)" /></label>
-                  <label class="field"><span>Propina</span><input class="input pos-focus-ring" type="number" min="0" step="0.01" [ngModel]="payPhoneTip()" (ngModelChange)="payPhoneTip.set($event)" /></label>
-                  <label class="field"><span>Referencia</span><input class="input pos-focus-ring" type="text" [ngModel]="payPhoneReference()" (ngModelChange)="payPhoneReference.set($event)" /></label>
-                  <label class="field"><span>Client Transaction ID</span><input class="input pos-focus-ring" type="text" [ngModel]="payPhoneClientTransactionId()" (ngModelChange)="payPhoneClientTransactionId.set($event)" /></label>
-                  <label class="field"><span>Client User ID</span><input class="input pos-focus-ring" type="text" [ngModel]="payPhoneClientUserId()" (ngModelChange)="payPhoneClientUserId.set($event)" /></label>
-                  <label class="field"><span>Opcional 1</span><input class="input pos-focus-ring" type="text" [ngModel]="payPhoneOptional1()" (ngModelChange)="payPhoneOptional1.set($event)" /></label>
-                  <label class="field"><span>Opcional 2</span><input class="input pos-focus-ring" type="text" [ngModel]="payPhoneOptional2()" (ngModelChange)="payPhoneOptional2.set($event)" /></label>
-                  <label class="field"><span>Opcional 3</span><input class="input pos-focus-ring" type="text" [ngModel]="payPhoneOptional3()" (ngModelChange)="payPhoneOptional3.set($event)" /></label>
-                </div>
-                <div class="stripe-actions">
-                  <button type="button" class="primary-btn primary-btn--soft pos-focus-ring" [disabled]="!canCreatePayPhoneSale()" (click)="createPayPhoneSale()">{{ payPhoneWidget.busy() ? 'Creando cobro...' : 'Crear cobro PayPhone' }}</button>
-                  <button type="button" class="mini-btn pos-focus-ring" [disabled]="!canCheckPayPhoneStatus()" (click)="checkPayPhoneStatus()">{{ payPhoneWidget.testCheckingStatus() ? 'Consultando...' : 'Consultar estado' }}</button>
-                </div>
-              </div>
-                </div>
+
+                @if (selectedPaymentIntegration() === 'payphone') {
+                  <footer class="integration-modal__footer">
+                    <div class="payphone-config__actions">
+                      <button type="button" class="payphone-config__save pos-focus-ring" [disabled]="payPhoneWidget.configSaving()" (click)="savePayPhoneConfig()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M5 5h11l3 3v11a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M8 5V3h6v2M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                        {{ payPhoneWidget.configSaving() ? 'Guardando...' : 'Guardar PayPhone' }}
+                      </button>
+                      <button type="button" class="payphone-config__cancel pos-focus-ring" (click)="closePaymentIntegrationModal()">Cancelar</button>
+                    </div>
+                  </footer>
+                }
               </section>
             }
           }
@@ -3695,6 +3835,68 @@ declare global {
       font-size: 0.78rem;
       line-height: 1.4;
     }
+    .integration-modal__close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 5px;
+      border: 1px solid var(--pos-border);
+      background: var(--pos-surface);
+      color: var(--pos-muted);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .integration-modal--payphone {
+      display: flex;
+      flex-direction: column;
+      width: min(44rem, calc(100vw - 2rem));
+      max-height: min(92vh, 52rem);
+      padding: 0;
+      overflow: hidden;
+      border-radius: 5px;
+    }
+    .integration-modal--payphone .integration-modal__head {
+      position: static;
+      flex-shrink: 0;
+      margin: 0;
+      padding: 1.25rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--pos-border);
+      background: var(--pos-elevated);
+    }
+    .integration-modal--payphone .integration-modal__head h2 {
+      margin-top: 0.2rem;
+      font-size: 1.42rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--pos-text);
+    }
+    .integration-modal--payphone .integration-modal__head p {
+      margin-top: 0.35rem;
+      font-size: 0.8rem;
+    }
+    .integration-modal--payphone .integration-modal__close {
+      width: 2.1rem;
+      height: 2.1rem;
+      margin-top: 0.1rem;
+    }
+    .integration-modal__body--payphone {
+      display: block;
+      flex: 1 1 auto;
+      min-height: 0;
+      margin-top: 0;
+      padding: 1rem 1.5rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .integration-modal__footer {
+      flex-shrink: 0;
+      padding: 0.85rem 1.5rem 1.1rem;
+      border-top: 1px solid var(--pos-border);
+      background: var(--pos-elevated);
+    }
     .integration-modal__body {
       margin-top: 0.85rem;
     }
@@ -3884,6 +4086,356 @@ declare global {
       border-color: rgba(217, 119, 6, 0.32);
       background: rgba(251, 191, 36, 0.12);
       color: #92400e;
+    }
+    .payphone-config {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 0;
+    }
+    .payphone-config__status-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+    }
+    .payphone-config__brand {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      min-width: 0;
+    }
+    .payphone-config__logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.65rem;
+      height: 2.65rem;
+      border-radius: 999px;
+      background: linear-gradient(145deg, #6366f1 0%, #4f46e5 100%);
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      box-shadow: 0 4px 14px -6px rgba(79, 70, 229, 0.65);
+      flex-shrink: 0;
+    }
+    .payphone-config__brand-copy {
+      min-width: 0;
+    }
+    .payphone-config__brand-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .payphone-config__brand-row strong {
+      font-size: 0.9rem;
+      font-weight: 750;
+      color: var(--pos-text);
+    }
+    .payphone-config__brand-copy small {
+      display: block;
+      margin-top: 0.2rem;
+      color: var(--pos-faint);
+      font-size: 0.7rem;
+    }
+    .payphone-config__badge {
+      padding: 0.18rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid #e2e8f0;
+      background: #f1f5f9;
+      color: #64748b;
+      font-size: 0.68rem;
+      font-weight: 650;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .payphone-config__badge--ready {
+      border-color: rgba(251, 191, 36, 0.45);
+      background: #fff7ed;
+      color: #c2410c;
+    }
+    .payphone-config__badge--on {
+      border-color: rgba(16, 185, 129, 0.35);
+      background: #ecfdf5;
+      color: #047857;
+    }
+    .payphone-config__reload {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42rem;
+      min-height: 2.15rem;
+      padding: 0.42rem 0.8rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: var(--pos-elevated);
+      color: var(--pos-accent-hover);
+      font-size: 0.74rem;
+      font-weight: 750;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .payphone-config__reload:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .payphone-config__alert {
+      display: flex;
+      align-items: center;
+      gap: 0.62rem;
+      padding: 0.78rem 0.9rem;
+      border-radius: 5px;
+      border: 1px solid #fdba74;
+      background: #fff7ed;
+      color: #9a3412;
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+    .payphone-config__alert-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: #ea580c;
+    }
+    .payphone-config__form-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+      border: 1px solid var(--pos-border);
+      border-radius: 5px;
+      background: color-mix(in srgb, var(--pos-surface) 88%, var(--pos-bg));
+    }
+    .payphone-config__grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.85rem 0.75rem;
+    }
+    .payphone-config__field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-width: 0;
+    }
+    .payphone-config__field--toggle {
+      justify-content: flex-start;
+    }
+    .payphone-config__label {
+      font-size: 0.74rem;
+      font-weight: 750;
+      color: #475569;
+    }
+    .payphone-config__toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      min-height: 2.5rem;
+      padding: 0.5rem 0.65rem;
+      border-radius: 5px;
+      border: 1px solid #e2e8f0;
+      background: var(--pos-elevated);
+    }
+    .payphone-config__toggle-row small {
+      color: #94a3b8;
+      font-size: 0.72rem;
+      line-height: 1.35;
+    }
+    .payphone-config__switch {
+      position: relative;
+      width: 2.5rem;
+      height: 1.35rem;
+      border: none;
+      border-radius: 999px;
+      background: #cbd5e1;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
+      transition: background 0.15s ease;
+    }
+    .payphone-config__switch--on {
+      background: var(--pos-accent);
+    }
+    .payphone-config__switch-thumb {
+      position: absolute;
+      top: 0.15rem;
+      left: 0.15rem;
+      width: 1.05rem;
+      height: 1.05rem;
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+      transition: transform 0.15s ease;
+    }
+    .payphone-config__switch--on .payphone-config__switch-thumb {
+      transform: translateX(1.15rem);
+    }
+    .payphone-config__input {
+      width: 100%;
+      min-height: 2.5rem;
+      border-radius: 5px;
+      border: 1px solid #e2e8f0;
+      background: var(--pos-elevated);
+      color: var(--pos-text);
+      padding: 0.5rem 0.65rem;
+      font-size: 0.8rem;
+      line-height: 1.2;
+    }
+    .payphone-config__input::placeholder {
+      color: #94a3b8;
+    }
+    .payphone-config__input:focus {
+      outline: none;
+      border-color: color-mix(in srgb, var(--pos-accent) 55%, #e2e8f0);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--pos-accent) 14%, transparent);
+    }
+    .payphone-config__select-wrap {
+      position: relative;
+    }
+    .payphone-config__input--select {
+      appearance: none;
+      padding-right: 2rem;
+      cursor: pointer;
+    }
+    .payphone-config__select-chevron {
+      position: absolute;
+      top: 50%;
+      right: 0.65rem;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      pointer-events: none;
+    }
+    .payphone-config__input--readonly {
+      color: #64748b;
+      background: #f8fafc;
+    }
+    .payphone-config__url {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .payphone-config__url-row {
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      background: #f8fafc;
+    }
+    .payphone-config__url-row .payphone-config__input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .payphone-config__url-row .payphone-config__input:focus {
+      box-shadow: none;
+    }
+    .payphone-config__url-value {
+      display: block;
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      margin: 0;
+      padding: 0.65rem 0.75rem;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-family: var(--pos-mono);
+      font-size: 0.74rem;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+      user-select: text;
+    }
+    .payphone-config__url-value--edit {
+      outline: none;
+      color: var(--pos-text);
+    }
+    .payphone-config__url-value--edit::placeholder {
+      color: #94a3b8;
+      font-family: var(--pos-font);
+      font-size: 0.72rem;
+    }
+    .payphone-config__url-value--edit:focus {
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pos-accent) 40%, transparent);
+    }
+    .payphone-config__copy {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.65rem;
+      border: none;
+      border-left: 1px solid #e2e8f0;
+      background: var(--pos-elevated);
+      color: var(--pos-accent-hover);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .payphone-config__copy:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .payphone-config__url-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.38rem;
+      color: #94a3b8;
+      font-size: 0.7rem;
+      line-height: 1.35;
+    }
+    .payphone-config__url-note svg {
+      flex-shrink: 0;
+      color: #94a3b8;
+    }
+    .payphone-config__actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+    .payphone-config__save {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-height: 2.55rem;
+      padding: 0.55rem 1.15rem;
+      border: 1px solid var(--pos-accent);
+      border-radius: 5px;
+      background: var(--pos-accent);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 2px 8px -4px color-mix(in srgb, var(--pos-accent) 55%, transparent);
+    }
+    .payphone-config__save:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .payphone-config__cancel {
+      min-height: 2.55rem;
+      padding: 0.55rem 1.2rem;
+      border-radius: 5px;
+      border: 1px solid #e2e8f0;
+      background: var(--pos-elevated);
+      color: #64748b;
+      font-size: 0.78rem;
+      font-weight: 750;
+      cursor: pointer;
     }
     .mini-btn,
     .primary-btn {
@@ -4855,6 +5407,21 @@ declare global {
         max-height: calc(100vh - 1rem);
         padding: 0.7rem;
       }
+      .integration-modal--payphone {
+        width: calc(100vw - 1rem);
+        max-height: calc(100vh - 1rem);
+        padding: 0;
+      }
+      .integration-modal--payphone .integration-modal__head {
+        margin: 0;
+        padding: 1rem;
+      }
+      .integration-modal__body--payphone {
+        padding: 0.85rem 1rem;
+      }
+      .integration-modal__footer {
+        padding: 0.75rem 1rem 1rem;
+      }
       .integration-modal__head {
         flex-direction: column;
         margin: -0.7rem -0.7rem 0;
@@ -4866,6 +5433,25 @@ declare global {
       }
       .info-grid--stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .payphone-config__actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+      }
+      .payphone-config__save,
+      .payphone-config__cancel {
+        width: 100%;
+        justify-content: center;
+      }
+      .payphone-config__grid {
+        grid-template-columns: 1fr;
+      }
+      .payphone-config__status-card {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .payphone-config__reload {
+        align-self: flex-end;
       }
       .stripe-grid,
       .kushki-plan,
@@ -4913,6 +5499,14 @@ export class PosAjustesPage implements OnInit {
   readonly auth = inject(PosAuthService);
   private readonly runtimeConfig = inject(PosConfigService);
   readonly payPhoneWidget = inject(PayPhonePaymentWidget);
+  readonly payPhoneTimeZoneOptions = [
+    { value: '-5', label: '-5' },
+    { value: '-6', label: '-6' },
+    { value: '-4', label: '-4' },
+    { value: '0', label: '0' },
+  ] as const;
+  readonly payPhoneCountryOptions = PAYPHONE_COUNTRY_OPTIONS;
+  readonly payPhoneResponseUrlCopied = signal(false);
 
   readonly invoicingProvider = signal('NONE');
   readonly invoicingPending = signal(0);
@@ -4971,20 +5565,6 @@ export class PosAjustesPage implements OnInit {
   readonly kushkiPhone = signal('');
   private kushkiHostedCard: any = null;
   private kushkiSubscriptionSubmitted = false;
-  readonly payPhonePhoneNumber = signal('');
-  readonly payPhoneCountryCode = signal('593');
-  readonly payPhoneAmountWithoutTax = signal('0');
-  readonly payPhoneAmountWithTax = signal('0');
-  readonly payPhoneTax = signal('0');
-  readonly payPhoneService = signal('0');
-  readonly payPhoneTip = signal('0');
-  readonly payPhoneReference = signal('Pago POS');
-  readonly payPhoneClientTransactionId = signal('');
-  readonly payPhoneClientUserId = signal('');
-  readonly payPhoneOptional1 = signal('');
-  readonly payPhoneOptional2 = signal('');
-  readonly payPhoneOptional3 = signal('');
-
   readonly stripeConfigLabel = computed(() => {
     if (this.stripeLoading()) {
       return 'Cargando configuracion...';
@@ -5005,7 +5585,6 @@ export class PosAjustesPage implements OnInit {
     return this.kushkiConfigured() ? 'Configurado' : 'No configurado';
   });
 
-  readonly payPhoneAmountView = computed(() => this.payPhoneWidget.testAmountView(this.payPhoneTestInput()));
   readonly selectedPaymentIntegrationCard = computed(() => {
     const cards = this.paymentIntegrationCards();
     return cards.find((item) => item.id === this.selectedPaymentIntegration()) ?? cards[0];
@@ -5040,13 +5619,13 @@ export class PosAjustesPage implements OnInit {
       id: 'payphone' as const,
       name: 'PayPhone',
       shortName: 'PF',
-      description: 'API Sale, cobro por telefono y consulta de estado.',
+      description: 'Cobro movil por telefono desde la venta POS.',
       state: this.integrationState(
         this.payPhoneWidget.configEnabled(),
         this.payPhoneWidget.configured(),
         this.payPhoneWidget.configStatus(),
       ),
-      capabilities: ['Sale API', 'Movil', 'Estado'],
+      capabilities: ['Movil', 'Venta POS'],
     },
     {
       id: 'manual' as const,
@@ -5710,52 +6289,36 @@ export class PosAjustesPage implements OnInit {
     });
   }
 
-  private payPhoneTestInput(): PayPhoneTestSaleInput {
-    return {
-      phoneNumber: this.payPhonePhoneNumber(),
-      countryCode: this.payPhoneCountryCode(),
-      amountWithoutTax: this.payPhoneAmountWithoutTax(),
-      amountWithTax: this.payPhoneAmountWithTax(),
-      tax: this.payPhoneTax(),
-      service: this.payPhoneService(),
-      tip: this.payPhoneTip(),
-      reference: this.payPhoneReference(),
-      clientTransactionId: this.payPhoneClientTransactionId(),
-      clientUserId: this.payPhoneClientUserId(),
-      optionalParameter1: this.payPhoneOptional1(),
-      optionalParameter2: this.payPhoneOptional2(),
-      optionalParameter3: this.payPhoneOptional3(),
-    };
+  payPhoneIntegrationBadge(): string {
+    if (!this.payPhoneWidget.configEnabled()) {
+      return 'Deshabilitado';
+    }
+    return this.payPhoneWidget.configured() ? 'Configurado' : 'Habilitado';
   }
 
-  canCreatePayPhoneSale(): boolean {
-    return this.payPhoneWidget.canCreateTestSale(this.payPhoneTestInput());
+  payPhoneShowConfigAlert(): boolean {
+    if (this.payPhoneWidget.configLoading()) {
+      return false;
+    }
+    if (!this.payPhoneWidget.configured()) {
+      return true;
+    }
+    const status = this.payPhoneWidget.configStatus().trim().toLowerCase();
+    return /error|faltan|no configurado|rechaz|fall/i.test(status);
   }
 
-  createPayPhoneSale(): void {
-    if (!this.canCreatePayPhoneSale()) {
+  async copyPayPhoneResponseUrl(): Promise<void> {
+    const url = this.payPhoneWidget.responseUrlForDisplay().trim();
+    if (!url || url === '—') {
       return;
     }
-    this.payPhoneWidget.startTestSale(this.payPhoneTestInput(), this.idempotencyKey()).subscribe({
-      next: (session) => {
-        this.payPhoneClientTransactionId.set(session.clientTransactionId);
-      },
-      error: (err: unknown) => this.payPhoneWidget.configStatus.set(this.errorMessage(err, 'PayPhone')),
-    });
-  }
-
-  canCheckPayPhoneStatus(): boolean {
-    return this.payPhoneWidget.canCheckTestStatus();
-  }
-
-  checkPayPhoneStatus(): void {
-    if (!this.canCheckPayPhoneStatus()) {
-      this.payPhoneWidget.configStatus.set('Espere unos segundos antes de consultar nuevamente.');
-      return;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.payPhoneResponseUrlCopied.set(true);
+      window.setTimeout(() => this.payPhoneResponseUrlCopied.set(false), 2000);
+    } catch {
+      this.payPhoneWidget.configStatus.set('No se pudo copiar la URL de respuesta.');
     }
-    this.payPhoneWidget.checkTestStatus().subscribe({
-      error: (err: unknown) => this.payPhoneWidget.configStatus.set(this.errorMessage(err, 'PayPhone')),
-    });
   }
 
   setTheme(t: PosTheme): void {

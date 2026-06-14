@@ -18,6 +18,7 @@ import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
 import type {
   PosCheckoutPago,
   PosCheckoutRequestBody,
+  PosCustomerRequest,
   PosCustomerResponse,
   PayPhoneIntentResponse,
   PosOfflineComprobanteSyncRequest,
@@ -26,6 +27,7 @@ import type {
   PosProductCategoryResponse,
   PosProductPriceMatrixEntry,
 } from '../../core/api/pos-backend.types';
+import { extractApiErrorMessage, formatPayPhoneApiError } from '../../core/http-error.util';
 import { resolveProductMediaUrl } from '../../shared/catalog/pos-product-media.util';
 import {
   applyTipoIdentificacionDefaults,
@@ -59,6 +61,7 @@ import { PosLayoutPreferencesService } from '../../core/layout/pos-layout-prefer
 import { PosOfflineSyncService } from '../../core/offline/pos-offline-sync.service';
 import { PosToastService } from '../../core/ui/pos-toast.service';
 import { PayPhonePaymentWidget } from '../../core/payments/payphone-payment.widget';
+import { PAYPHONE_COUNTRY_OPTIONS, normalizePayPhoneLocalPhone } from '../../core/payments/payphone-countries.util';
 import { PosPaymentWidgetRegistryService } from '../../core/payments/pos-payment-widget-registry.service';
 import type {
   PaymentCollectionSession,
@@ -1024,27 +1027,47 @@ type ModalState =
           @case ('cobro') {
             <div class="pos-pay-modal">
               <header class="pos-pay-top">
-                <div class="pos-pay-top__main">
-                  <span class="pos-pay-top__icon" aria-hidden="true">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
-                      <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                      <path d="M16.5 15.5l2 2L21 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                  </span>
-                  <div class="pos-pay-top__copy">
-                    <h3 class="pos-pay-top__title" id="mdl-cobro">Cobro de ticket</h3>
-                    <p class="pos-pay-top__meta">
-                      Cliente: <strong>{{ activeCustomer()?.name || 'Consumidor final' }}</strong>
-                      · Caja: <strong>{{ desk.cajaDisplayId() }}</strong>
-                    </p>
+                <div class="pos-pay-top__row">
+                  <div class="pos-pay-top__main">
+                    <span class="pos-pay-top__icon" aria-hidden="true">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M8 4h11a1 1 0 011 1v14a1 1 0 01-1 1H8a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" />
+                        <path d="M8 8h8M8 11h8M8 14h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        <path d="M16.5 15.5l2 2L21 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <div class="pos-pay-top__copy">
+                      <h3 class="pos-pay-top__title" id="mdl-cobro">Cobro de ticket</h3>
+                      <p class="pos-pay-top__meta">
+                        Cliente: <strong>{{ activeCustomer()?.name || 'Consumidor final' }}</strong>
+                        · Caja: <strong>{{ desk.cajaDisplayId() }}</strong>
+                      </p>
+                    </div>
                   </div>
+                  <button type="button" class="pos-pay-top__close pos-focus-ring" aria-label="Cerrar" (click)="closeModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                  </button>
                 </div>
-                <button type="button" class="pos-pay-top__close pos-focus-ring" aria-label="Cerrar" (click)="closeModal()">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                  </svg>
-                </button>
+                @if (checkoutError()) {
+                  <div class="pos-pay-feedback pos-pay-top__alert" role="alert" aria-live="polite">
+                    <span class="pos-pay-feedback__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 8v5M12 16h.01M10.3 4.3l-7.4 12.8A2 2 0 004.6 20h14.8a2 2 0 001.7-2.9l-7.4-12.8a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                    <div class="pos-pay-feedback__copy">
+                      <strong>{{ checkoutErrorTitle() }}</strong>
+                      <p>{{ checkoutError() }}</p>
+                    </div>
+                    <button type="button" class="pos-pay-feedback__dismiss pos-focus-ring" aria-label="Cerrar mensaje" (click)="dismissCheckoutError()">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+                }
               </header>
 
               <div class="pos-pay-hero">
@@ -1200,8 +1223,12 @@ type ModalState =
                             <input class="modal-input pos-focus-ring" type="tel" [value]="payPhonePhoneNumber()" (input)="onPayPhonePhoneNumber($event)" />
                           </label>
                           <label class="modal-field">
-                            <span>Codigo pais</span>
-                            <input class="modal-input pos-focus-ring" type="text" [value]="payPhoneCountryCode()" (input)="onPayPhoneCountryCode($event)" />
+                            <span>País</span>
+                            <select class="modal-input pos-focus-ring" [value]="payPhoneCountryCode()" (change)="onPayPhoneCountryCode($event)">
+                              @for (country of payPhoneCountryOptions; track country.code) {
+                                <option [value]="country.code">{{ country.label }}</option>
+                              }
+                            </select>
                           </label>
                           <label class="modal-field">
                             <span>Referencia</span>
@@ -1411,24 +1438,6 @@ type ModalState =
                 </div>
 
                 <footer class="pos-pay-footer">
-                  @if (checkoutError()) {
-                    <div class="pos-pay-feedback" role="alert" aria-live="polite">
-                      <span class="pos-pay-feedback__icon" aria-hidden="true">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <path d="M12 8v5M12 16h.01M10.3 4.3l-7.4 12.8A2 2 0 004.6 20h14.8a2 2 0 001.7-2.9l-7.4-12.8a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-                        </svg>
-                      </span>
-                      <div class="pos-pay-feedback__copy">
-                        <strong>{{ checkoutErrorTitle() }}</strong>
-                        <p>{{ checkoutError() }}</p>
-                      </div>
-                      <button type="button" class="pos-pay-feedback__dismiss pos-focus-ring" aria-label="Cerrar mensaje" (click)="dismissCheckoutError()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                        </svg>
-                      </button>
-                    </div>
-                  }
                   <div class="pos-pay-footer__bar">
                   <div class="pos-pay-footer__stats">
                     <div class="pos-pay-stat pos-pay-stat--total">
@@ -3259,12 +3268,21 @@ type ModalState =
     .pos-pay-top {
       flex-shrink: 0;
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 0.75rem;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.55rem;
       padding: 0.85rem 1rem;
       border-bottom: 1px solid var(--pos-border);
       background: var(--pos-elevated);
+    }
+    .pos-pay-top__row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .pos-pay-top__alert {
+      width: 100%;
     }
     .pos-pay-top__main {
       display: flex;
@@ -4600,6 +4618,7 @@ export class PosVentaPage {
   private readonly toast = inject(PosToastService);
   private readonly paymentWidgets = inject(PosPaymentWidgetRegistryService);
   readonly payPhoneWidget = inject(PayPhonePaymentWidget);
+  readonly payPhoneCountryOptions = PAYPHONE_COUNTRY_OPTIONS;
 
   readonly invoicingEnabled = signal(false);
   readonly resolvedPuntoEmisionId = signal<string | null>(null);
@@ -4772,8 +4791,12 @@ export class PosVentaPage {
     if (!message) {
       return '';
     }
+    const lower = message.toLowerCase();
+    if (lower.includes('payphone')) {
+      return 'Error en cobro PayPhone';
+    }
     const serverHints = ['sesión', 'servidor', 'autorizada', 'pos-app', 'conexión', 'código 4', 'código 5'];
-    const isServer = serverHints.some((hint) => message.toLowerCase().includes(hint));
+    const isServer = serverHints.some((hint) => lower.includes(hint));
     return isServer ? 'No se pudo confirmar el cobro' : 'Revisa el cobro';
   });
   readonly checkoutLoading = signal(false);
@@ -5563,7 +5586,7 @@ export class PosVentaPage {
     if (method === 'payphone') {
       this.payPhoneWidget.resetSession();
       this.payPhonePhoneNumber.set(this.defaultPayPhonePhoneNumber());
-      this.payPhoneCountryCode.set('593');
+      this.payPhoneCountryCode.set(this.defaultPayPhoneCountryCode());
     }
     this.fillDraftPending();
   }
@@ -5650,7 +5673,7 @@ export class PosVentaPage {
   }
 
   onPayPhoneCountryCode(ev: Event): void {
-    this.payPhoneCountryCode.set((ev.target as HTMLInputElement).value.trim());
+    this.payPhoneCountryCode.set((ev.target as HTMLSelectElement).value.trim());
   }
 
   canStartPayPhoneCollection(): boolean {
@@ -5675,6 +5698,8 @@ export class PosVentaPage {
     }
     this.checkoutError.set(null);
     const amount = this.round2(Math.min(this.parseUsd(this.draftAmount()), this.payableBalance()));
+    const phone = this.payPhonePhoneNumber().trim();
+    this.persistCustomerPhoneIfChanged(phone);
     this.payPhoneWidget
       .startCollection(
         {
@@ -5890,21 +5915,43 @@ export class PosVentaPage {
   }
 
   private defaultPayPhonePhoneNumber(): string {
-    return '';
+    return normalizePayPhoneLocalPhone(this.activeCustomer()?.phone);
+  }
+
+  private defaultPayPhoneCountryCode(): string {
+    return this.payPhoneWidget.defaultCountryCodeForCheckout();
+  }
+
+  private persistCustomerPhoneIfChanged(phone: string): void {
+    const customer = this.activeCustomer();
+    if (!customer?.id || customer.isConsumidorFinal) {
+      return;
+    }
+    const normalized = phone.trim();
+    if (!normalized || normalized === (customer.phone?.trim() ?? '')) {
+      return;
+    }
+    const body: PosCustomerRequest = {
+      tipoIdentificacion: customer.tipoIdentificacion,
+      identificacion: customer.doc,
+      razonSocial: customer.razonSocial ?? customer.name,
+      nombreComercial: customer.nombreComercial ?? null,
+      direccion: customer.direccion ?? null,
+      email: customer.email ?? null,
+      phone: normalized,
+      priceListId: customer.priceListId ?? null,
+      active: customer.active ?? true,
+    };
+    this.backend.putCustomer(customer.id, body).subscribe({
+      next: (res) => this.applyCustomer(customerResponseToSale(res)),
+      error: () => {
+        /* no bloquea el cobro si falla la actualización del teléfono */
+      },
+    });
   }
 
   private payPhoneErrorMessage(err: unknown): string {
-    if (err instanceof HttpErrorResponse) {
-      const body = err.error as { message?: string } | string | null;
-      if (typeof body === 'string' && body.trim()) {
-        return body;
-      }
-      if (body && typeof body === 'object' && typeof body.message === 'string' && body.message.trim()) {
-        return body.message;
-      }
-      return `PayPhone: error HTTP ${err.status}`;
-    }
-    return err instanceof Error ? err.message : 'No se pudo procesar el cobro PayPhone';
+    return formatPayPhoneApiError(err);
   }
 
   clearDraftCash(): void {
@@ -6062,7 +6109,7 @@ export class PosVentaPage {
     this.draftProviderTransactionId.set('');
     this.draftExternalStatus.set('idle');
     this.payPhonePhoneNumber.set('');
-    this.payPhoneCountryCode.set('593');
+    this.payPhoneCountryCode.set(this.defaultPayPhoneCountryCode());
     this.resetCardOperation();
   }
 
@@ -6476,15 +6523,9 @@ export class PosVentaPage {
       if (err.status === 0) {
         return 'Sin respuesta del servidor. Verifique que el servicio esté activo.';
       }
-      const b = err.error;
-      if (typeof b === 'string' && b.trim()) {
-        return b.length > 200 ? `${b.slice(0, 200)}…` : b;
-      }
-      if (b && typeof b === 'object' && 'message' in b) {
-        const m = (b as { message: unknown }).message;
-        if (typeof m === 'string' && m.trim()) {
-          return m;
-        }
+      const fromApi = extractApiErrorMessage(err, '');
+      if (fromApi) {
+        return fromApi;
       }
       if (err.status >= 500) {
         return 'El servidor no pudo procesar el cobro. Intente de nuevo en unos momentos.';
