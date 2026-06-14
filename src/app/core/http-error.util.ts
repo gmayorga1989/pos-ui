@@ -168,8 +168,11 @@ function enrichPayPhoneDetail(detail: string, httpStatus: number | null): string
     const providerCode = gatewayMatch[1];
     const providerBody = gatewayMatch[2]?.trim() ?? '';
     const providerMsg = parsePayPhoneProviderPayload(providerBody);
+    const validationDetails = parsePayPhoneValidationErrors(providerBody);
     const parts = [`PayPhone respondió con error HTTP ${providerCode}.`];
-    if (providerMsg) {
+    if (validationDetails) {
+      parts.push(validationDetails);
+    } else if (providerMsg) {
       parts.push(providerMsg);
     } else if (providerBody) {
       parts.push(truncateErrorText(providerBody, 420));
@@ -183,6 +186,40 @@ function enrichPayPhoneDetail(detail: string, httpStatus: number | null): string
   }
 
   return truncateErrorText(detail, 640);
+}
+
+function parsePayPhoneValidationErrors(raw: string): string | null {
+  if (!raw) {
+    return null;
+  }
+  try {
+    const body = JSON.parse(raw) as Record<string, unknown>;
+    const errors = body['errors'];
+    if (!Array.isArray(errors) || errors.length === 0) {
+      return null;
+    }
+    const parts = errors
+      .map((entry) => {
+        if (!entry || typeof entry !== 'object') {
+          return '';
+        }
+        const row = entry as Record<string, unknown>;
+        const field = pickNonEmptyString(row['message']);
+        const descriptions = row['errorDescriptions'];
+        const desc =
+          Array.isArray(descriptions) && descriptions.length
+            ? descriptions.map((d) => String(d).trim()).filter(Boolean).join('; ')
+            : '';
+        if (field && desc) {
+          return `${field}: ${desc}`;
+        }
+        return desc || field || '';
+      })
+      .filter((part): part is string => !!part);
+    return parts.length ? parts.join(' · ') : null;
+  } catch {
+    return null;
+  }
 }
 
 function parsePayPhoneProviderPayload(raw: string): string | null {

@@ -299,9 +299,9 @@ export class PayPhonePaymentWidget implements PosPaymentWidget {
     const subtotal = Math.max(0, roundUsd(amounts.subtotalUsd));
     const tax = Math.max(0, roundUsd(amounts.taxUsd));
     const ratio = ticketTotal > 0 ? payment / ticketTotal : 1;
-    const amountWithoutTaxCents = usdInputToCents(subtotal * ratio);
     const taxCents = usdInputToCents(tax * ratio);
-    const amountWithTaxCents = 0;
+    const amountWithTaxCents = taxCents > 0 ? usdInputToCents(subtotal * ratio) : 0;
+    const amountWithoutTaxCents = taxCents > 0 ? 0 : usdInputToCents(subtotal * ratio);
     const amountCents = amountWithoutTaxCents + amountWithTaxCents + taxCents;
     return { amountCents, amountWithoutTaxCents, amountWithTaxCents, taxCents };
   }

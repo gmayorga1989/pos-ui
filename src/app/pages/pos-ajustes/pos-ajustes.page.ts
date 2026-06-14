@@ -6,6 +6,7 @@ import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
 import type {
   KushkiSubscriptionPlan,
   KushkiTenantConfigResponse,
+  PayPhoneIntentResponse,
   PosPuntoEmisionOption,
   StripeTenantConfigResponse,
 } from '../../core/api/pos-backend.types';
@@ -1735,6 +1736,28 @@ declare global {
                       El sistema la env&iacute;a a PayPhone por empresa; no requiere configuraci&oacute;n manual.
                     </small>
                   </div>
+
+                  <details class="payphone-config__log" [open]="payPhoneRecoverableLog().length > 0">
+                    <summary>
+                      Historial PayPhone ({{ payPhoneRecoverableLog().length }})
+                      @if (payPhoneRecoverableLogLoading()) { · cargando… }
+                    </summary>
+                    @if (!payPhoneRecoverableLog().length && !payPhoneRecoverableLogLoading()) {
+                      <p class="payphone-config__log-empty">Sin intentos pendientes o confirmados en las últimas 24 h.</p>
+                    } @else {
+                      <ul class="payphone-config__log-list">
+                        @for (item of payPhoneRecoverableLog(); track item.clientTransactionId) {
+                          <li class="payphone-config__log-item">
+                            <div>
+                              <strong>{{ item.status === 'CONFIRMED' ? 'Confirmado' : 'Pendiente' }}</strong>
+                              <span>{{ item.amountUsd | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
+                              <small>{{ item.reference || item.clientTransactionId }}</small>
+                            </div>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </details>
                 </div>
               </div>
 
@@ -4396,6 +4419,49 @@ declare global {
       flex-shrink: 0;
       color: #94a3b8;
     }
+    .payphone-config__log {
+      margin-top: 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.55rem 0.65rem;
+      background: #f8fafc;
+    }
+    .payphone-config__log summary {
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .payphone-config__log-empty {
+      margin: 0.5rem 0 0;
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+    .payphone-config__log-list {
+      list-style: none;
+      margin: 0.55rem 0 0;
+      padding: 0;
+      display: grid;
+      gap: 0.45rem;
+      max-height: 220px;
+      overflow: auto;
+    }
+    .payphone-config__log-item {
+      padding: 0.45rem 0.5rem;
+      border-radius: 6px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      font-size: 0.78rem;
+    }
+    .payphone-config__log-item strong {
+      margin-right: 0.35rem;
+    }
+    .payphone-config__log-item small {
+      display: block;
+      margin-top: 0.15rem;
+      color: #64748b;
+      word-break: break-all;
+    }
     .payphone-config__actions {
       display: flex;
       align-items: center;
@@ -5507,6 +5573,8 @@ export class PosAjustesPage implements OnInit {
   ] as const;
   readonly payPhoneCountryOptions = PAYPHONE_COUNTRY_OPTIONS;
   readonly payPhoneResponseUrlCopied = signal(false);
+  readonly payPhoneRecoverableLog = signal<PayPhoneIntentResponse[]>([]);
+  readonly payPhoneRecoverableLogLoading = signal(false);
 
   readonly invoicingProvider = signal('NONE');
   readonly invoicingPending = signal(0);
@@ -6281,6 +6349,26 @@ export class PosAjustesPage implements OnInit {
 
   loadPayPhoneConfig(): void {
     this.payPhoneWidget.loadConfig();
+    this.loadPayPhoneRecoverableLog();
+  }
+
+  loadPayPhoneRecoverableLog(): void {
+    if (!this.auth.apiBaseUrl?.trim()) {
+      this.payPhoneRecoverableLog.set([]);
+      return;
+    }
+    this.payPhoneRecoverableLogLoading.set(true);
+    this.api.getRecoverablePayPhoneIntents().subscribe({
+      next: (response) => {
+        const items = (response.items ?? []).filter((item) => !item.recovered);
+        this.payPhoneRecoverableLog.set(items);
+        this.payPhoneRecoverableLogLoading.set(false);
+      },
+      error: () => {
+        this.payPhoneRecoverableLog.set([]);
+        this.payPhoneRecoverableLogLoading.set(false);
+      },
+    });
   }
 
   savePayPhoneConfig(): void {

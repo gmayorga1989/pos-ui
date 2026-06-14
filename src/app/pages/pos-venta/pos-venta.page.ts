@@ -1086,20 +1086,23 @@ type ModalState =
                   <button type="button" class="btn-modal pos-focus-ring" (click)="closeModal()">Entendido</button>
                 </div>
               } @else {
-                @if (recoverablePayPhoneIntents().length) {
-                  <div class="pos-pay-recovery">
-                    @for (intent of recoverablePayPhoneIntents(); track intent.clientTransactionId) {
-                      <div class="pos-pay-recovery__item">
-                        <div>
-                          <strong>PayPhone {{ intent.status === 'CONFIRMED' ? 'confirmado' : 'pendiente' }}</strong>
-                          <p>{{ intent.amountUsd | currency: 'USD' : 'symbol-narrow' : '1.2-2' }} · {{ intent.reference || intent.clientTransactionId }}</p>
-                        </div>
-                        @if (intent.status === 'CONFIRMED') {
-                          <button type="button" class="btn-modal pos-focus-ring" (click)="applyRecoverablePayPhoneIntent(intent)">Aplicar pago</button>
-                        } @else {
-                          <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="resumeRecoverablePayPhoneIntent(intent)">Reanudar seguimiento</button>
-                        }
+                @if (primaryRecoverablePayPhoneIntent(); as intent) {
+                  <div class="pos-pay-recovery pos-pay-recovery--compact">
+                    <div class="pos-pay-recovery__item">
+                      <div>
+                        <strong>Último PayPhone {{ intent.status === 'CONFIRMED' ? 'confirmado' : 'pendiente' }}</strong>
+                        <p>{{ intent.amountUsd | currency: 'USD' : 'symbol-narrow' : '1.2-2' }} · {{ intent.reference || intent.clientTransactionId }}</p>
                       </div>
+                      @if (intent.status === 'CONFIRMED') {
+                        <button type="button" class="btn-modal pos-focus-ring" (click)="applyRecoverablePayPhoneIntent(intent)">Aplicar pago</button>
+                      } @else {
+                        <button type="button" class="btn-modal btn-modal--ghost pos-focus-ring" (click)="resumeRecoverablePayPhoneIntent(intent)">Reanudar</button>
+                      }
+                    </div>
+                    @if (recoverablePayPhoneOlderCount() > 0) {
+                      <p class="pos-pay-recovery__hint">
+                        +{{ recoverablePayPhoneOlderCount() }} intento(s) más en <strong>Ajustes → PayPhone → Historial</strong>.
+                      </p>
                     }
                   </div>
                 }
@@ -3478,6 +3481,15 @@ type ModalState =
       color: var(--pos-faint);
       font-size: 0.82rem;
     }
+    .pos-pay-recovery--compact {
+      margin-bottom: 0.35rem;
+    }
+    .pos-pay-recovery__hint {
+      margin: 0;
+      font-size: 0.76rem;
+      color: var(--pos-faint);
+      line-height: 1.35;
+    }
     .pos-pay-layout {
       flex: 1 1 auto;
       min-height: 0;
@@ -4773,6 +4785,11 @@ export class PosVentaPage {
   readonly payPhonePhoneNumber = signal('');
   readonly payPhoneCountryCode = signal('593');
   readonly recoverablePayPhoneIntents = signal<PayPhoneIntentResponse[]>([]);
+  readonly primaryRecoverablePayPhoneIntent = computed(() => {
+    const items = this.recoverablePayPhoneIntents();
+    return items.length ? items[0] : null;
+  });
+  readonly recoverablePayPhoneOlderCount = computed(() => Math.max(0, this.recoverablePayPhoneIntents().length - 1));
   readonly payPhoneRecoveryMessage = signal('');
   private payPhonePollTimer: ReturnType<typeof setInterval> | null = null;
   private payPhonePollStartedAt = 0;
