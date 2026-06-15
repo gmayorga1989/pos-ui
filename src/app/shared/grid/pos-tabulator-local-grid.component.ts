@@ -40,6 +40,7 @@ type TabulatorRowHeader = {
 type TabulatorGridOptions = Options & {
   selectableRows?: boolean;
   rowHeader?: TabulatorRowHeader;
+  rowFormatter?: (row: { getData: () => Record<string, unknown>; getElement: () => HTMLElement }) => void;
 };
 
 @Component({
@@ -72,8 +73,11 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
   @Input() emptyCtaAction = 'create';
   @Input() emptyImagePath = '';
   @Input() rowSelection = false;
+  @Input() activateOnRowClick = false;
+  @Input() highlightedRowId: string | null = null;
 
   @Output() rowAction = new EventEmitter<{ action: string; row: Record<string, unknown> }>();
+  @Output() rowActivate = new EventEmitter<Record<string, unknown>>();
   @Output() emptyAction = new EventEmitter<string>();
 
   private table: Tabulator | null = null;
@@ -114,6 +118,9 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
     }
     if (changes['rowSelection'] && !changes['rowSelection'].firstChange) {
       this.applyRowSelectionOptions();
+    }
+    if (changes['highlightedRowId'] && !changes['highlightedRowId'].firstChange) {
+      void this.table?.redraw(true);
     }
     if (changes['pagination'] || changes['paginationSize']) {
       this.applyPaginationOptions();
@@ -175,6 +182,24 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
       const c = cell as { getRow: () => { getData: () => Record<string, unknown> } };
       this.rowAction.emit({ action, row: c.getRow().getData() });
     });
+    if (this.activateOnRowClick) {
+      (this.table as Tabulator & { on: (event: string, callback: (...args: unknown[]) => void) => void }).on(
+        'rowClick',
+        (e: unknown, row: unknown) => {
+          const ev = e as MouseEvent;
+          const target = ev.target as HTMLElement | null;
+          if (
+            target?.closest(
+              '[data-ts-action], .ts-grid-actions__toggle, .ts-grid-actions__menu, button, a, input, select, textarea, label',
+            )
+          ) {
+            return;
+          }
+          const r = row as { getData: () => Record<string, unknown> };
+          this.rowActivate.emit(r.getData());
+        },
+      );
+    }
   }
 
   private buildPlaceholder(): string {
@@ -247,7 +272,22 @@ export class PosTabulatorLocalGridComponent implements AfterViewInit, OnChanges,
       opts.selectableRows = true;
       opts.rowHeader = this.buildRowHeader();
     }
+    if (this.activateOnRowClick) {
+      opts.selectableRows = false;
+    }
+    opts.rowFormatter = (row: { getData: () => Record<string, unknown>; getElement: () => HTMLElement }) =>
+      this.applyRowHighlight(row);
     return opts;
+  }
+
+  private applyRowHighlight(row: { getData: () => Record<string, unknown>; getElement: () => HTMLElement }): void {
+    const data = row.getData();
+    const el = row.getElement();
+    const selected = this.highlightedRowId && String(data['id'] ?? '') === this.highlightedRowId;
+    el.classList.toggle('ts-tab-row--selected', !!selected);
+    if (this.activateOnRowClick) {
+      el.classList.add('ts-tab-row--clickable');
+    }
   }
 
   private buildRowHeader(): TabulatorRowHeader {

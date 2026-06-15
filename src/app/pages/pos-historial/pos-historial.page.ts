@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
 import { mapCajaHistorialResponse } from '../../core/api/pos-backend.mappers';
 import type { PosCajaHistoryItem } from '../../core/api/pos-backend.types';
+import { PosAuthService } from '../../core/auth/pos-auth.service';
+import { decodeJwtPayload, readPosSessionDisplay } from '../../core/layout/pos-jwt-hint.util';
 import { PosToastService } from '../../core/ui/pos-toast.service';
 import { customerDisplayInitials } from '../../shared/customer/pos-sale-customer.util';
 
@@ -77,29 +79,29 @@ interface KpiCard {
             <span class="hist-kpi__icon" aria-hidden="true">
               @switch (card.tone) {
                 @case ('sales') {
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path d="M6 6h12l-1.2 11H7.2L6 6zM9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                 }
                 @case ('cash') {
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <rect x="3" y="7" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.6" />
                     <circle cx="12" cy="12" r="2" stroke="currentColor" stroke-width="1.5" />
                   </svg>
                 }
                 @case ('card') {
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6" />
                     <path d="M3 10h18" stroke="currentColor" stroke-width="1.6" />
                   </svg>
                 }
                 @case ('transfer') {
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path d="M7 7h11M7 7l3-3M7 7l3 3M17 17H6M17 17l-3 3M17 17l-3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                 }
                 @default {
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path d="M12 3v18M8 8h8M6 12h12M8 16h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
                   </svg>
                 }
@@ -231,7 +233,15 @@ interface KpiCard {
             <header class="hist-detail__head">
               <div>
                 <span class="hist__eyebrow">Detalle del turno</span>
+                <h2 class="hist-detail__title">{{ labelStatus(row.status) }} · {{ formatDate(row.openedAt) }}</h2>
+                <p class="hist-detail__meta">
+                  Abierto por <strong>{{ row.openedBy || '—' }}</strong>
+                  @if (row.closedBy) {
+                    · Cerrado por <strong>{{ row.closedBy }}</strong>
+                  }
+                </p>
                 <div class="hist-detail__id-row">
+                  <span class="hist-detail__id-label">ID</span>
                   <code class="hist-detail__id">{{ row.id }}</code>
                   <button type="button" class="hist-detail__copy pos-focus-ring" title="Copiar ID" (click)="copyShiftId(row.id)">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -298,12 +308,14 @@ interface KpiCard {
             </div>
           </div>
           <div class="hist-detail__art" aria-hidden="true">
-            <svg class="hist-detail__safe" viewBox="0 0 200 160" fill="none">
+            <div class="hist-detail__art-frame">
+              <svg class="hist-detail__safe" viewBox="0 0 200 160" fill="none">
               <rect x="36" y="24" width="128" height="112" rx="14" class="hist-detail__safe-body" stroke-width="2" />
               <circle cx="100" cy="80" r="22" class="hist-detail__safe-dial" stroke-width="2" />
               <path d="M100 68v12l8 6" class="hist-detail__safe-hand" stroke-width="2" stroke-linecap="round" />
               <rect x="52" y="118" width="96" height="10" rx="5" class="hist-detail__safe-base" />
             </svg>
+            </div>
           </div>
         </section>
       }
@@ -404,9 +416,10 @@ interface KpiCard {
     }
     .hist-kpi__card {
       display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      padding: 0.9rem 0.95rem;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.95rem 1rem;
+      min-height: 5.25rem;
       border: 1px solid var(--pos-border);
       border-radius: var(--pos-radius);
       background: var(--pos-surface);
@@ -414,8 +427,8 @@ interface KpiCard {
     }
     .hist-kpi__icon {
       flex-shrink: 0;
-      width: 2.5rem;
-      height: 2.5rem;
+      width: 3.25rem;
+      height: 3.25rem;
       border-radius: 999px;
       display: grid;
       place-items: center;
@@ -645,10 +658,14 @@ interface KpiCard {
       position: sticky;
       bottom: 0;
       z-index: 2;
-      background: color-mix(in srgb, var(--pos-text) 92%, var(--pos-surface));
-      color: var(--pos-surface);
+      background: #1e1b4b;
+      color: #fff;
       font-weight: 900;
       border-bottom: none;
+      border-top: 1px solid color-mix(in srgb, #fff 8%, #1e1b4b);
+    }
+    .hist-grid tfoot .neg {
+      color: #fca5a5;
     }
     .hist-grid__totals-label {
       text-transform: uppercase;
@@ -667,20 +684,62 @@ interface KpiCard {
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 1rem;
       padding: 1rem 1.1rem;
-      border: 1px solid var(--pos-border);
+      border: 1px solid color-mix(in srgb, var(--lux-indigo) 18%, var(--pos-border));
       border-radius: var(--pos-radius);
-      background: var(--pos-surface);
+      background: linear-gradient(
+        118deg,
+        color-mix(in srgb, var(--lux-indigo) 9%, var(--pos-surface)) 0%,
+        color-mix(in srgb, var(--lux-cyan) 11%, var(--pos-surface)) 48%,
+        color-mix(in srgb, var(--pos-bg) 28%, var(--pos-surface)) 100%
+      );
       overflow: hidden;
       box-shadow: 0 1px 0 color-mix(in srgb, var(--pos-text) 4%, transparent);
     }
+    .hist-detail::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 42% 88% at 94% 42%,
+        color-mix(in srgb, var(--lux-indigo) 16%, transparent),
+        transparent 72%
+      );
+      pointer-events: none;
+    }
+    .hist-detail__main {
+      position: relative;
+      z-index: 1;
+    }
     .hist-detail__head {
       margin-bottom: 0.85rem;
+    }
+    .hist-detail__title {
+      margin: 0.15rem 0 0.35rem;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--pos-text);
+    }
+    .hist-detail__meta {
+      margin: 0 0 0.55rem;
+      font-size: 0.82rem;
+      color: var(--pos-muted);
+    }
+    .hist-detail__meta strong {
+      color: var(--pos-text);
+      font-weight: 700;
     }
     .hist-detail__id-row {
       display: flex;
       align-items: center;
       gap: 0.45rem;
       margin-top: 0.25rem;
+    }
+    .hist-detail__id-label {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--pos-muted);
     }
     .hist-detail__id {
       font-family: var(--pos-mono);
@@ -768,15 +827,27 @@ interface KpiCard {
       overflow-wrap: anywhere;
     }
     .hist-detail__art {
+      position: relative;
+      z-index: 1;
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       justify-content: flex-end;
       padding-right: 0.25rem;
-      opacity: 0.85;
+    }
+    .hist-detail__art-frame {
+      width: 6.5rem;
+      height: 6.5rem;
+      border-radius: 1.1rem;
+      display: grid;
+      place-items: center;
+      background: color-mix(in srgb, var(--lux-indigo) 12%, var(--pos-surface));
+      border: 1px solid color-mix(in srgb, var(--lux-indigo) 20%, transparent);
+      box-shadow: 0 10px 28px color-mix(in srgb, var(--lux-indigo) 12%, transparent);
     }
     .hist-detail__safe {
-      width: min(10rem, 28vw);
+      width: 4.5rem;
       height: auto;
+      opacity: 0.92;
     }
     .hist-detail__safe-body {
       fill: color-mix(in srgb, var(--lux-indigo) 8%, transparent);
@@ -830,6 +901,7 @@ interface KpiCard {
 })
 export class PosHistorialPage implements OnInit {
   private readonly api = inject(PosBackendApiService);
+  private readonly auth = inject(PosAuthService);
   private readonly toast = inject(PosToastService);
 
   readonly rows = signal<ReportRow[]>([]);
@@ -890,12 +962,13 @@ export class PosHistorialPage implements OnInit {
     this.closeRowMenu();
     try {
       const response = await firstValueFrom(this.api.getCajaHistorial());
-      const rows = mapCajaHistorialResponse(response);
+      const rows = this.enrichRows(mapCajaHistorialResponse(response));
       this.rows.set(rows);
       this.selected.set(rows[0] ?? null);
     } catch (err) {
-      this.rows.set(this.demoRows());
-      this.selected.set(this.rows()[0] ?? null);
+      const rows = this.enrichRows(this.demoRows());
+      this.rows.set(rows);
+      this.selected.set(rows[0] ?? null);
       this.error.set(this.errorMessage(err));
     } finally {
       this.loading.set(false);
@@ -923,6 +996,64 @@ export class PosHistorialPage implements OnInit {
     await this.copyValue(id, 'ID del turno');
     this.closeRowMenu();
   }
+
+  private enrichRows(rows: ReportRow[]): ReportRow[] {
+    const ctx = this.personContext();
+    return rows.map((row) => ({
+      ...row,
+      openedBy: this.resolvePersonLabel(row.openedBy, row.openedByUserId, ctx),
+      closedBy: this.resolvePersonLabel(row.closedBy, row.closedByUserId, ctx),
+    }));
+  }
+
+  private personContext(): { displayName: string; email: string; userId: string } {
+    const session = this.auth.sessionContext();
+    const jwt = readPosSessionDisplay(this.auth.accessToken());
+    const claims = decodeJwtPayload(this.auth.accessToken() ?? '') ?? {};
+    const sub = claims['sub'] ?? claims['user_id'] ?? claims['userId'];
+    return {
+      displayName: session.cashierName || jwt.cashierName || jwt.cashierLabel,
+      email: session.cashierEmail || jwt.cashierEmail,
+      userId: sub != null ? String(sub) : '',
+    };
+  }
+
+  private resolvePersonLabel(
+    stored: string | null | undefined,
+    userId: string | null | undefined,
+    ctx: { displayName: string; email: string; userId: string },
+  ): string | null {
+    const label = stored?.trim() || null;
+    const name = ctx.displayName.trim();
+    const email = ctx.email.trim();
+    const emailPrefix = email.includes('@') ? email.slice(0, email.indexOf('@')) : email;
+    const sameUser = !userId || !ctx.userId || String(userId) === ctx.userId;
+
+    if (name && sameUser) {
+      if (!label) {
+        return name;
+      }
+      if (this.looksLikeLogin(label) || label.toLowerCase() === emailPrefix.toLowerCase()) {
+        return name;
+      }
+    }
+    if (label && !this.looksLikeLogin(label)) {
+      return label;
+    }
+    return name || label;
+  }
+
+  private looksLikeLogin(value: string): boolean {
+    const v = value.trim();
+    if (!v) {
+      return false;
+    }
+    if (v.includes('@')) {
+      return true;
+    }
+    return /^[a-z0-9._-]+$/.test(v);
+  }
+
 
   async copyValue(value: string, label: string): Promise<void> {
     const text = value.trim();

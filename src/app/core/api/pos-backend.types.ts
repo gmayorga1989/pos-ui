@@ -21,7 +21,9 @@ export interface PosCajaSessionDto {
   cashDifference?: number | null;
   closeNotes?: string | null;
   openedByUserId?: string | null;
+  openedByUserLabel?: string | null;
   closedByUserId?: string | null;
+  closedByUserLabel?: string | null;
   denominations?: PosCajaDenominationDto[] | null;
 }
 
@@ -69,6 +71,8 @@ export interface PosCajaHistoryItem {
   countedTransfer?: number | null;
   cashDifference?: number | null;
   notes?: string | null;
+  openedByUserId?: string | null;
+  closedByUserId?: string | null;
   openedBy?: string | null;
   closedBy?: string | null;
   denominations?: PosCajaCierreDenomination[] | null;

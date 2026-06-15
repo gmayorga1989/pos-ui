@@ -48,8 +48,10 @@ export function mapCajaSessionToHistoryItem(session: PosCajaSessionDto): PosCaja
     countedTransfer: session.countedTransfer == null ? null : num(session.countedTransfer),
     cashDifference: session.cashDifference == null ? null : num(session.cashDifference),
     notes: session.closeNotes ?? null,
-    openedBy: session.openedByUserId ?? null,
-    closedBy: session.closedByUserId ?? null,
+    openedByUserId: session.openedByUserId ?? null,
+    closedByUserId: session.closedByUserId ?? null,
+    openedBy: session.openedByUserLabel?.trim() || null,
+    closedBy: session.closedByUserLabel?.trim() || null,
     denominations,
   };
 }

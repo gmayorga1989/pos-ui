@@ -59,7 +59,15 @@
   color: var(--pos-text);
 }
 
-.ts-tabulator-grid.tabulator .tabulator-row .tabulator-cell:has(.ts-grid-actions) {
+.ts-tabulator-grid.tabulator .tabulator-row.ts-tab-row--clickable {
+  cursor: pointer;
+}
+
+.ts-tabulator-grid.tabulator .tabulator-row.ts-tab-row--selected {
+  background: var(--pos-maestro-grid-hover);
+}
+
+.ts-tabulator-grid.tabulator .tabulator-row .tabulator-cell:has(.hist-tab-actions) {
   overflow: visible;
 }
 

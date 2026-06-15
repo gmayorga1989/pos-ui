@@ -560,7 +560,7 @@ type CashPanelMode = 'open' | 'close' | 'history';
                         <span>Tarjeta {{ (item.countedCard ?? item.tarjetaCobros) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
                         <span>Transferencia {{ (item.countedTransfer ?? item.transferCobros) | currency: 'USD' : 'symbol-narrow' : '1.2-2' }}</span>
                         @if (item.openedBy || item.closedBy) {
-                          <span>Usuario {{ item.openedBy || '-' }} / {{ item.closedBy || '-' }}</span>
+                          <span>Cajero {{ item.openedBy || '—' }}@if (item.closedBy) { / {{ item.closedBy }} }</span>
                         }
                         @if (item.notes) {
                           <p>{{ item.notes }}</p>

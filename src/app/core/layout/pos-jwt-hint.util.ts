@@ -87,6 +87,8 @@ export function readPosSessionDisplay(accessToken: string | null): PosSessionDis
   }
   const email = firstString(p, ['email', 'userEmail', 'user_email', 'preferred_username']);
   const userName = firstString(p, [
+    'display_name',
+    'displayName',
     'name',
     'full_name',
     'fullName',
