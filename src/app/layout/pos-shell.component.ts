@@ -100,10 +100,15 @@ type CashPanelMode = 'open' | 'close' | 'history';
                   {{ deploymentModeShort() }}
                 </span>
               }
-              @if (showEfacturaChip()) {
-                <span class="chip chip--ok" role="listitem">
+              @if (invoicingEnabled()) {
+                <span class="chip chip--ok" role="listitem" [attr.title]="invoicingProfileChip()">
                   <span class="chip__dot"></span>
-                  eF
+                  {{ invoicingProfileChip() }}
+                </span>
+              } @else {
+                <span class="chip chip--pos" role="listitem" title="POS standalone">
+                  <span class="chip__dot"></span>
+                  POS solo
                 </span>
               }
               @if (showCarteraChip()) {
@@ -2442,6 +2447,7 @@ export class PosShellComponent implements OnInit {
 
   readonly deploymentMode = signal('');
   readonly invoicingEnabled = signal(false);
+  readonly invoicingProvider = signal('NONE');
   readonly carteraEnabled = signal(false);
 
   readonly cajaPanelOpen = signal(false);
@@ -2509,6 +2515,16 @@ export class PosShellComponent implements OnInit {
   readonly showEfacturaChip = computed(
     () => this.invoicingEnabled() && this.deploymentMode() !== 'STANDALONE',
   );
+  readonly invoicingProfileChip = computed(() => {
+    const provider = this.invoicingProvider();
+    if (provider === 'EFACTURA') {
+      return 'eFactura';
+    }
+    if (provider === 'CUSTOM') {
+      return 'Tercero';
+    }
+    return 'POS solo';
+  });
   readonly showCarteraChip = computed(() => this.carteraEnabled());
   readonly deploymentModeShort = computed(() => {
     const m = this.deploymentMode();
@@ -2691,6 +2707,7 @@ export class PosShellComponent implements OnInit {
     void this.runtimeConfig.ensureLoaded().then((cfg) => {
       this.deploymentMode.set(cfg.deploymentMode);
       this.invoicingEnabled.set(cfg.invoicingEnabled);
+      this.invoicingProvider.set(cfg.invoicingProvider);
       this.carteraEnabled.set(cfg.carteraEnabled);
     });
     this.router.events

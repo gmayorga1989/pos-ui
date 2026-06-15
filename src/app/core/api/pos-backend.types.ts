@@ -244,6 +244,29 @@ export interface PosPuntoEmisionOption {
   activo?: boolean;
 }
 
+export interface PosStationContextResponse {
+  invoicingProvider: string;
+  invoicingProfileLabel: string;
+  puntoEmisionId: string | null;
+  puntoEmisionLabel: string | null;
+  fiscalReady: boolean;
+  cajaSuggested: string;
+}
+
+export interface PosIntegrationStatusResponse {
+  invoicingProvider: string;
+  deploymentMode: string;
+  suiteCompanyId: string;
+  userEmail: string;
+  suiteExchangeOk: boolean;
+  suiteExchangeDetail: string;
+  puntosEmisionCount: number;
+  autoPuntoEmisionId: string | null;
+  autoPuntoEmisionLabel: string | null;
+  fiscalReady: boolean;
+  recommendation: string;
+}
+
 export interface PosPuntoEmisionRequest {
   establecimientoCodigo: string;
   codigo: string;

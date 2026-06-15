@@ -5048,11 +5048,36 @@ export class PosVentaPage {
     this.loadCatalog();
     void this.runtimeConfig.ensureLoaded().then((cfg) => {
       this.invoicingEnabled.set(cfg.invoicingEnabled);
-      this.loadPuntoEmision();
+      this.loadStationContext();
     });
   }
 
-  private loadPuntoEmision(): void {
+  private loadStationContext(): void {
+    if (!this.posApiConfigured()) {
+      this.resolvedPuntoEmisionId.set(null);
+      return;
+    }
+    this.ensureDefaultCaja();
+    this.backend.getStationContext().subscribe({
+      next: (ctx) => {
+        if (ctx.puntoEmisionId) {
+          this.resolvedPuntoEmisionId.set(ctx.puntoEmisionId);
+          this.prefs.setPuntoEmisionId(ctx.puntoEmisionId);
+        } else {
+          this.resolvedPuntoEmisionId.set(null);
+        }
+      },
+      error: () => this.loadPuntoEmisionFallback(),
+    });
+  }
+
+  private ensureDefaultCaja(): void {
+    if (!this.prefs.cajaId().trim()) {
+      this.prefs.setCajaId('CAJA-01');
+    }
+  }
+
+  private loadPuntoEmisionFallback(): void {
     if (!this.posApiConfigured()) {
       this.resolvedPuntoEmisionId.set(null);
       return;
@@ -5581,9 +5606,8 @@ export class PosVentaPage {
     this.selectPaymentMethod('cash');
     this.fillDraftPending();
     this.modal.set({ kind: 'cobro' });
-    const puntoMsg = this.missingPuntoEmisionMessage();
-    if (puntoMsg) {
-      this.checkoutError.set(puntoMsg);
+    if (!this.effectivePuntoEmisionId()) {
+      this.loadStationContext();
     }
   }
 

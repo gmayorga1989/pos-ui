@@ -11,6 +11,7 @@ export interface PosRuntimeConfig {
   carteraEnabled: boolean;
   carteraBaseUrl: string;
   invoicingEnabled: boolean;
+  efacturaBackgroundConfigured?: boolean;
   persistenceEngine?: string;
   persistenceDatabase?: string;
   ephemeralPersistence?: boolean;
@@ -103,7 +104,7 @@ export class PosConfigService {
   }
 
   deploymentProfileLabel(): string {
-    if (this.isStandalone() && this.usesLocalPuntoEmision() && !this.isInvoicingEnabled()) {
+    if (this.isStandalone() && !this.isInvoicingEnabled()) {
       return 'POS standalone';
     }
     if (this.requiresEfacturaPuntoEmision()) {
@@ -113,6 +114,30 @@ export class PosConfigService {
       return 'Integración terceros';
     }
     return this.deploymentMode();
+  }
+
+  invoicingProfileChipLabel(): string {
+    if (this.requiresEfacturaPuntoEmision()) {
+      return 'eFactura';
+    }
+    if (this.isCustomInvoicing()) {
+      return 'Tercero';
+    }
+    return 'POS solo';
+  }
+
+  efacturaBackgroundConfigured(): boolean {
+    return !!this.config()?.efacturaBackgroundConfigured;
+  }
+
+  deploymentProfileDescription(): string {
+    if (this.requiresEfacturaPuntoEmision()) {
+      return 'Las ventas emiten comprobantes electrónicos vía eFactura. Configure aquí la caja y el punto de emisión autorizado (ej. 001-001).';
+    }
+    if (this.isCustomInvoicing()) {
+      return 'Las ventas se envían a un facturador HTTP externo. La caja y el punto local identifican esta estación.';
+    }
+    return 'Solo ticket POS en esta estación; sin emisión electrónica automática al SRI.';
   }
 
   ephemeralPersistence(): boolean {

@@ -15,6 +15,8 @@ import type {
   PosOfflineComprobanteSyncRequest,
   PosOfflineSyncStatusResponse,
   PosPuntoEmisionOption,
+  PosStationContextResponse,
+  PosIntegrationStatusResponse,
   PosPuntoEmisionRequest,
   KushkiSubscriptionCreateRequest,
   KushkiSubscriptionCreateResponse,
@@ -123,6 +125,23 @@ export class PosBackendApiService {
       throw new Error('posApiOrigin no configurado');
     }
     return this.http.get<PosPuntoEmisionOption[]>(`${root}/efactura/facturas/puntos-emision`);
+  }
+
+  /** Punto de emisión y perfil fiscal resueltos automáticamente en servidor. */
+  getStationContext(): Observable<PosStationContextResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PosStationContextResponse>(`${root}/station/context`);
+  }
+
+  getIntegrationStatus(): Observable<PosIntegrationStatusResponse> {
+    const root = this.apiRoot();
+    if (!root) {
+      throw new Error('posApiOrigin no configurado');
+    }
+    return this.http.get<PosIntegrationStatusResponse>(`${root}/integration/status`);
   }
 
   postCheckout(body: PosCheckoutRequestBody, idempotencyKey: string): Observable<PosCheckoutResponse> {

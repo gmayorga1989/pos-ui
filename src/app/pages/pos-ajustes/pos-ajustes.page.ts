@@ -8,6 +8,7 @@ import type {
   KushkiTenantConfigResponse,
   PayPhoneIntentResponse,
   PosPuntoEmisionOption,
+  PosIntegrationStatusResponse,
   StripeTenantConfigResponse,
 } from '../../core/api/pos-backend.types';
 import { PosAuthService } from '../../core/auth/pos-auth.service';
@@ -637,6 +638,37 @@ declare global {
 
           @case ('station') {
             <div class="station-board">
+              <article class="station-card station-card--profile">
+                <header class="station-card__head">
+                  <span class="station-card__icon station-card__icon--blue" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                      <path d="M12 8v4l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <span class="station-card__titles">
+                    <strong>Modo de operación</strong>
+                    <small>{{ deploymentProfileLabel() }}</small>
+                  </span>
+                  <span class="station-card__badge station-card__badge--ok">{{ invoicingProfileChipLabel() }}</span>
+                </header>
+                <div class="station-card__body">
+                  <p class="station-card__copy">{{ deploymentProfileDescription() }}</p>
+                  @if (integrationStatus(); as st) {
+                    <div class="station-integration-status" [class.station-integration-status--ok]="st.fiscalReady">
+                      <p><strong>Company ID (Identity):</strong> {{ st.suiteCompanyId }}</p>
+                      <p><strong>Canje eFactura:</strong> {{ st.suiteExchangeOk ? 'OK' : 'Pendiente' }} — {{ st.suiteExchangeDetail }}</p>
+                      @if (st.autoPuntoEmisionLabel) {
+                        <p><strong>Punto auto:</strong> {{ st.autoPuntoEmisionLabel }}</p>
+                      }
+                      <p>{{ st.recommendation }}</p>
+                    </div>
+                  } @else if (integrationStatusError()) {
+                    <p class="station-note station-note--warn">{{ integrationStatusError() }}</p>
+                  }
+                </div>
+              </article>
+
               <article class="station-card station-card--ident">
                 <header class="station-card__head">
                   <span class="station-card__icon station-card__icon--purple" aria-hidden="true">
@@ -659,9 +691,15 @@ declare global {
                       placeholder="CAJA-01"
                       [ngModel]="prefs.cajaId()"
                       (ngModelChange)="onCaja($event)" />
+                    <small class="station-field__hint">Usted elige el código (ej. CAJA-01, MOSTRADOR-2). Se guarda al escribir.</small>
                   </label>
                   @if (puntosError()) {
                     <p class="station-note station-note--warn">{{ puntosError() }}</p>
+                    @if (requiresEfacturaIntegration()) {
+                      <button type="button" class="station-card__cta pos-focus-ring" (click)="reloadStationPuntos()">
+                        Reintentar carga eFactura
+                      </button>
+                    }
                   }
                   @if (puntos().length > 0) {
                     <label class="station-field">
@@ -676,7 +714,7 @@ declare global {
                         }
                       </select>
                     </label>
-                  } @else {
+                  } @else if (usesLocalPuntoEmision()) {
                     <div class="station-field-row">
                       <label class="station-field">
                         <span class="station-field__label">Sucursal local</span>
@@ -699,6 +737,10 @@ declare global {
                           (ngModelChange)="onLocalEmission($event)" />
                       </label>
                     </div>
+                  } @else if (requiresEfacturaIntegration()) {
+                    <p class="station-note station-note--muted">
+                      Cree el punto en eFactura (Sucursales → Puntos de emisión, ej. 001-001 MAPASINGUE) y pulse Reintentar.
+                    </p>
                   }
                 </div>
               </article>
@@ -3575,6 +3617,11 @@ declare global {
       font-weight: 800;
       color: color-mix(in srgb, var(--pos-accent-hover) 70%, var(--pos-text));
     }
+    .station-field__hint {
+      font-size: 0.68rem;
+      color: var(--pos-text-muted, #64748b);
+      line-height: 1.35;
+    }
     .station-field__input {
       width: 100%;
       min-height: 2.15rem;
@@ -3592,6 +3639,22 @@ declare global {
     }
     .station-note--warn {
       color: #b45309;
+    }
+    .station-integration-status {
+      margin-top: 0.65rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 6px;
+      background: color-mix(in srgb, #f59e0b 8%, var(--pos-bg));
+      border: 1px solid color-mix(in srgb, #f59e0b 25%, var(--pos-border));
+      font-size: 0.72rem;
+      line-height: 1.4;
+    }
+    .station-integration-status p {
+      margin: 0.2rem 0;
+    }
+    .station-integration-status--ok {
+      background: color-mix(in srgb, #22c55e 8%, var(--pos-bg));
+      border-color: color-mix(in srgb, #22c55e 25%, var(--pos-border));
     }
     .station-toggle-row {
       display: flex;
@@ -5587,6 +5650,9 @@ export class PosAjustesPage implements OnInit {
   readonly payPhoneRecoverableLogLoading = signal(false);
 
   readonly invoicingProvider = signal('NONE');
+  readonly efacturaBackgroundConfigured = signal(false);
+  readonly integrationStatus = signal<PosIntegrationStatusResponse | null>(null);
+  readonly integrationStatusError = signal<string | null>(null);
   readonly invoicingPending = signal(0);
   readonly invoicingCustomUrl = signal('');
   readonly invoicingCustomAuth = signal('API_KEY');
@@ -5971,6 +6037,10 @@ export class PosAjustesPage implements OnInit {
   }
 
   guardarCambios(): void {
+    if (!this.prefs.cajaId().trim()) {
+      this.settingsSaveMsg.set('Ingrese un identificador de caja (ej. CAJA-01) antes de guardar.');
+      return;
+    }
     this.prefs.bumpDocumentDensity();
     this.stationDirty.set(false);
     this.stationLastSavedAt.set(Date.now());
@@ -5979,11 +6049,19 @@ export class PosAjustesPage implements OnInit {
 
   stationIsConfigured(): boolean {
     const caja = this.prefs.cajaId().trim();
-    if (!caja) return false;
-    if (this.puntos().length > 0) {
-      return !!this.prefs.puntoEmisionId().trim();
+    if (!caja) {
+      return false;
     }
-    return !!this.prefs.localBranchCode().trim() && !!this.prefs.localEmissionCode().trim();
+    if (this.requiresEfacturaIntegration()) {
+      return this.puntos().length > 0 && !!this.prefs.puntoEmisionId().trim() && !this.puntosError();
+    }
+    if (this.usesLocalPuntoEmision()) {
+      if (this.puntos().length > 0) {
+        return !!this.prefs.puntoEmisionId().trim();
+      }
+      return !!this.prefs.localBranchCode().trim() && !!this.prefs.localEmissionCode().trim();
+    }
+    return false;
   }
 
   stationStatusLabel(): string {
@@ -6003,10 +6081,59 @@ export class PosAjustesPage implements OnInit {
   }
 
   efacturaIntegrationReady(): boolean {
-    if (this.puntos().length > 0) {
-      return !!this.prefs.puntoEmisionId().trim();
+    if (this.invoicingProvider() === 'NONE') {
+      return true;
     }
-    return !!this.prefs.localBranchCode().trim() && !!this.prefs.localEmissionCode().trim();
+    if (this.invoicingProvider() === 'CUSTOM') {
+      return this.stationIsConfigured();
+    }
+    return this.puntos().length > 0 && !!this.prefs.puntoEmisionId().trim() && !this.puntosError();
+  }
+
+  deploymentProfileLabel(): string {
+    return this.runtimeConfig.deploymentProfileLabel();
+  }
+
+  deploymentProfileDescription(): string {
+    if (this.requiresEfacturaIntegration()) {
+      return 'Las ventas se facturan automáticamente. El punto de emisión autorizado se asigna solo al cobrar.';
+    }
+    if (this.usesLocalPuntoEmision() && this.invoicingProvider() === 'CUSTOM') {
+      return 'Las ventas se envían al facturador configurado. La estación se identifica con su código de caja.';
+    }
+    return 'Ticket de venta local. Configure la caja si desea identificar esta estación.';
+  }
+
+  invoicingProfileChipLabel(): string {
+    return this.runtimeConfig.invoicingProfileChipLabel();
+  }
+
+  requiresEfacturaIntegration(): boolean {
+    return this.runtimeConfig.requiresEfacturaPuntoEmision();
+  }
+
+  usesLocalPuntoEmision(): boolean {
+    return this.runtimeConfig.usesLocalPuntoEmision();
+  }
+
+  reloadStationPuntos(): void {
+    this.loadStationPuntosEmision();
+    this.loadIntegrationStatus();
+  }
+
+  private loadIntegrationStatus(): void {
+    this.api.getIntegrationStatus().subscribe({
+      next: (st) => {
+        this.integrationStatus.set(st);
+        this.integrationStatusError.set(null);
+      },
+      error: () => {
+        this.integrationStatus.set(null);
+        this.integrationStatusError.set(
+          'Diagnóstico de integración no disponible (despliegue pendiente de pos-app).',
+        );
+      },
+    });
   }
 
   openBusinessTab(): void {
@@ -6084,6 +6211,7 @@ export class PosAjustesPage implements OnInit {
     }
     void this.runtimeConfig.ensureLoaded().then((cfg) => {
       this.invoicingProvider.set(cfg.invoicingProvider);
+      this.efacturaBackgroundConfigured.set(!!cfg.efacturaBackgroundConfigured);
       if (cfg.invoicingEnabled) {
         this.api.getInvoicingPending().subscribe({
           next: (r) => this.invoicingPending.set(r.pendingExternal ?? 0),
@@ -6098,6 +6226,7 @@ export class PosAjustesPage implements OnInit {
         }
       }
       this.loadStationPuntosEmision();
+      this.loadIntegrationStatus();
     });
     this.loadStripeConfig();
     this.loadKushkiConfig();
@@ -6428,7 +6557,9 @@ export class PosAjustesPage implements OnInit {
         next: (list) => applyList(list),
         error: () => {
           this.puntos.set([]);
-          this.puntosError.set('No se pudieron cargar los puntos de eFactura.');
+          this.puntosError.set(
+            'No se pudieron cargar los puntos de emisión. Verifique la vinculación empresa ↔ Suite en eFactura.',
+          );
         },
       });
       return;
