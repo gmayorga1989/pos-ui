@@ -18,6 +18,7 @@ import { PosBackendApiService } from '../../core/api/pos-backend-api.service';
 import type {
   PosCheckoutPago,
   PosCheckoutRequestBody,
+  PosCheckoutResponse,
   PosCustomerRequest,
   PosCustomerResponse,
   PayPhoneIntentResponse,
@@ -5806,10 +5807,21 @@ export class PosVentaPage {
       },
     });
     this.payPhoneWidget.resetSession();
+    this.payPhoneWidget.statusMessage.set('Pago PayPhone confirmado.');
     const nextMethod = this.paymentMethods().find((item) => !this.hasPaymentFor(item.code));
     if (nextMethod && this.payableBalance() > 0) {
       this.selectPaymentMethod(nextMethod.code);
+      this.fillDraftPending();
+      return;
     }
+    if (this.confirmCobroError() === null) {
+      this.toast.info('Pago PayPhone confirmado. Registrando venta...');
+      void this.confirmarCobro();
+      return;
+    }
+    const pendingMsg = 'Pago PayPhone registrado. Pulse Confirmar cobro para cerrar la venta.';
+    this.saleActionMessage.set(pendingMsg);
+    this.toast.info(pendingMsg);
     this.fillDraftPending();
   }
 
@@ -6303,6 +6315,7 @@ export class PosVentaPage {
       this.desk.recordSaleFromLocalUI(t, amounts);
       this.clearActiveCart();
       this.closeModal();
+      this.toast.success('Venta registrada localmente.');
       return;
     }
     const pid = this.effectivePuntoEmisionId();
@@ -6322,23 +6335,14 @@ export class PosVentaPage {
       .pipe(finalize(() => this.checkoutLoading.set(false)))
       .subscribe({
         next: (response) => {
-          if (response.estadoSri?.trim()) {
-            this.saleActionMessage.set(`Estado SRI: ${response.estadoSri}`);
-          } else if (response.invoiceStatus === 'SKIPPED') {
-            this.saleActionMessage.set('Venta registrada (ticket local).');
-          } else if (response.invoiceStatus === 'PENDING') {
-            this.saleActionMessage.set('Venta registrada. Emisión fiscal pendiente.');
-          }
+          const msg = this.buildCheckoutSuccessMessage(response);
+          this.saleActionMessage.set(msg);
+          this.toast.success(msg);
           const cid = response.comprobanteLocalId?.trim();
           if (cid) {
             this.lastTicketId.set(cid);
           }
           this.desk.refreshAfterRemoteSale();
-          if (response.paymentCollectionId) {
-            this.loadPaymentCollection(response.paymentCollectionId);
-            this.clearActiveCart();
-            return;
-          }
           this.clearActiveCart();
           this.closeModal();
         },
@@ -6352,12 +6356,29 @@ export class PosVentaPage {
             this.desk.refresh();
           }
           this.checkoutError.set(msg);
+          this.toast.error(msg);
         },
       });
   }
 
   dismissCheckoutError(): void {
     this.checkoutError.set(null);
+  }
+
+  private buildCheckoutSuccessMessage(response: PosCheckoutResponse): string {
+    if (response.estadoSri?.trim()) {
+      return `Venta registrada. Estado SRI: ${response.estadoSri}`;
+    }
+    if (response.invoiceStatus === 'SKIPPED') {
+      return 'Venta registrada (ticket local).';
+    }
+    if (response.invoiceStatus === 'PENDING') {
+      return 'Venta registrada. Emisión fiscal pendiente.';
+    }
+    if (response.numeroComprobante?.trim()) {
+      return `Venta registrada. Comprobante ${response.numeroComprobante}.`;
+    }
+    return 'Venta registrada correctamente.';
   }
 
   tryConfirmarCobro(): void {
@@ -6367,13 +6388,6 @@ export class PosVentaPage {
       return;
     }
     void this.confirmarCobro();
-  }
-
-  private loadPaymentCollection(collectionId: string): void {
-    this.backend.getCobro(collectionId).subscribe({
-      next: (collection) => this.paymentCollection.set(collection),
-      error: (err: unknown) => this.checkoutError.set(this.httpErrMessage(err)),
-    });
   }
 
   private effectivePuntoEmisionId(): string {
@@ -6482,11 +6496,14 @@ export class PosVentaPage {
       this.desk.recordSaleFromLocalUI(this.total(), amounts);
       this.clearActiveCart();
       this.closeModal();
+      this.toast.success('Venta guardada offline. Se sincronizará cuando haya conexión.');
       if (this.posApiConfigured() && navigator.onLine) {
         void this.offline.syncPending();
       }
     } catch (err) {
-      this.checkoutError.set(err instanceof Error ? err.message : 'No se pudo guardar el comprobante offline');
+      const msg = err instanceof Error ? err.message : 'No se pudo guardar el comprobante offline';
+      this.checkoutError.set(msg);
+      this.toast.error(msg);
     } finally {
       this.checkoutLoading.set(false);
     }
@@ -6607,7 +6624,12 @@ export class PosVentaPage {
   }
 
   private clearActiveCart(): void {
-    this.patchActiveTab((tab) => ({ ...tab, cart: [] }));
+    this.patchActiveTab((tab) => ({
+      ...tab,
+      cart: [],
+      customer: SALE_CONSUMIDOR_FINAL,
+    }));
+    this.resetCustomerSearchUi();
   }
 
   selectTab(id: string): void {

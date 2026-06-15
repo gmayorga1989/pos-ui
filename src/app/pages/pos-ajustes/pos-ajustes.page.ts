@@ -13,6 +13,7 @@ import type {
 } from '../../core/api/pos-backend.types';
 import { PosAuthService } from '../../core/auth/pos-auth.service';
 import { PosConfigService } from '../../core/config/pos-config.service';
+import { PosToastService } from '../../core/ui/pos-toast.service';
 import { PayPhonePaymentWidget } from '../../core/payments/payphone-payment.widget';
 import { PAYPHONE_COUNTRY_OPTIONS } from '../../core/payments/payphone-countries.util';
 import { environment } from '../../../environments/environment';
@@ -5637,6 +5638,7 @@ export class PosAjustesPage implements OnInit {
   private readonly api = inject(PosBackendApiService);
   readonly auth = inject(PosAuthService);
   private readonly runtimeConfig = inject(PosConfigService);
+  private readonly toast = inject(PosToastService);
   readonly payPhoneWidget = inject(PayPhonePaymentWidget);
   readonly payPhoneTimeZoneOptions = [
     { value: '-5', label: '-5' },
@@ -6038,13 +6040,13 @@ export class PosAjustesPage implements OnInit {
 
   guardarCambios(): void {
     if (!this.prefs.cajaId().trim()) {
-      this.settingsSaveMsg.set('Ingrese un identificador de caja (ej. CAJA-01) antes de guardar.');
+      this.notifyConfig('warning', 'Ingrese un identificador de caja (ej. CAJA-01) antes de guardar.', true);
       return;
     }
     this.prefs.bumpDocumentDensity();
     this.stationDirty.set(false);
     this.stationLastSavedAt.set(Date.now());
-    this.settingsSaveMsg.set('Cambios guardados correctamente en esta estación.');
+    this.notifyConfig('success', 'Cambios guardados correctamente en esta estación.', true);
   }
 
   stationIsConfigured(): boolean {
@@ -6180,7 +6182,7 @@ export class PosAjustesPage implements OnInit {
     this.prefs.bumpDocumentDensity();
     this.stationDirty.set(false);
     this.stationLastSavedAt.set(null);
-    this.settingsSaveMsg.set('Configuración restablecida a valores por defecto.');
+    this.notifyConfig('info', 'Configuración restablecida a valores por defecto.', true);
   }
 
   saveInvoicingConfig(): void {
@@ -6190,8 +6192,14 @@ export class PosAjustesPage implements OnInit {
       customApiKey: this.invoicingCustomApiKey().trim() || null,
     };
     this.api.putInvoicingConfig(body).subscribe({
-      next: () => this.invoicingStatus.set('Integración guardada'),
-      error: () => this.invoicingStatus.set('No se pudo guardar la integración'),
+      next: () => {
+        this.invoicingStatus.set('Integración guardada');
+        this.notifyConfig('success', 'Integración de facturación guardada.');
+      },
+      error: () => {
+        this.invoicingStatus.set('No se pudo guardar la integración');
+        this.notifyConfig('error', 'No se pudo guardar la integración de facturación.');
+      },
     });
   }
 
@@ -6200,8 +6208,12 @@ export class PosAjustesPage implements OnInit {
       next: (r) => {
         this.invoicingPending.set(r.pendingExternal ?? 0);
         this.invoicingStatus.set('Reintento de emisión solicitado');
+        this.notifyConfig('success', 'Reintento de emisión fiscal solicitado.');
       },
-      error: () => this.invoicingStatus.set('No se pudo reintentar la emisión'),
+      error: () => {
+        this.invoicingStatus.set('No se pudo reintentar la emisión');
+        this.notifyConfig('error', 'No se pudo reintentar la emisión fiscal.');
+      },
     });
   }
 
@@ -6257,13 +6269,17 @@ export class PosAjustesPage implements OnInit {
         next: (cfg) => {
           this.stripeSecretKey.set('');
           this.applyStripeConfig(cfg);
-          this.stripeStatus.set(
-            cfg.configured
-              ? 'Stripe configurado correctamente.'
-              : 'Configuracion guardada, pero faltan datos para operar.',
-          );
+          const msg = cfg.configured
+            ? 'Stripe configurado correctamente.'
+            : 'Configuración Stripe guardada; faltan datos para operar.';
+          this.stripeStatus.set(msg);
+          this.notifyConfig(cfg.configured ? 'success' : 'warning', msg);
         },
-        error: (err: unknown) => this.stripeStatus.set(this.errorMessage(err)),
+        error: (err: unknown) => {
+          const msg = this.errorMessage(err);
+          this.stripeStatus.set(msg);
+          this.notifyConfig('error', msg);
+        },
       });
   }
 
@@ -6275,10 +6291,16 @@ export class PosAjustesPage implements OnInit {
       .pipe(finalize(() => this.stripeCreating.set(false)))
       .subscribe({
         next: (r) => {
-          this.stripeStatus.set('Sesion creada correctamente. Redirigiendo a Stripe...');
+          const msg = 'Sesión creada correctamente. Redirigiendo a Stripe...';
+          this.stripeStatus.set(msg);
+          this.notifyConfig('info', msg);
           window.location.href = r.url;
         },
-        error: (err: unknown) => this.stripeStatus.set(this.errorMessage(err)),
+        error: (err: unknown) => {
+          const msg = this.errorMessage(err);
+          this.stripeStatus.set(msg);
+          this.notifyConfig('error', msg);
+        },
       });
   }
 
@@ -6336,13 +6358,17 @@ export class PosAjustesPage implements OnInit {
         next: (cfg) => {
           this.kushkiPrivateMerchantId.set('');
           this.applyKushkiConfig(cfg);
-          this.kushkiStatus.set(
-            cfg.configured
-              ? 'Kushki configurado correctamente.'
-              : 'Configuracion guardada, pero faltan datos para operar.',
-          );
+          const msg = cfg.configured
+            ? 'Kushki configurado correctamente.'
+            : 'Configuración Kushki guardada; faltan datos para operar.';
+          this.kushkiStatus.set(msg);
+          this.notifyConfig(cfg.configured ? 'success' : 'warning', msg);
         },
-        error: (err: unknown) => this.kushkiStatus.set(this.errorMessage(err, 'Kushki')),
+        error: (err: unknown) => {
+          const msg = this.errorMessage(err, 'Kushki');
+          this.kushkiStatus.set(msg);
+          this.notifyConfig('error', msg);
+        },
       });
   }
 
@@ -6445,18 +6471,24 @@ export class PosAjustesPage implements OnInit {
         )
         .subscribe({
           next: (r) => {
-            this.kushkiStatus.set(`Suscripcion creada correctamente${r.status ? `: ${r.status}` : ''}.`);
+            const msg = `Suscripción Kushki creada correctamente${r.status ? `: ${r.status}` : ''}.`;
+            this.kushkiStatus.set(msg);
+            this.notifyConfig('success', msg);
           },
           error: (err: unknown) => {
             this.kushkiSubscriptionSubmitted = false;
-            this.kushkiStatus.set(this.errorMessage(err, 'Kushki'));
+            const msg = this.errorMessage(err, 'Kushki');
+            this.kushkiStatus.set(msg);
+            this.notifyConfig('error', msg);
           },
         });
     } catch (err: unknown) {
       this.kushkiSubscriptionSubmitted = false;
       this.kushkiTokenizing.set(false);
       this.kushkiCreatingSubscription.set(false);
-      this.kushkiStatus.set(this.errorMessage(err, 'Kushki'));
+      const msg = this.errorMessage(err, 'Kushki');
+      this.kushkiStatus.set(msg);
+      this.notifyConfig('error', msg);
     }
   }
 
@@ -6486,7 +6518,17 @@ export class PosAjustesPage implements OnInit {
 
   savePayPhoneConfig(): void {
     this.payPhoneWidget.saveConfig(this.payPhoneWidget.configFormState()).subscribe({
-      error: (err: unknown) => this.payPhoneWidget.configStatus.set(this.errorMessage(err, 'PayPhone')),
+      next: (cfg) => {
+        const msg = cfg.configured
+          ? 'PayPhone configurado correctamente.'
+          : 'Configuración PayPhone guardada; faltan datos para operar.';
+        this.notifyConfig(cfg.configured ? 'success' : 'warning', msg);
+      },
+      error: (err: unknown) => {
+        const msg = this.errorMessage(err, 'PayPhone');
+        this.payPhoneWidget.configStatus.set(msg);
+        this.notifyConfig('error', msg);
+      },
     });
   }
 
@@ -6516,9 +6558,12 @@ export class PosAjustesPage implements OnInit {
     try {
       await navigator.clipboard.writeText(url);
       this.payPhoneResponseUrlCopied.set(true);
+      this.notifyConfig('success', 'URL de respuesta PayPhone copiada al portapapeles.');
       window.setTimeout(() => this.payPhoneResponseUrlCopied.set(false), 2000);
     } catch {
-      this.payPhoneWidget.configStatus.set('No se pudo copiar la URL de respuesta.');
+      const msg = 'No se pudo copiar la URL de respuesta.';
+      this.payPhoneWidget.configStatus.set(msg);
+      this.notifyConfig('error', msg);
     }
   }
 
@@ -6857,6 +6902,29 @@ export class PosAjustesPage implements OnInit {
       return String(value);
     }
     return '';
+  }
+
+  private notifyConfig(
+    outcome: 'success' | 'error' | 'warning' | 'info',
+    message: string,
+    mirrorFooter = false,
+  ): void {
+    const text = message.trim();
+    if (!text) {
+      return;
+    }
+    if (outcome === 'success') {
+      this.toast.success(text);
+    } else if (outcome === 'error') {
+      this.toast.error(text);
+    } else if (outcome === 'warning') {
+      this.toast.warning(text);
+    } else {
+      this.toast.info(text);
+    }
+    if (mirrorFooter) {
+      this.settingsSaveMsg.set(text);
+    }
   }
 
   private errorMessage(err: unknown, provider = 'Stripe'): string {
